@@ -1,0 +1,3 @@
+google-genai>=2.3.0
+pytest
+python-dotenv
