@@ -1,0 +1,6 @@
+{"timestamp":"2026-11-07T16:32:08Z","state":"SURVEY_SEABED","action":"Surveyed sector B-04","evidence":{"clusters_detected":16,"coverage_pct":82,"sensor":"hull RGB-D"},"outcome":"Semantic map updated"}
+{"timestamp":"2026-11-07T16:32:19Z","state":"COMPUTE_RESTORATION_PLAN","action":"Selected restoration site C-07","evidence":{"cluster_id":"C-07","substrate":"stable hard substrate","health_score":0.83,"candidate_sites":4},"outcome":"Placement plan accepted"}
+{"timestamp":"2026-11-07T16:32:31Z","state":"NAVIGATE_TO_DONOR","action":"Approached viable fragment","evidence":{"fragment_id":"F-03","distance_m":2.4,"localization_confidence":0.96},"outcome":"Within grasp tolerance"}
+{"timestamp":"2026-11-07T16:32:44Z","state":"HARVEST_FRAGMENT","action":"Secured loose fragment F-03","evidence":{"fragment_id":"F-03","gripper_force_n":3.1,"species_class":"Acropora palmata"},"outcome":"Fragment held"}
+{"timestamp":"2026-11-07T16:33:02Z","state":"NAVIGATE_TO_RECIPIENT","action":"Transit to C-07","evidence":{"cluster_id":"C-07","distance_m":3.6,"current_ms":0.18},"outcome":"Holding course"}
+{"timestamp":"2026-11-07T16:33:16Z","state":"TRANSPLANT_FRAGMENT","action":"Placed fragment at C-07","evidence":{"cluster_id":"C-07","surface_normal":[0.02,0.04,0.99],"placement_shift_mm":2.1},"outcome":"Current-push check passed"}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071b24">
+  <meta name="description" content="Reef Rescue AUV mission control dashboard">
+  <title>Mission Control — Reef Rescue</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Mission identity">
+      <div class="brand-mark" aria-label="Reef Rescue"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4v40M24 19C15 11 10 11 6 13M24 27C15 20 9 21 5 25M24 33C33 24 39 25 43 27M24 16C31 10 37 10 41 13"/></svg></div>
+      <span class="rail-word">REEF<br>RESCUE</span>
+      <span class="rail-line"></span>
+      <span class="rail-caption">MISSION<br>CONTROL</span>
+      <div class="rail-bottom">01 <span>/</span> 03</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb"><span class="bread-dot"></span> OPERATIONS <span class="slash">/</span> MISSION CONTROL</div>
+        <div class="top-actions">
+          <span class="source-pill"><span class="pulse-dot"></span><span id="source-label">SYNTHETIC DEMO</span></span>
+          <span id="sync-label" class="sync-label">CONNECTING</span>
+          <button class="icon-button" id="info-button" aria-label="About this dashboard" title="About this dashboard">?</button>
+        </div>
+      </header>
+
+      <section class="mission-intro">
+        <div>
+          <div class="eyebrow">AUTONOMOUS CORAL RESTORATION <span class="eyebrow-rule"></span> <span id="sector-label">SECTOR B–04</span></div>
+          <h1>Mission <em>Control.</em></h1>
+          <p>One clear view of what the vehicle sees, where it is working, and why it acts.</p>
+        </div>
+        <div class="mission-status">
+          <div class="status-heading"><span class="status-spark"></span> MISSION STATUS</div>
+          <strong id="mission-phase">Mapping reef</strong>
+          <span id="mission-subphase">Awaiting decision feed</span>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Mission summary">
+        <div class="metric"><span>CLUSTERS MAPPED</span><div><strong id="metric-clusters">—</strong><small>in registry</small></div></div>
+        <div class="metric"><span>RESTORED SITES</span><div><strong id="metric-restored">—</strong><small>in registry</small></div></div>
+        <div class="metric"><span>NEEDS ATTENTION</span><div><strong id="metric-attention">—</strong><small>dead + bleached</small></div></div>
+        <div class="metric link-metric"><span>ACOUSTIC LINK <i>SIMULATED</i></span><div><strong id="link-text">Connected</strong><button id="link-toggle" class="link-toggle" type="button" aria-label="Toggle simulated acoustic link" aria-pressed="true"><span></span></button></div></div>
+      </section>
+
+      <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+      <section class="workspace" aria-label="Mission views">
+        <article class="panel camera-panel">
+          <div class="panel-heading"><div><div class="panel-index">01 / OPTICAL</div><h2>Camera feed</h2></div><div class="panel-controls"><span class="panel-meta">HULL RGB–D</span><button class="text-button active" id="boxes-toggle" type="button" aria-pressed="true">DETECTIONS <span class="tiny-switch"></span></button></div></div>
+          <div class="camera-stage">
+            <img id="camera-image" src="assets/reef-camera-synthetic.png" alt="Synthetic underwater reef scene showing healthy and pale coral formations">
+            <div class="camera-vignette"></div>
+            <div class="camera-top"><span class="synthetic-tag" id="frame-label">SYNTHETIC FRAME</span><span>CAM 01 <span class="camera-divider">/</span> RGB</span></div>
+            <div id="detections-layer" class="detections-layer"></div>
+            <div class="camera-crosshair" aria-hidden="true"><span></span><span></span></div>
+            <div class="camera-bottom"><div><span class="rec-dot"></span> OPTICAL VIEW <span class="camera-divider">/</span> SAMPLE FRAME</div><span id="camera-detection-count">0 DETECTIONS</span></div>
+          </div>
+          <div class="panel-foot"><span id="camera-overlay-note"><span class="foot-square"></span> Boxes in demo are illustrative</span><span id="camera-source-note">Source image is generated for this demo</span></div>
+        </article>
+
+        <article class="panel map-panel">
+          <div class="panel-heading"><div><div class="panel-index">02 / SPATIAL</div><h2>Reef map</h2></div><div class="panel-controls"><span class="panel-meta">TOP DOWN <span class="map-north">N ↑</span></span></div></div>
+          <div class="map-stage" id="map-stage">
+            <div class="map-halo"></div><div class="map-grid"></div>
+            <svg class="map-contours" viewBox="0 0 520 370" preserveAspectRatio="none" aria-hidden="true"><path d="M-40 290C90 215 111 316 215 266S376 215 557 277"/><path d="M-40 315C94 240 120 340 225 290S385 240 557 300"/><path d="M-40 345C86 272 128 368 240 315S390 270 557 327"/><path d="M-40 372C81 301 130 398 251 346S404 300 557 352"/><path d="M-40 260C85 185 110 280 200 237S365 185 557 248"/></svg>
+            <span class="map-coordinate top">LOCAL REEF GRID</span><span class="map-coordinate bottom">WORLD X / Y · METRES</span>
+            <div id="map-points" class="map-points"></div>
+            <div class="rov-marker" title="ROV position is illustrative in demo"><span class="rov-ring"></span><span class="rov-body">◆</span><span class="rov-label">ROV</span></div>
+            <div class="map-scale"><span></span> <span id="map-scale-label">— m</span></div>
+          </div>
+          <div class="map-legend" id="map-legend"><button data-filter="ALL" class="selected">ALL <b id="count-all">0</b></button><button data-filter="LIVE"><i class="legend-dot live"></i> LIVE <b id="count-live">0</b></button><button data-filter="DEAD"><i class="legend-dot dead"></i> DEAD <b id="count-dead">0</b></button><button data-filter="BLEACHED"><i class="legend-dot bleached"></i> BLEACHED <b id="count-bleached">0</b></button><button data-filter="RESTORED"><i class="legend-dot restored"></i> RESTORED <b id="count-restored">0</b></button></div>
+          <div id="cluster-detail" class="cluster-detail" aria-live="polite"><span>SELECT A MAP PIN</span><p>Inspect a cluster’s health, species and position.</p></div>
+        </article>
+
+        <article class="panel scene-panel">
+          <div class="panel-heading"><div><div class="panel-index">03 / ENVIRONMENT</div><h2>Reef viewport</h2></div><div class="panel-controls"><span class="panel-meta">SPATIAL PREVIEW</span></div></div>
+          <div class="scene-stage" id="scene-stage"><svg id="scene-svg" viewBox="0 0 700 320" role="img" aria-label="Illustrative perspective view of ROV and registry coral positions"></svg><div class="scene-top-note">REGISTRY POINT CLOUD <span>·</span> ILLUSTRATIVE</div><div class="scene-axis">X <span>→</span><br>Y <span>↗</span><br>Z <span>↑</span></div><div class="scene-depth" id="scene-depth">DEPTH — M</div></div>
+          <div class="panel-foot"><span><span class="foot-square cyan"></span> ROV position is illustrative</span><span>Live sim viewport pending</span></div>
+        </article>
+
+        <article class="panel decisions-panel">
+          <div class="panel-heading"><div><div class="panel-index">04 / REASONING</div><h2>Decision trace</h2></div><div class="panel-controls"><span class="panel-meta" id="decision-count">0 EVENTS</span><button class="text-button" id="pause-toggle" type="button" aria-pressed="false">PAUSE UPDATES</button></div></div>
+          <div class="decisions-layout"><div class="decision-list" id="decision-list"></div><div class="decision-inspector" id="decision-inspector"><div class="inspector-kicker">EVIDENCE / OUTCOME</div><p>Select a decision to inspect the sensor evidence behind it.</p></div></div>
+        </article>
+      </section>
+
+      <footer class="footer"><span>REEF RESCUE AUV <span class="footer-sep">/</span> OPERATOR OVERVIEW</span><span>LOCAL DASHBOARD <span class="footer-sep">·</span> SOURCE REFRESHES EVERY 2 S</span></footer>
+    </main>
+  </div>
+
+  <dialog id="about-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close">×</button><div class="panel-index">ABOUT THIS VIEW</div><h2>Built for a traceable mission.</h2><p>The camera image and ROV position are illustrative synthetic demo assets. Registry pins, counts, and decision evidence come from the selected JSON/JSONL files. Pass real file paths to <code>dashboard/server.py</code> to follow a running mission.</p><p>The acoustic link switch simulates only the operator uplink indicator; it does not control the vehicle.</p><button class="dialog-done">UNDERSTOOD</button></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
