@@ -3,3 +3,6 @@ pytest
 python-dotenv
 numpy
 scipy
+Pillow
+requests
+datasets  # eval/coralscapes_eval.py only
