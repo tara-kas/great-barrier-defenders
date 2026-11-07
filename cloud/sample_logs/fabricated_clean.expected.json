@@ -1,0 +1,4 @@
+{
+  "note": "Answer key for fabricated_clean.jsonl. No flaws were planted, so any flag is a false positive.",
+  "planted_flaws": []
+}

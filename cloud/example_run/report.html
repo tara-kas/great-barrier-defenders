@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission Debrief</title>
+<style>
+:root {
+  --bg: #f6f7f8; --panel: #ffffff; --ink: #1b2126; --muted: #5d6871; --line: #dfe3e7;
+  --high: #c0342b; --high-bg: #fdecea; --medium: #b0650a; --medium-bg: #fdf2e0;
+  --low: #47708f; --low-bg: #e9f1f7; --good: #1d7a54; --good-bg: #e3f4ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12171b; --panel: #1b2227; --ink: #e6eaed; --muted: #97a3ac; --line: #2e383f;
+    --high: #f0837a; --high-bg: #3a1f1d; --medium: #e8ac5c; --medium-bg: #38291a;
+    --low: #8dbad9; --low-bg: #1e2d38; --good: #6cd0a4; --good-bg: #17332a;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 32px 0 10px; }
+p { margin: 0 0 10px; }
+code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.banner { border-radius: 8px; padding: 10px 14px; margin-top: 12px; background: var(--medium-bg); color: var(--medium); }
+.banner.live { background: var(--good-bg); color: var(--good); }
+.verdict { display: inline-block; font-weight: 600; padding: 2px 10px; border-radius: 999px; margin: 8px 0; }
+.verdict.clean { background: var(--good-bg); color: var(--good); }
+.verdict.issues_found { background: var(--high-bg); color: var(--high); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-top: 16px; }
+.stat b { display: block; font-size: 18px; overflow-wrap: anywhere; }
+.stat span { font-size: 12px; color: var(--muted); }
+.change { font-size: 17px; margin: 6px 0 10px; overflow-wrap: anywhere; }
+.change b { color: var(--good); }
+.score-row { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.score-row:first-of-type { border-top: 0; }
+.tag { flex: none; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; height: fit-content; }
+.tag.good { background: var(--good-bg); color: var(--good); }
+.tag.bad { background: var(--high-bg); color: var(--high); }
+.tag.high { background: var(--high-bg); color: var(--high); }
+.tag.medium { background: var(--medium-bg); color: var(--medium); }
+.tag.low { background: var(--low-bg); color: var(--low); }
+.entry { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--line);
+  border-radius: 6px; margin-bottom: 6px; scroll-margin-top: 12px; }
+.entry.high { border-left-color: var(--high); }
+.entry.medium { border-left-color: var(--medium); }
+.entry.low { border-left-color: var(--low); }
+.entry:target { outline: 2px solid var(--low); }
+summary { cursor: pointer; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.idx { color: var(--muted); min-width: 2ch; }
+.state { color: var(--muted); font-size: 12px; }
+.outcome { margin-left: auto; color: var(--muted); }
+.outcome.fail { color: var(--high); }
+.body { padding: 0 12px 12px; }
+.flag { padding: 8px 10px; border-radius: 6px; background: var(--bg); margin-bottom: 8px; }
+.cite { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; margin-top: 4px; overflow-wrap: anywhere; }
+pre { margin: 0; padding: 10px; background: var(--bg); border-radius: 6px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>Mission debrief</h1>
+<div class="muted mono">cloud/sample_logs/fabricated_subtle.jsonl</div>
+<div class="banner">Re-rendered from a saved debrief. No API call was made for this page. The original call ran at 2026-11-07T17:12:20.268452+00:00.</div><div class="banner">Input is a hand-written sample log, not a real mission. The debrief is real; the mission it describes is not.</div>
+<div class="verdict issues_found">Issues found</div>
+<div class="panel"><p>The ROV surveyed 7 coral clusters (4 live, 3 dead) and completed two restoration cycles before terminating the mission. Three significant issues occurred during the dive: in entry 3, the ROV attached a fragment from donor L-03 even though inverse kinematics indicated the target was unreachable; in entry 7, the planner paired dead acropora_palmata recipient D-14 with live acropora_cervicornis donor L-05 instead of same-species candidate L-09; and in entry 13, the mission ended early claiming all restorable clusters were processed while 1 of the 3 dead clusters from the survey still remained.</p><div class="stats"><div class="stat"><b>14</b><span>log entries</span></div><div class="stat"><b>3</b><span>flagged</span></div><div class="stat"><b>67.2s</b><span>Argon latency</span></div><div class="stat"><b>3688</b><span>input tokens</span></div><div class="stat"><b>974</b><span>output tokens</span></div><div class="stat"><b>5919</b><span>thought tokens</span></div></div></div>
+<h2>Suggested patch</h2><div class="panel"><div class="mono">agent/pairing.py:species_match_check</div><div class="change">False &rarr; <b>donor.species_class == recipient.species_class</b></div><p>Enforcing a strict same-species filter on candidate donors before evaluating J(i,j) prevents biologically invalid cross-species transplants such as grafting acropora_cervicornis (L-05) onto dead acropora_palmata (D-14).</p><div class="muted">Addresses <a href="#entry-7">entry 7</a>. Proposal only: nothing has been applied or tested.</div></div>
+<h2>Planted flaw check: 3/3 caught</h2><div class="panel"><div class="score-row"><span class="tag good">caught</span><span><b>S1</b> Fragment attached although ik_reachable was false.</span></div><div class="score-row"><span class="tag good">caught</span><span><b>S2</b> Donor L-05 is acropora_cervicornis but recipient D-14 is acropora_palmata.</span></div><div class="score-row"><span class="tag good">caught</span><span><b>S3</b> Mission declared complete with remaining_dead_clusters at 1.</span></div></div>
+
+<h2>Mission timeline</h2><details class="entry " id="entry-0"><summary><span class="idx mono">0</span><span class="mono">survey_complete</span><span class="state">SURVEY_SEABED</span><span class="outcome">7 clusters registered</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:00:00+00:00</summary><pre>{
+  &quot;clusters_detected&quot;: 7,
+  &quot;live&quot;: 4,
+  &quot;dead&quot;: 3,
+  &quot;bleached&quot;: 0,
+  &quot;seabed_coverage&quot;: 0.97,
+  &quot;min_classification_confidence&quot;: 0.86,
+  &quot;classification_confidence_floor&quot;: 0.7
+}</pre></details></div></details><details class="entry " id="entry-1"><summary><span class="idx mono">1</span><span class="mono">select_donor_recipient_pair</span><span class="state">COMPUTE_RESTORATION_PLAN</span><span class="outcome">pair L-03 -&gt; D-11</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:00:04+00:00</summary><pre>{
+  &quot;recipient&quot;: {
+    &quot;cluster_id&quot;: &quot;D-11&quot;,
+    &quot;species_class&quot;: &quot;acropora_cervicornis&quot;,
+    &quot;health_status&quot;: &quot;DEAD&quot;,
+    &quot;health_score&quot;: 0.04,
+    &quot;position_world&quot;: [
+      6.0,
+      4.0,
+      -12.0
+    ]
+  },
+  &quot;rov_position&quot;: [
+    1.0,
+    1.0,
+    -11.0
+  ],
+  &quot;weights&quot;: {
+    &quot;w1&quot;: 1.0,
+    &quot;w2&quot;: 1.5,
+    &quot;w3&quot;: 2.0
+  },
+  &quot;candidates&quot;: [
+    {
+      &quot;cluster_id&quot;: &quot;L-03&quot;,
+      &quot;species_class&quot;: &quot;acropora_cervicornis&quot;,
+      &quot;health_status&quot;: &quot;LIVE&quot;,
+      &quot;health_score&quot;: 0.94,
+      &quot;position_world&quot;: [
+        4.5,
+        3.0,
+        -12.1
+      ],
+      &quot;dist_rov_to_donor_m&quot;: 4.179,
+      &quot;dist_donor_to_recipient_m&quot;: 1.806,
+      &quot;cost_J&quot;: 5.008
+    },
+    {
+      &quot;cluster_id&quot;: &quot;L-07&quot;,
+      &quot;species_class&quot;: &quot;acropora_cervicornis&quot;,
+      &quot;health_status&quot;: &quot;LIVE&quot;,
+      &quot;health_score&quot;: 0.81,
+      &quot;position_world&quot;: [
+        8.0,
+        6.0,
+        -11.9
+      ],
+      &quot;dist_rov_to_donor_m&quot;: 8.649,
+      &quot;dist_donor_to_recipient_m&quot;: 2.83,
+      &quot;cost_J&quot;: 11.274
+    }
+  ],
+  &quot;chosen_donor&quot;: &quot;L-03&quot;,
+  &quot;chosen_cost_J&quot;: 5.008
+}</pre></details></div></details><details class="entry " id="entry-2"><summary><span class="idx mono">2</span><span class="mono">arrive_at_donor</span><span class="state">NAVIGATE_TO_DONOR</span><span class="outcome">arrived</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:00:20+00:00</summary><pre>{
+  &quot;target&quot;: &quot;L-03&quot;,
+  &quot;target_position&quot;: [
+    4.5,
+    3.0,
+    -12.1
+  ],
+  &quot;final_position_error_m&quot;: 0.04,
+  &quot;distance_travelled_m&quot;: 4.179
+}</pre></details></div></details><details class="entry high" id="entry-3" open><summary><span class="idx mono">3</span><span class="mono">attach_fragment</span><span class="state">HARVEST_FRAGMENT</span><span class="outcome">fragment attached</span></summary><div class="body"><div class="flag"><span class="tag high">high</span> The ROV executed attach_fragment on donor L-03 and transitioned to navigation despite ik_reachable being false.<div class="cite"><span class="tag good">in log</span><code>action = attach_fragment</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.ik_reachable = false</code></div><div class="cite"><span class="tag good">in log</span><code>outcome = fragment attached</code></div></div><details><summary class="muted">Raw evidence · 2026-11-07T14:00:38+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;L-03&quot;,
+  &quot;base_locked&quot;: true,
+  &quot;ik_reachable&quot;: false,
+  &quot;gripper_force_n&quot;: 3.1,
+  &quot;force_limit_n&quot;: 6.0
+}</pre></details></div></details><details class="entry " id="entry-4"><summary><span class="idx mono">4</span><span class="mono">arrive_at_recipient</span><span class="state">NAVIGATE_TO_RECIPIENT</span><span class="outcome">arrived</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:00:45+00:00</summary><pre>{
+  &quot;target&quot;: &quot;D-11&quot;,
+  &quot;target_position&quot;: [
+    6.0,
+    4.0,
+    -12.0
+  ],
+  &quot;final_position_error_m&quot;: 0.05,
+  &quot;distance_travelled_m&quot;: 1.806,
+  &quot;fragment_attached&quot;: true
+}</pre></details></div></details><details class="entry " id="entry-5"><summary><span class="idx mono">5</span><span class="mono">select_graft_point</span><span class="state">TRANSPLANT_FRAGMENT</span><span class="outcome">graft pose accepted</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:00:54+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;D-11&quot;,
+  &quot;point_cloud_points&quot;: 2140,
+  &quot;valid_patch_points&quot;: 301,
+  &quot;normal_dot_z&quot;: 0.95,
+  &quot;normal_dot_z_min&quot;: 0.866,
+  &quot;approach_cylinder_clear&quot;: true,
+  &quot;within_reach&quot;: true
+}</pre></details></div></details><details class="entry " id="entry-6"><summary><span class="idx mono">6</span><span class="mono">detach_and_verify</span><span class="state">TRANSPLANT_FRAGMENT</span><span class="outcome">D-11 RESTORED</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:01:08+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;D-11&quot;,
+  &quot;push_test_displacement_m&quot;: 0.009,
+  &quot;push_test_tolerance_m&quot;: 0.02,
+  &quot;registry_status_after&quot;: &quot;RESTORED&quot;,
+  &quot;remaining_dead_clusters&quot;: 2,
+  &quot;restored_total&quot;: 1
+}</pre></details></div></details><details class="entry high" id="entry-7" open><summary><span class="idx mono">7</span><span class="mono">select_donor_recipient_pair</span><span class="state">COMPUTE_RESTORATION_PLAN</span><span class="outcome">pair L-05 -&gt; D-14</span></summary><div class="body"><div class="flag"><span class="tag high">high</span> The restoration planner violated the same-species pairing requirement by selecting donor L-05 (acropora_cervicornis) for recipient D-14 (acropora_palmata) simply because it had a lower cost_J than the valid same-species candidate L-09 (acropora_palmata).<div class="cite"><span class="tag good">in log</span><code>evidence.recipient.cluster_id = D-14</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.recipient.species_class = acropora_palmata</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.candidates.0.cluster_id = L-05</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.candidates.0.species_class = acropora_cervicornis</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.candidates.1.cluster_id = L-09</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.candidates.1.species_class = acropora_palmata</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.chosen_donor = L-05</code></div></div><details><summary class="muted">Raw evidence · 2026-11-07T14:01:12+00:00</summary><pre>{
+  &quot;recipient&quot;: {
+    &quot;cluster_id&quot;: &quot;D-14&quot;,
+    &quot;species_class&quot;: &quot;acropora_palmata&quot;,
+    &quot;health_status&quot;: &quot;DEAD&quot;,
+    &quot;health_score&quot;: 0.07,
+    &quot;position_world&quot;: [
+      2.0,
+      8.0,
+      -12.4
+    ]
+  },
+  &quot;rov_position&quot;: [
+    6.0,
+    4.0,
+    -12.0
+  ],
+  &quot;weights&quot;: {
+    &quot;w1&quot;: 1.0,
+    &quot;w2&quot;: 1.5,
+    &quot;w3&quot;: 2.0
+  },
+  &quot;candidates&quot;: [
+    {
+      &quot;cluster_id&quot;: &quot;L-05&quot;,
+      &quot;species_class&quot;: &quot;acropora_cervicornis&quot;,
+      &quot;health_status&quot;: &quot;LIVE&quot;,
+      &quot;health_score&quot;: 0.91,
+      &quot;position_world&quot;: [
+        3.0,
+        6.5,
+        -12.2
+      ],
+      &quot;dist_rov_to_donor_m&quot;: 3.91,
+      &quot;dist_donor_to_recipient_m&quot;: 1.814,
+      &quot;cost_J&quot;: 4.811
+    },
+    {
+      &quot;cluster_id&quot;: &quot;L-09&quot;,
+      &quot;species_class&quot;: &quot;acropora_palmata&quot;,
+      &quot;health_status&quot;: &quot;LIVE&quot;,
+      &quot;health_score&quot;: 0.88,
+      &quot;position_world&quot;: [
+        8.5,
+        8.0,
+        -12.1
+      ],
+      &quot;dist_rov_to_donor_m&quot;: 4.718,
+      &quot;dist_donor_to_recipient_m&quot;: 6.507,
+      &quot;cost_J&quot;: 12.719
+    }
+  ],
+  &quot;chosen_donor&quot;: &quot;L-05&quot;,
+  &quot;chosen_cost_J&quot;: 4.811
+}</pre></details></div></details><details class="entry " id="entry-8"><summary><span class="idx mono">8</span><span class="mono">arrive_at_donor</span><span class="state">NAVIGATE_TO_DONOR</span><span class="outcome">arrived</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:01:27+00:00</summary><pre>{
+  &quot;target&quot;: &quot;L-05&quot;,
+  &quot;target_position&quot;: [
+    3.0,
+    6.5,
+    -12.2
+  ],
+  &quot;final_position_error_m&quot;: 0.04,
+  &quot;distance_travelled_m&quot;: 3.91
+}</pre></details></div></details><details class="entry " id="entry-9"><summary><span class="idx mono">9</span><span class="mono">attach_fragment</span><span class="state">HARVEST_FRAGMENT</span><span class="outcome">fragment attached</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:01:45+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;L-05&quot;,
+  &quot;base_locked&quot;: true,
+  &quot;ik_reachable&quot;: true,
+  &quot;gripper_force_n&quot;: 3.1,
+  &quot;force_limit_n&quot;: 6.0
+}</pre></details></div></details><details class="entry " id="entry-10"><summary><span class="idx mono">10</span><span class="mono">arrive_at_recipient</span><span class="state">NAVIGATE_TO_RECIPIENT</span><span class="outcome">arrived</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:01:52+00:00</summary><pre>{
+  &quot;target&quot;: &quot;D-14&quot;,
+  &quot;target_position&quot;: [
+    2.0,
+    8.0,
+    -12.4
+  ],
+  &quot;final_position_error_m&quot;: 0.05,
+  &quot;distance_travelled_m&quot;: 1.814,
+  &quot;fragment_attached&quot;: true
+}</pre></details></div></details><details class="entry " id="entry-11"><summary><span class="idx mono">11</span><span class="mono">select_graft_point</span><span class="state">TRANSPLANT_FRAGMENT</span><span class="outcome">graft pose accepted</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:02:01+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;D-14&quot;,
+  &quot;point_cloud_points&quot;: 2140,
+  &quot;valid_patch_points&quot;: 388,
+  &quot;normal_dot_z&quot;: 0.97,
+  &quot;normal_dot_z_min&quot;: 0.866,
+  &quot;approach_cylinder_clear&quot;: true,
+  &quot;within_reach&quot;: true
+}</pre></details></div></details><details class="entry " id="entry-12"><summary><span class="idx mono">12</span><span class="mono">detach_and_verify</span><span class="state">TRANSPLANT_FRAGMENT</span><span class="outcome">D-14 RESTORED</span></summary><div class="body"><details><summary class="muted">Raw evidence · 2026-11-07T14:02:15+00:00</summary><pre>{
+  &quot;cluster_id&quot;: &quot;D-14&quot;,
+  &quot;push_test_displacement_m&quot;: 0.008,
+  &quot;push_test_tolerance_m&quot;: 0.02,
+  &quot;registry_status_after&quot;: &quot;RESTORED&quot;,
+  &quot;remaining_dead_clusters&quot;: 1,
+  &quot;restored_total&quot;: 2
+}</pre></details></div></details><details class="entry high" id="entry-13" open><summary><span class="idx mono">13</span><span class="mono">mission_complete</span><span class="state">COMPUTE_RESTORATION_PLAN</span><span class="outcome">all restorable clusters processed</span></summary><div class="body"><div class="flag"><span class="tag high">high</span> The mission terminated claiming all restorable clusters were processed even though the initial survey detected 3 dead clusters and 4 live clusters, and remaining_dead_clusters was still 1.<div class="cite"><span class="tag good">in log</span><code>action = mission_complete</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.remaining_dead_clusters = 1</code></div><div class="cite"><span class="tag good">in log</span><code>evidence.restored_total = 2</code></div><div class="cite"><span class="tag good">in log</span><code>outcome = all restorable clusters processed</code></div></div><details><summary class="muted">Raw evidence · 2026-11-07T14:02:18+00:00</summary><pre>{
+  &quot;remaining_dead_clusters&quot;: 1,
+  &quot;restored_total&quot;: 2
+}</pre></details></div></details>
+<p class="muted mono" style="margin-top:24px;overflow-wrap:anywhere">interaction v1_ChdzVnZ2YXBUdEs1N3FrZFVQcFlTQmtBdxIXc1Z2dmFwVHRLNTdxa2RVUHBZU0JrQXc · thinking high · log sha256 b1997ef296d5</p>
+</main>
+</body>
+</html>
