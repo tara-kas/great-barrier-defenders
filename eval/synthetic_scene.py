@@ -17,6 +17,7 @@ from typing import Literal, Optional
 
 import numpy as np
 
+from agent.base_station import BaseStation, Rack
 from perception.registry import SemanticMapEntry, SemanticSeabedRegistry
 
 SPECIES = ("acropora_cervicornis", "porites_astreoides", "orbicella_faveolata")
@@ -49,6 +50,12 @@ class SyntheticScene:
     seed: Optional[int]
     synthetic: bool = field(default=True, init=False)
 
+    def base_station(self) -> BaseStation:
+        """Generous stock of every genet in the scene, just outside the survey area."""
+        genets = sorted({(e.genet_id, e.species_class) for e in self.entries if e.genet_id})
+        racks = [Rack(f"R{i:02d}", g, s, 50, 0.95) for i, (g, s) in enumerate(genets, start=1)]
+        return BaseStation((-1.5, 5.0, 0.0), racks)
+
     def registry(self) -> SemanticSeabedRegistry:
         """Fresh registry with copies of the ground-truth entries."""
         reg = SemanticSeabedRegistry()
@@ -72,9 +79,10 @@ class SyntheticScene:
         radius: float = 0.14,
         height: float = 0.22,
         kind: ShapeKind = "mound",
+        genet_id: Optional[str] = None,
     ) -> SemanticMapEntry:
         shape = ShapeSpec(kind, center, radius, height)
-        entry = _entry_for(cluster_id, species_class, health_status, health_score, shape)
+        entry = _entry_for(cluster_id, species_class, health_status, health_score, shape, genet_id)
         self.entries.append(entry)
         self.shapes[cluster_id] = shape
         return copy.deepcopy(entry)
@@ -93,7 +101,7 @@ class SyntheticScene:
         return copy.deepcopy(self.entries[i])
 
 
-def _entry_for(cluster_id, species_class, health_status, health_score, shape: ShapeSpec) -> SemanticMapEntry:
+def _entry_for(cluster_id, species_class, health_status, health_score, shape: ShapeSpec, genet_id=None) -> SemanticMapEntry:
     return SemanticMapEntry(
         cluster_id=cluster_id,
         species_class=species_class,
@@ -101,6 +109,7 @@ def _entry_for(cluster_id, species_class, health_status, health_score, shape: Sh
         health_score=round(float(health_score), 3),
         position_world=(round(shape.center[0], 4), round(shape.center[1], 4), round(shape.height / 2.0, 4)),
         bounding_box_extent=tuple(round(v, 4) for v in shape.bbox_extent()),
+        genet_id=genet_id,
     )
 
 
@@ -114,8 +123,8 @@ def generate_scene(
 ) -> SyntheticScene:
     """15-20 clusters by default, 2-3 species, mixed LIVE/DEAD/BLEACHED.
 
-    Every species gets at least one healthy LIVE donor, so every DEAD cluster
-    is restorable unless a test deliberately breaks that.
+    Each species has two genets, and every bleached colony has a known genet in
+    stock, so every BLEACHED cluster is treatable unless a test breaks that.
     """
     rng = np.random.default_rng(seed)
     n = int(n_clusters if n_clusters is not None else rng.integers(15, 21))
@@ -141,12 +150,13 @@ def generate_scene(
         if i < len(species):
             status, score = "LIVE", rng.uniform(0.7, 0.98)  # guaranteed healthy donor per species
         else:
-            status = rng.choice(["LIVE", "DEAD", "BLEACHED"], p=[0.4, 0.42, 0.18])
+            status = rng.choice(["LIVE", "DEAD", "BLEACHED"], p=[0.3, 0.2, 0.5])
             score = {"LIVE": rng.uniform(0.4, 0.98), "DEAD": rng.uniform(0.0, 0.15), "BLEACHED": rng.uniform(0.2, 0.5)}[
                 status
             ]
         shape = ShapeSpec("mound", c, float(rng.uniform(0.1, 0.18)), float(rng.uniform(0.15, 0.3)))
         cid = f"cluster_{i:02d}"
-        entries.append(_entry_for(cid, sp, str(status), score, shape))
+        genet_id = f"{sp}_g{int(rng.integers(2))}" if status == "BLEACHED" else None
+        entries.append(_entry_for(cid, sp, str(status), score, shape, genet_id))
         shapes[cid] = shape
     return SyntheticScene(entries, shapes, bounds, seed)

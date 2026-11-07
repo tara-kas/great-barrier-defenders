@@ -1,5 +1,7 @@
 # Build the non-sim half of the ROV stack, against the new spec PDF
 
+> **Historical.** The mission premise has since changed; see `CLAUDE.md` section 1 and section 15.
+
 ## Context
 
 The repo (`great-barrier-defenders`) currently only has scaffolding (empty module

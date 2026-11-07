@@ -2,7 +2,7 @@
 
 AgentVerse 2026, Robotics Track.
 
-An autonomous underwater vehicle that locates loose, living coral fragments and re-attaches them to stable reef substrate. Built for reef restoration teams currently limited by diver depth, time, and weather, particularly on mesophotic reefs. Simulated in NVIDIA Isaac Sim.
+An autonomous underwater vehicle that treats bleached coral. Healthy coral can restore a bleached fragment of the same genet through direct contact, by transferring symbionts ([Collins et al. 2026](https://doi.org/10.1126/sciadv.aeh1580)). This vehicle makes that contact at reef scale, for restoration teams limited by diver depth, time and weather. It is simulated in NVIDIA Isaac Sim, in a Moore Reef scenario on the Great Barrier Reef.
 
 Project notes and setup instructions are in the repository root.
 
@@ -16,7 +16,9 @@ Project notes and setup instructions are in the repository root.
 
 ## How it works
 
-During a dive, a six-state mission loop surveys the seabed, classifies coral with Gemma, pairs donors with recipients using an inspectable cost function, picks a graft point from the depth data, and places the fragment. The loop makes no cloud calls, and Gemma runs on the same machine as the vehicle's stack. If perception fails repeatedly the mission aborts rather than finishing with an empty map.
+During a dive, the mission loop surveys the seabed and classifies each colony with Gemma. For bleached colonies it reads UV fluorescence to identify the genet, then collects a healthy fragment of that genet from a base station and places it touching the colony. Dead colonies are skipped, and so is any colony without a confident in-stock genet match, because contact with the wrong genet harms the coral. The loop makes no cloud calls, and Gemma runs on the same machine as the vehicle's stack. If perception fails repeatedly the mission aborts rather than finishing with an empty map.
+
+The fragment stays in contact. The vehicle returns at day 7 to confirm contact and at day 56 to judge recovery.
 
 Every decision is logged with the evidence behind it. `mission/` connects these parts and writes live files for the dashboard.
 
@@ -24,7 +26,7 @@ Every decision is logged with the evidence behind it. `mission/` connects these 
 
 Two checks are built today:
 
-1. **In the dive:** the mission will not start without a post-placement push test. If a fragment shifts, the site stays open and the vehicle retries, then gives up on that site after three attempts. The test itself comes from the simulator, which is still to be connected.
+1. **In the dive:** the mission will not start without a post-placement push test, which must confirm the fragment held and stayed in contact. If not, the colony stays open and the vehicle retries, then gives up on it after three attempts. The test itself comes from the simulator, which is still to be connected.
 2. **After the dive:** `gemini-4-argon` reviews the decision log and flags suspect transitions. Every flag must cite log values, and code checks each citation against the log. Argon proposes one patch, which a person reviews.
 
 Not built yet: applying proposed patches automatically, or running them against the regression suite before a person approves them.

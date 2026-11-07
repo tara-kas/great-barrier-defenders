@@ -1,6 +1,6 @@
 """MissionFSM: the on-device mission loop.
 
-    SURVEY_SEABED -> COMPUTE_RESTORATION_PLAN -> NAVIGATE_TO_DONOR ->
+    SURVEY_SEABED -> COMPUTE_RESTORATION_PLAN -> NAVIGATE_TO_DONOR (the base station) ->
     HARVEST_FRAGMENT -> NAVIGATE_TO_RECIPIENT -> TRANSPLANT_FRAGMENT
          ^                                                   |
          +------------- loop back to COMPUTE_RESTORATION_PLAN+
@@ -17,7 +17,8 @@ Pluggable dependencies (all optional except robot and registry):
   It raises `PerceptionFailure` when a frame could not be processed, and may
   expose `last_evidence` to have its reasoning logged with each survey frame.
 - `fragment_held() -> bool`: gripper force/camera check for dislodgement.
-- `placement_verifier(pose) -> {"stable": bool, ...}`: post-placement push test.
+- `placement_verifier(pose) -> {"stable": bool, "contact": bool, ...}`: post-placement
+  push test. Symbiont transfer needs the fragment to stay touching the colony.
 """
 
 from __future__ import annotations
@@ -31,13 +32,14 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 
+from agent.base_station import BaseStation
 from agent.config import FSMConfig, GraftConfig
 from agent.decision_log import DecisionLog
 from agent.evidence import entry_summary, pose_summary, to_jsonable
 from agent.geometry import bbox_top, box_mask, distance, frame_to_world_points
 from agent.graft_point import GraftCandidate, select_graft_candidates
 from agent.memory import EpisodicMemory
-from agent.pairing import best_recipient_for_carried, plan_pairs
+from agent.pairing import best_recipient_for_carried, is_open_recipient, plan_pairs
 from agent.robot_interface import Pose, RGBDFrame, RobotInterface
 from perception.registry import SemanticMapEntry, SemanticSeabedRegistry
 
@@ -51,6 +53,7 @@ class MissionState(str, Enum):
     HARVEST_FRAGMENT = "HARVEST_FRAGMENT"
     NAVIGATE_TO_RECIPIENT = "NAVIGATE_TO_RECIPIENT"
     TRANSPLANT_FRAGMENT = "TRANSPLANT_FRAGMENT"
+    RETURN_VISIT = "RETURN_VISIT"
     MISSION_COMPLETE = "MISSION_COMPLETE"
     ABORTED = "ABORTED"
 
@@ -67,10 +70,20 @@ class MissionSummary:
     final_state: str
     steps: int
     sim_time_s: float
-    restored: list[str]
-    unrestorable: dict[str, str]
+    treated: list[str]
+    skipped: dict[str, str]
     memory: dict[str, Any]
     unverified_placements: list[str] = dataclasses.field(default_factory=list)
+
+
+def assess_revisit(day: int, final_day: int, observation: dict, recovered_density_pct: float) -> str:
+    """Status after a return visit. Recovery is only judged at the last visit."""
+    if not observation.get("contact_maintained", False):
+        return "NOT_RECOVERED"
+    if day < final_day:
+        return "TREATED"
+    density = observation.get("symbiont_density_pct_of_healthy", 0)
+    return "RECOVERED" if density >= recovered_density_pct else "NOT_RECOVERED"
 
 
 def lawnmower(bounds: tuple[float, float, float, float], swath: float, z: float) -> list[tuple[float, float, float]]:
@@ -90,6 +103,7 @@ class MissionFSM:
         robot: RobotInterface,
         registry: SemanticSeabedRegistry,
         *,
+        base_station: BaseStation,
         config: FSMConfig = FSMConfig(),
         log: Optional[DecisionLog] = None,
         wait: Callable[[float], None] = time.sleep,
@@ -99,6 +113,7 @@ class MissionFSM:
     ) -> None:
         self.robot = robot
         self.registry = registry
+        self.station = base_station
         self.config = config
         self.log = log if log is not None else DecisionLog()
         self.wait = wait
@@ -110,12 +125,11 @@ class MissionFSM:
         self.memory = EpisodicMemory(config.max_attempts_per_recipient)
         self.steps = 0
         self.sim_time = 0.0
-        self.donor_id: Optional[str] = None
+        self.genet_id: Optional[str] = None  # genet of the current pairing
         self.recipient_id: Optional[str] = None
-        self.carrying: Optional[str] = None  # donor cluster_id of the fragment in the gripper
-        self.carried_species: Optional[str] = None
-        self.returning = False  # carrying a fragment back to its donor (no recipient left)
-        self.unrestorable: dict[str, str] = {}
+        self.carrying: Optional[str] = None  # genet of the fragment in the gripper
+        self.returning = False  # carrying a fragment back to the station (no recipient left)
+        self.skipped: dict[str, str] = {}
         self._started = False
         self._survey_queue: Optional[list[tuple[float, float, float]]] = None
         self._perception_failures = 0
@@ -168,18 +182,18 @@ class MissionFSM:
         return self.summary()
 
     def summary(self) -> MissionSummary:
-        restored = sorted(e.cluster_id for e in self.registry.all() if e.health_status == "RESTORED")
-        open_dead = {e.cluster_id for e in self.registry.all() if e.health_status == "DEAD" and not e.sampled_or_restored}
-        unrestorable = {}
-        for cid in sorted(open_dead):
+        entries = self.registry.all()
+        treated = sorted(e.cluster_id for e in entries if e.sampled_or_restored)
+        skipped = {}
+        for cid in sorted(e.cluster_id for e in entries if is_open_recipient(e)):
             reasons = self.memory.recipient_rejections.get(cid)
-            unrestorable[cid] = reasons[-1] if reasons else self.unrestorable.get(cid, "not processed")
+            skipped[cid] = reasons[-1] if reasons else self.skipped.get(cid, "not processed")
         return MissionSummary(
             final_state=self.state.value,
             steps=self.steps,
             sim_time_s=round(self.sim_time, 3),
-            restored=restored,
-            unrestorable=unrestorable,
+            treated=treated,
+            skipped=skipped,
             memory=self.memory.to_dict(),
             unverified_placements=sorted(self._unverified),
         )
@@ -291,11 +305,8 @@ class MissionFSM:
         if existing is None:
             self.registry.upsert(d)
             return "new"
-        if existing.health_status == "RESTORED":
-            return "kept"
         if existing.sampled_or_restored:
-            self.registry.upsert(dataclasses.replace(d, sampled_or_restored=True))
-            return "updated"
+            return "kept"
         self.registry.upsert(d)
         return "updated"
 
@@ -306,26 +317,16 @@ class MissionFSM:
 
         if self.carrying is not None:
             found = best_recipient_for_carried(
-                self.carried_species, rov, entries, exclude=self.memory.excluded_recipients()
+                self.carrying, rov, entries, exclude=self.memory.excluded_recipients()
             )
             if found is None:
-                donor = self.registry.get(self.carrying)
-                if donor is None:
-                    return self._go(
-                        MissionState.ABORTED,
-                        "abort",
-                        {"memory": self.memory.to_dict()},
-                        "holding fragment with no recipient and donor unknown; operator needed",
-                    )
-                self.recipient_id = donor.cluster_id
                 self.returning = True
                 return self._go(
                     MissionState.NAVIGATE_TO_RECIPIENT,
-                    "return_fragment_to_donor",
+                    "return_fragment_to_station",
                     {
-                        "species_class": self.carried_species,
-                        "reason": "no open recipient of this species left",
-                        "donor": entry_summary(donor),
+                        "genet_id": self.carrying,
+                        "reason": "no open recipient of this genet left",
                         "memory": self.memory.to_dict(),
                     },
                 )
@@ -335,7 +336,7 @@ class MissionFSM:
                 MissionState.NAVIGATE_TO_RECIPIENT,
                 "select_recipient_for_carried",
                 {
-                    "species_class": self.carried_species,
+                    "genet_id": self.carrying,
                     "recipient": entry_summary(recipient),
                     "carry_distance_m": carry_dist,
                     "memory": self.memory.to_dict(),
@@ -345,21 +346,20 @@ class MissionFSM:
         plan = plan_pairs(
             entries,
             rov,
+            self.station,
             cfg.weights,
-            exclude_donors=self.memory.excluded_donors(),
+            exclude_racks=self.memory.excluded_donors(),
             exclude_recipients=self.memory.excluded_recipients(),
             min_donor_health=cfg.min_donor_health,
-            harvest_counts=self.memory.harvest_counts,
-            max_harvests_per_donor=cfg.max_harvests_per_donor,
         )
-        for u in plan.unrestorable:
-            self.unrestorable[u.recipient_id] = u.reason
+        for skip in plan.skipped:
+            self.skipped[skip.recipient_id] = skip.reason
         plan_ev = {
             "weights": cfg.weights,
-            "n_open_recipients": sum(1 for e in entries if e.health_status == "DEAD" and not e.sampled_or_restored),
-            "unrestorable": plan.unrestorable,
-            "skipped_donors": plan.skipped_donors,
-            "ignored_bleached": plan.ignored_bleached,
+            "n_open_recipients": sum(1 for e in entries if is_open_recipient(e)),
+            "skipped": plan.skipped,
+            "ignored_dead": plan.ignored_dead,
+            "stock": self.station.stock(),
             "excluded_recipients": sorted(self.memory.excluded_recipients()),
             "memory": self.memory.to_dict(),
         }
@@ -369,123 +369,137 @@ class MissionFSM:
             return self._go(
                 MissionState.MISSION_COMPLETE,
                 "mission_complete",
-                {**plan_ev, "restored": summary.restored, "unrestorable_final": summary.unrestorable},
+                {**plan_ev, "treated": summary.treated, "skipped_final": summary.skipped},
             )
-        self.donor_id, self.recipient_id = best.donor_id, best.recipient_id
+        self.genet_id, self.recipient_id = best.genet_id, best.recipient_id
         return self._go(
             MissionState.NAVIGATE_TO_DONOR,
             "select_pair",
             {
                 **plan_ev,
                 "chosen": best.cost,
-                "runners_up_donors": best.runners_up,
+                "genet_id": best.genet_id,
                 "other_pairings": [p.cost for p in plan.pairings[1:6]],
-                "donor": entry_summary(self.registry.get(best.donor_id)),
+                "rack": self.station.rack_for(best.genet_id),
                 "recipient": entry_summary(self.registry.get(best.recipient_id)),
             },
         )
 
     def _navigate_to_donor(self) -> MissionState:
-        donor = self.registry.get(self.donor_id)
-        if donor is None or donor.health_status != "LIVE":
+        rack = self.station.rack_for(self.genet_id)
+        if rack is None or rack.fragments_available <= 0:
             return self._go(
                 MissionState.COMPUTE_RESTORATION_PLAN,
                 "replan_target_changed",
-                {"donor_id": self.donor_id, "donor_now": entry_summary(donor) if donor else None},
-                "donor no longer LIVE in registry",
+                {"genet_id": self.genet_id, "stock": self.station.stock()},
+                "genet no longer in stock",
             )
-        status, nav_ev = self._navigate(self._standoff(donor), carrying=False)
+        status, nav_ev = self._navigate(self._station_pose(), carrying=False)
         if status != "arrived":
-            self.memory.reject_donor(donor.cluster_id, f"navigation {status}")
+            self.memory.reject_donor(rack.slot, f"navigation {status}")
             return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "navigate_failed", {"navigation": nav_ev}, status)
-        return self._go(
-            MissionState.HARVEST_FRAGMENT, "arrive_donor", {"donor": entry_summary(donor), "navigation": nav_ev}
-        )
+        return self._go(MissionState.HARVEST_FRAGMENT, "arrive_donor", {"rack": rack, "navigation": nav_ev})
 
     def _harvest(self) -> MissionState:
-        donor = self.registry.get(self.donor_id)
-        if donor is None or donor.health_status != "LIVE":
+        rack = self.station.rack_for(self.genet_id)
+        target = Pose(self.station.position)
+        ik_results = []
+        self.robot.lock_base()
+        try:
+            for attempt in range(self.config.harvest_ik_attempts):
+                reachable = bool(self.robot.solve_ik(target))
+                ik_results.append({"attempt": attempt, "reachable": reachable})
+                if reachable:
+                    self.robot.attach_fragment(rack.slot)
+                    break
+        finally:
+            self.robot.unlock_base()
+        ev = {"rack": rack, "ik_results": ik_results}
+        if not ik_results[-1]["reachable"]:
+            self.memory.reject_donor(rack.slot, "IK unreachable at the rack")
             return self._go(
-                MissionState.COMPUTE_RESTORATION_PLAN,
-                "replan_target_changed",
-                {"donor_id": self.donor_id},
-                "donor no longer LIVE in registry",
+                MissionState.COMPUTE_RESTORATION_PLAN, "abstain_harvest", ev, "rejected: IK unreachable at the rack"
             )
-        chosen, ev = self._manipulate(donor, self.config.harvest, lambda pose: self.robot.attach_fragment(donor.cluster_id))
-        ev["donor"] = entry_summary(donor)
-        if chosen is None:
-            self.memory.reject_donor(donor.cluster_id, ev["failure"])
-            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_harvest", ev, f"rejected: {ev['failure']}")
-        self.memory.note_harvest(donor.cluster_id)
-        self.carrying, self.carried_species = donor.cluster_id, donor.species_class
-        self.registry.upsert(dataclasses.replace(donor, sampled_or_restored=True))
-        return self._go(MissionState.NAVIGATE_TO_RECIPIENT, "harvest_fragment", ev)
+        self.station.take(rack.genet_id)
+        self.memory.note_harvest(rack.slot)
+        self.carrying = rack.genet_id
+        return self._go(MissionState.NAVIGATE_TO_RECIPIENT, "harvest_fragment", {**ev, "stock": self.station.stock()})
 
     def _navigate_to_recipient(self) -> MissionState:
-        target = self.registry.get(self.recipient_id)
-        still_valid = target is not None and (
-            self.returning or (target.health_status == "DEAD" and not target.sampled_or_restored)
-        )
-        if not still_valid:
-            return self._go(
-                MissionState.COMPUTE_RESTORATION_PLAN,
-                "replan_target_changed",
-                {"recipient_id": self.recipient_id, "recipient_now": entry_summary(target) if target else None},
-                "recipient no longer open in registry",
-            )
-        status, nav_ev = self._navigate(self._standoff(target), carrying=True)
+        if self.returning:
+            status, nav_ev = self._navigate(self._station_pose(), carrying=True)
+            target = None
+        else:
+            target = self.registry.get(self.recipient_id)
+            if target is None or not is_open_recipient(target) or target.genet_id != self.carrying:
+                return self._go(
+                    MissionState.COMPUTE_RESTORATION_PLAN,
+                    "replan_target_changed",
+                    {"recipient_id": self.recipient_id, "recipient_now": entry_summary(target) if target else None},
+                    "recipient no longer open for this genet",
+                )
+            status, nav_ev = self._navigate(self._standoff(target), carrying=True)
         if status == "dislodged":
             self.memory.dislodge_events += 1
             lost = self.carrying
-            self.carrying = self.carried_species = None
+            self.carrying = None
             self.returning = False
             return self._go(
                 MissionState.COMPUTE_RESTORATION_PLAN,
                 "fragment_dislodged",
-                {"lost_fragment_from": lost, "recipient_id": self.recipient_id, "navigation": nav_ev},
+                {"lost_genet": lost, "recipient_id": self.recipient_id, "navigation": nav_ev},
                 "fragment lost mid-carry; re-planning to re-acquire",
             )
         if status != "arrived":
-            self.memory.note_recipient_attempt(target.cluster_id)
+            if target is not None:
+                self.memory.note_recipient_attempt(target.cluster_id)
             return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "navigate_failed", {"navigation": nav_ev}, status)
         return self._go(
             MissionState.TRANSPLANT_FRAGMENT,
             "arrive_recipient",
-            {"recipient": entry_summary(target), "returning_to_donor": self.returning, "navigation": nav_ev},
+            {
+                "recipient": entry_summary(target) if target else None,
+                "returning_to_station": self.returning,
+                "navigation": nav_ev,
+            },
         )
 
     def _transplant(self) -> MissionState:
-        target = self.registry.get(self.recipient_id)
         if self.returning:
-            chosen, ev = self._manipulate(target, self.config.harvest, self.robot.detach_fragment)
-            if chosen is None:
-                return self._go(
-                    MissionState.ABORTED, "abort", ev, f"could not return fragment to donor: {ev['failure']}; operator needed"
-                )
-            self.carrying = self.carried_species = None
-            self.returning = False
-            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "fragment_returned_to_donor", ev)
+            self.robot.lock_base()
+            try:
+                self.robot.detach_fragment(Pose(self.station.position))
+            finally:
+                self.robot.unlock_base()
+            self.station.put_back(self.carrying)
+            genet_id, self.carrying, self.returning = self.carrying, None, False
+            return self._go(
+                MissionState.COMPUTE_RESTORATION_PLAN,
+                "fragment_returned_to_station",
+                {"genet_id": genet_id, "stock": self.station.stock()},
+            )
 
+        target = self.registry.get(self.recipient_id)
         attempt = self.memory.note_recipient_attempt(target.cluster_id)
         chosen, ev = self._manipulate(target, self.config.graft, self.robot.detach_fragment)
-        ev.update(recipient=entry_summary(target), attempt=attempt, fragment_from=self.carrying)
+        ev.update(recipient=entry_summary(target), attempt=attempt, fragment_genet=self.carrying)
         if chosen is None:
             self.memory.reject_recipient(target.cluster_id, ev["failure"])
             return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_transplant", ev, f"rejected: {ev['failure']}")
 
         placed_pose = Pose(chosen.position, chosen.orientation_quat)
-        self.carrying = self.carried_species = None
+        self.carrying = None
         if self.placement_verifier is not None:
             verdict = self.placement_verifier(placed_pose)
             ev["placement_verification"] = verdict
-            if not verdict.get("stable", False):
+            if not (verdict.get("stable", False) and verdict.get("contact", False)):
                 if attempt >= self.config.max_attempts_per_recipient:
                     self.memory.reject_recipient(target.cluster_id, f"failed the push test {attempt} times")
                 return self._go(
                     MissionState.COMPUTE_RESTORATION_PLAN,
                     "placement_unstable",
                     ev,
-                    "fragment shifted under push test; recipient left open",
+                    "fragment shifted or lost contact under push test; colony left open",
                 )
         else:
             ev["placement_verification"] = "unverified (no placement_verifier injected)"
@@ -493,7 +507,7 @@ class MissionFSM:
         self.registry.upsert(
             dataclasses.replace(
                 target,
-                health_status="RESTORED",
+                health_status="TREATED",
                 sampled_or_restored=True,
                 optimal_graft_pose_world=chosen.to_graft_pose(),
             )
@@ -501,7 +515,39 @@ class MissionFSM:
         outcome = "ok" if self.placement_verifier is not None else "placed, unverified"
         return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "transplant_fragment", ev, outcome)
 
+    # ------------------------------------------------------------- return visits
+
+    def revisit(self, day: int, observe: Callable[[SemanticMapEntry, int], dict]) -> dict[str, str]:
+        """Check every treated colony on `day`. Fragments stay in contact throughout."""
+        due = [e for e in self.registry.all() if e.health_status == "TREATED"]
+        self.state = self._go(
+            MissionState.RETURN_VISIT, "revisit_start", {"day": day, "colonies": [e.cluster_id for e in due]}
+        )
+        final_day = max(self.config.revisit_days)
+        results = {}
+        for entry in due:
+            status, nav_ev = self._navigate(self._standoff(entry), carrying=False)
+            if status != "arrived":
+                self._go(MissionState.RETURN_VISIT, "navigate_failed", {"navigation": nav_ev, "day": day}, status)
+                continue
+            observation = observe(entry, day)
+            new_status = assess_revisit(day, final_day, observation, self.config.recovered_density_pct)
+            self.registry.upsert(dataclasses.replace(entry, health_status=new_status))
+            results[entry.cluster_id] = new_status
+            self._go(
+                MissionState.RETURN_VISIT,
+                "revisit_observation",
+                {"day": day, "recipient": entry_summary(entry), "observation": observation, "navigation": nav_ev},
+                new_status,
+            )
+        self.state = self._go(MissionState.MISSION_COMPLETE, "revisit_complete", {"day": day, "results": results})
+        return results
+
     # ----------------------------------------------------------------- helpers
+
+    def _station_pose(self) -> Pose:
+        x, y, z = self.station.position
+        return Pose((x, y, z + self.config.wrist_standoff))
 
     def _standoff(self, entry: SemanticMapEntry) -> Pose:
         x, y, _ = entry.position_world

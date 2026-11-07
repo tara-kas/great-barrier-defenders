@@ -14,10 +14,13 @@ from typing import Any, Optional
 import numpy as np
 from PIL import Image
 
+from agent.base_station import BaseStation, Rack
 from agent.robot_interface import Pose, RGBDFrame
 from eval.mock_robot import DOWN_CAMERA, CameraModel, MockRobotInterface
 from eval.synthetic_scene import ShapeSpec, SyntheticScene, _entry_for
+from perception.genet import BANDS, UV_BACKGROUND, GenetRecord, match_genet
 from perception.projection import pose_to_matrix
+from perception.registry import SemanticMapEntry
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data" / "moore_reef"
@@ -41,8 +44,6 @@ GENETS: dict[str, dict[str, Any]] = {
     "MM-02": {"species_class": "massive_meandering", "signature": (0.30, 0.30, 0.40), "stock": 0},
 }
 
-# Rules a mission is expected to follow, used to derive and check expected_action.
-MATCH_MAX_DISTANCE = 0.15  # L1 distance between normalised signatures
 CONTACT_DAYS_REQUIRED = 7
 REVISIT_DAYS = (7, 56)
 
@@ -118,14 +119,25 @@ class MooreReef:
 
     def __post_init__(self) -> None:
         shapes = {c.cluster_id: c.shape for c in self.clusters}
-        entries = [
-            _entry_for(c.cluster_id, c.species_class, c.health_status, c.health_score, c.shape)
-            for c in self.clusters
-        ]
+        entries = [_registry_entry(c) for c in self.clusters]
         self.scene = SyntheticScene(entries, shapes, BOUNDS, SEED)
 
     def cluster(self, cluster_id: str) -> ReefCluster:
         return next(c for c in self.clusters if c.cluster_id == cluster_id)
+
+
+def genet_library() -> list[GenetRecord]:
+    return [GenetRecord(k, g["species_class"], g["signature"]) for k, g in GENETS.items()]
+
+
+def _registry_entry(c: ReefCluster) -> SemanticMapEntry:
+    """What a survey should conclude: the genet comes from the UV match, not the label."""
+    entry = _entry_for(c.cluster_id, c.species_class, c.health_status, c.health_score, c.shape)
+    if c.health_status != "BLEACHED":
+        return entry
+    entry.genet_id = match_genet(c.species_class, c.uv_signature, genet_library()).genet_id
+    entry.uv_signature = c.uv_signature
+    return entry
 
 
 def _normalise(values: np.ndarray) -> tuple[float, float, float]:
@@ -174,19 +186,6 @@ def build_reef(seed: int = SEED) -> MooreReef:
     return MooreReef(clusters)
 
 
-def match_genet(species_class: str, signature: tuple[float, float, float]) -> tuple[Optional[str], float]:
-    """Closest in-stock genet of this species, or None if nothing is close enough."""
-    distances = {
-        genet_id: float(np.abs(np.array(g["signature"]) - np.array(signature)).sum())
-        for genet_id, g in GENETS.items()
-        if g["species_class"] == species_class and g["stock"] > 0
-    }
-    if not distances:
-        return None, float("inf")
-    best = min(distances, key=distances.get)
-    return (best if distances[best] <= MATCH_MAX_DISTANCE else None), distances[best]
-
-
 def base_station_stock() -> dict[str, Any]:
     slots = [
         {
@@ -202,6 +201,12 @@ def base_station_stock() -> dict[str, Any]:
         if genet["stock"] > 0
     ]
     return {"position_world": list(BASE_STATION), "racks": slots}
+
+
+def moore_station() -> BaseStation:
+    stock = base_station_stock()
+    fields = ("slot", "genet_id", "species_class", "fragments_available", "health_score")
+    return BaseStation(tuple(stock["position_world"]), [Rack(**{k: r[k] for k in fields}) for r in stock["racks"]])
 
 
 def recovery_timeline(reef: MooreReef) -> list[dict[str, Any]]:
@@ -328,8 +333,8 @@ def render_view(reef: MooreReef, textures: TextureSet, pose: Pose, camera: Camer
     seabed = textures.seabed()
     tile_m = 4.0
     rgb = _sample(seabed, (x / tile_m) % 1.0, (y / tile_m) % 1.0).copy()
-    uv = np.broadcast_to(np.array([0.02, 0.03, 0.09], dtype=np.float32), rgb.shape).copy()
-    bands = np.array([[0.0, 0.85, 1.0], [0.2, 1.0, 0.3], [1.0, 0.2, 0.15]], dtype=np.float32)
+    uv = np.broadcast_to(UV_BACKGROUND.astype(np.float32), rgb.shape).copy()
+    bands = BANDS.astype(np.float32)
 
     for i, cluster in enumerate(reef.clusters):
         mask = index == i
@@ -350,7 +355,7 @@ def render_view(reef: MooreReef, textures: TextureSet, pose: Pose, camera: Camer
             glow = np.array([0.3, 0.05, 0.03], dtype=np.float32) * cluster.uv_intensity * 3.0 * relief
         else:
             mix = np.array(cluster.uv_signature, dtype=np.float32) @ bands
-            glow = mix * cluster.uv_intensity * (0.35 + relief)
+            glow = mix * cluster.uv_intensity * (0.2 + 0.4 * relief)  # kept below sensor saturation
         uv[mask] = alpha * np.clip(glow, 0.0, 1.0) + (1.0 - alpha) * uv[mask]
 
     return RenderedView(
@@ -380,11 +385,26 @@ class MooreReefRobot(MockRobotInterface):
     def __init__(self, reef: Optional[MooreReef] = None, textures: Optional[TextureSet] = None, **kwargs: Any) -> None:
         self.reef = reef or build_reef()
         self.textures = textures or TextureSet()
+        self._last_view: Optional[tuple[Pose, RenderedView]] = None
         super().__init__(self.reef.scene, **kwargs)
 
+    def view(self) -> RenderedView:
+        """The render from the current pose. The scene is static, so repeat poses reuse it."""
+        pose = self.get_pose()
+        if self._last_view is None or self._last_view[0] != pose:
+            self._last_view = (pose, render_view(self.reef, self.textures, pose))
+        return self._last_view[1]
+
     def get_hull_rgbd(self) -> RGBDFrame:
-        view = render_view(self.reef, self.textures, self.get_pose())
+        view = self.view()
         return RGBDFrame(rgb=view.rgb, depth=view.depth, intrinsics=view.intrinsics, camera_to_robot=DOWN_CAMERA)
 
     def get_uv_frame(self) -> np.ndarray:
-        return render_view(self.reef, self.textures, self.get_pose()).uv
+        return self.view().uv
+
+    def observe_recovery(self, entry: SemanticMapEntry, day: int) -> dict[str, Any]:
+        """The scenario's follow-up reading for the colony at this registry entry."""
+        x, y = entry.position_world[:2]
+        cluster = min(self.reef.clusters, key=lambda c: np.hypot(c.shape.center[0] - x, c.shape.center[1] - y))
+        record = next(r for r in recovery_timeline(self.reef) if r["cluster_id"] == cluster.cluster_id)
+        return next(o for o in record["observations"] if o["day"] == day)

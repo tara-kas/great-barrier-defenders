@@ -1,5 +1,7 @@
 # CLAUDE.md — agent-fsm branch (`agent/`)
 
+> **Premise changed (root `CLAUDE.md` section 15).** The robot now treats `BLEACHED` coral with same-genet fragments from a base station, and skips `DEAD`. Where this file still describes LIVE donors and DEAD recipients, the root file wins.
+
 Scoped context for work on the mission FSM, pairing, and graft-point selection.
 The root [`CLAUDE.md`](../CLAUDE.md) still applies; where this file and the
 root disagree, `docs/plan.md` and `docs/tasks/agent-fsm.md` (the newer spec)
@@ -38,7 +40,7 @@ Changing any of these is a team sync message, not a unilateral edit.
   outcome)`; JSONL via `save()` / `load()`. Consumed by `dashboard/` and
   `cloud/debrief.py`.
 - **`perception/registry.py`** — `SemanticMapEntry` (`cluster_id`,
-  `species_class`, `health_status` ∈ `LIVE|DEAD|BLEACHED|RESTORED`,
+  `species_class`, `health_status` ∈ `LIVE|DEAD|BLEACHED|TREATED|RECOVERED|NOT_RECOVERED`,
   `health_score`, `position_world`, `bounding_box_extent`,
   `optimal_graft_pose_world: GraftPose | None`, `sampled_or_restored`) and
   `SemanticSeabedRegistry` (`upsert`, `get`, `all`, `query(health_status,
@@ -83,7 +85,7 @@ sim-specific branches). Likely mapping onto the interface: navigate =
 `set_cmd_vel` until `get_pose` is within tolerance; harvest/transplant =
 `lock_base` → `get_wrist_rgbd` → graft point → `solve_ik` →
 `attach_fragment` / `detach_fragment` → `unlock_base`; on success mark the
-recipient `RESTORED` / `sampled_or_restored=True`.
+recipient `TREATED` / `sampled_or_restored=True`.
 
 **Every transition calls `DecisionLog.record(...)` with real evidence** — the
 actual pose, registry entries, `J` scores, normals, IK result, etc. that drove
@@ -97,7 +99,7 @@ the decision. No placeholder evidence (root §8).
 - `mock_robot.py` — `MockRobotInterface`: no physics, position bookkeeping,
   instant attach/detach.
 - `test_fsm_loop.py` — run `MissionFSM` end-to-end on mock + synthetic scene;
-  assert every DEAD cluster ends `RESTORED` and the log has evidence for every
+  assert every BLEACHED colony ends `TREATED` and the log has evidence for every
   transition. This is **the regression test** any patch (including
   Argon-proposed ones) must pass before merge.
 

@@ -4,11 +4,11 @@ Context file for coding agents and teammates. Keep it current. If something here
 
 ## 1. What we are building
 
-An autonomous underwater vehicle (hovering AUV) in **NVIDIA Isaac Sim** that rescues loose, living coral fragments (for example after a storm) and re-seats them on stable reef substrate. It maps the reef, classifies fragments and substrate from its sensors, optimises where each fragment should go, carries it there, places it, and verifies the placement.
+An autonomous underwater vehicle (hovering AUV) in **NVIDIA Isaac Sim** that treats bleached coral. It surveys the reef, classifies colonies, reads each bleached colony's genet from UV fluorescence, collects a healthy fragment of the same genet from a base station, places it in contact with the colony so symbionts can transfer, verifies contact, and returns to check recovery. The scenario is Moore Reef on the Great Barrier Reef (`data/moore_reef/`).
 
-- **Named user:** a reef restoration team that today relies on divers, who are limited by depth, time, and weather. Deeper (mesophotic) reefs are where an autonomous vehicle adds the most.
-- **Pitch hook:** carry-aware site optimisation plus self-improvement between dives, with every decision traceable to a sensor reading.
-- **Not claiming:** that we "revive" dead coral. Dead tissue cannot be revived. We re-attach viable fragments to clean, stable hard substrate (a clean dead skeleton can serve as substrate). Prefer fragments of opportunity (already broken and loose); do not cut from healthy colonies.
+- **Named user:** a reef restoration team responding to mass bleaching, who today rely on divers limited by depth, time and weather.
+- **Pitch hook:** bleached coral can recover in weeks through contact with a healthy clone (Collins et al., *Science Advances*, 2026). A robot can make that contact at reef scale, with every decision traceable to a sensor reading and self-improvement between dives.
+- **Not claiming:** that we revive dead coral (dead colonies are skipped), or that this is field-proven. The paper is one species (*Pocillopora damicornis*) in aquaria. UV genet identification is the project's central untested assumption: there is evidence fluorescence varies genetically, none that it identifies genets. Say so if asked; real deployment would confirm with a DNA sample or a pre-mapped reef.
 
 ## 2. Event rules and what judges want (READ THIS)
 
@@ -82,11 +82,11 @@ Two loops. The vehicle never waits on the cloud.
 **Loop A: on-device, during the dive (autonomous).**
 Status: the reflex layer below is not built (`control/` is empty); the FSM has a simple position controller. Everything else in this list exists.
 - **Reflex layer (CPU, fast):** thruster allocation, station keeping, current compensation, carry-aware control (mass and drag change when holding a fragment), collision and depth limits.
-- **Perception:** hull and wrist RGB-D, gripper force. **Gemma (`gemma-4-31b-it`, self-hosted, zero/few-shot) detects and classifies** coral: species class, `LIVE`/`DEAD`/`BLEACHED`, health score. It replaced the classical HSV/YOLOv8 step. `perception/survey.py` projects each detection to the world frame and merges it into the registry.
+- **Perception:** hull and wrist RGB-D, hull UV, gripper force. **Gemma (`gemma-4-31b-it`, self-hosted, zero/few-shot) detects and classifies** coral: type, `LIVE`/`DEAD`/`BLEACHED`, health score. `perception/survey.py` projects detections into the registry. `perception/genet.py` reads each bleached colony's emission across three UV bands and matches it to the genet library; a weak match stays `None`.
 - **Map:** `SemanticSeabedRegistry` (`perception/registry.py`), one `SemanticMapEntry` per cluster. This schema is a frozen contract.
-- **Optimiser (classical, inspectable):** `agent/pairing.py` picks the same-species `LIVE` donor minimising `J = w1*|x_rov-x_i| + w2*|x_i-x_j| - w3*H_i`. Weights and limits live in `agent/config.py`. `agent/graft_point.py` picks the graft point by PCA surface normals. The richer scoring (flow, algae risk, uncertainty, value of information) is a possible extension, not built.
-- **Agent loop:** a classical 6-state FSM (`agent/fsm.py`): `SURVEY_SEABED -> COMPUTE_RESTORATION_PLAN -> NAVIGATE_TO_DONOR -> HARVEST_FRAGMENT -> NAVIGATE_TO_RECIPIENT -> TRANSPLANT_FRAGMENT`, looping to planning. Gemma is confined to perception and does not pick actions. Episodic memory stops it retrying rejected sites. It abstains on low-confidence detections and aborts after repeated perception failures.
-- **Verify:** after placement, a push test supplied by the sim (`placement_verifier`). If the fragment shifts, the site stays open; three failures reject it. Without a verifier a placement is logged as `placed, unverified`.
+- **Optimiser (classical, inspectable):** `agent/pairing.py` pairs open `BLEACHED` colonies with a same-genet base station rack, lowest `J = w1*|x_rov-x_i| + w2*|x_i-x_j| - w3*H_i` first. No confident genet, or no stock, means skip with a logged reason. `DEAD` is never a target. Weights and limits live in `agent/config.py`. `agent/graft_point.py` picks the contact point by PCA surface normals.
+- **Agent loop:** a classical FSM (`agent/fsm.py`): `SURVEY_SEABED -> COMPUTE_RESTORATION_PLAN -> NAVIGATE_TO_DONOR (base station) -> HARVEST_FRAGMENT -> NAVIGATE_TO_RECIPIENT -> TRANSPLANT_FRAGMENT`, looping to planning, then `RETURN_VISIT`. Gemma is confined to perception and does not pick actions. Episodic memory stops it retrying rejected sites. Unused fragments go back to the station. It aborts after repeated perception failures.
+- **Verify:** after placement, a push test from the sim (`placement_verifier` returns `stable` and `contact`). On failure the colony stays open; three failures reject it. Success means `TREATED`, not recovered. Return visits at day 7 and day 56 (`revisit_days`) leave the fragment in place; lost contact gives `NOT_RECOVERED`, and recovery is judged at the last visit (`RECOVERED`/`NOT_RECOVERED`).
 - **Entry point:** `run_mission` in `mission/runner.py` wires all of this and writes live files for the dashboard. It lives outside `agent/` so `agent/` stays free of network code. It refuses to run without `fragment_held` and `placement_verifier`, and refuses a non-local Gemma endpoint, unless explicitly overridden.
 
 **Loop B: cloud, between dives (Argon).**
@@ -136,8 +136,8 @@ Status: only the debrief of decision logs is built (`cloud/debrief.py`). The ite
 ## 7. Domain facts to keep straight
 
 - Coral colonies are polyps with symbiotic algae. Bleaching = loss of algae under stress (often marine heatwaves); bleached coral is alive but starving and can recover if stress ends. Dead coral tissue cannot be revived.
-- Direction of transplant: living fragment goes onto stable hard substrate (clean dead skeleton is acceptable). Never the reverse.
-- Sand and loose rubble are poor targets (shift and abrade). Algae-covered skeleton is worse than clean rock.
+- Symbiont transfer (Collins et al. 2026, PMC13665998): a healthy fragment of the **same genet** in **direct contact** restores a bleached one. Mixed-genet pairs did not recover and were overgrown; fragments 5-7 mm apart mostly failed. 1 day of contact did nothing, 3+ days showed transfer but later algal overgrowth, about a week or more gave full polyp recovery within 7 weeks. So: genet is a hard rule, contact must be kept, and the fragment stays in place.
+- Bleaching changes fluorescence: it can spike once symbionts are lost (Roth & Deheyn 2013), so match the share across bands, not brightness.
 - Reef-building corals live mostly in the upper ~30 to 40 m; mesophotic reefs extend deeper. Figures are approximate, so cite a source in the PDF.
 - Real acoustic links cannot stream video. We simulate that constraint.
 
@@ -187,14 +187,15 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 ## 11. Metrics to report (evidence for technical quality)
 
 - Fragment survival and placement stability across N perturbation runs.
-- Optimiser vs nearest-site baseline.
+- Genet-matched pairing vs a species-only baseline (`species_only_mismatches`): how many colonies would get the wrong genet.
 - Version 1 vs version 2 (after an Argon-proposed patch, human-approved).
 - Abstention quality: how often it declined, and how often that was right.
 - Latency per component and energy used.
 
 ## 12. Critical failure mode and safety (for the PDF and pitch)
 
-- **Primary failure to show handled on screen:** a fragment is dislodged mid-carry (current surge). Detect via force and camera, return and re-acquire.
+- **Primary failure to show handled on screen:** a fragment is dislodged mid-carry (current surge). Detect via `fragment_held`, re-plan, collect another of the same genet.
+- **Do no harm:** a wrong-genet pairing harms the colony, so anything short of a confident in-stock match is skipped, and contact must survive the push test before a colony counts as treated.
 - Force-limited handling, depth floor, abstain when unsure, yield to wildlife, hold or abort on lost localisation.
 - Human approval gate for any change to the vehicle's code or policy; recall always available.
 
@@ -207,7 +208,7 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 - Can more than one teammate stream at once? (One streaming client per Isaac Sim instance.)
 - Who owns the Modal account/credentials, and what exactly runs there (Gemma eval batches? dataset preprocessing? it's not a substitute for Isaac Sim's RTX requirement)?
 
-- Pitch story: the FSM harvests a cutting from a LIVE donor, but section 1 says prefer loose fragments and do not cut healthy colonies. Same code either way; pick one story.
+- Does the poster say 5 days? Evidence supports about 7+, so the poster and `revisit_days` should agree.
 - Which machine serves Gemma for the demo? It must be local to the agent stack. `gemma-4-31b-it` is not edge-sized, so the PDF needs the edge budget stated separately (section 5).
 
 ## 14. Schedule (Sat 7 Nov to Sun 8 Nov 2026)
@@ -221,6 +222,7 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 
 - 2026-11-07: Gemma does detection and classification, replacing HSV/YOLOv8. Self-hosted, never the cloud Interactions API.
 - 2026-11-07: The team spec's 6-state FSM, registry schema and algorithms are canonical, replacing the Gemma ~1 Hz tool-picking loop.
+- 2026-11-07: **Premise change.** The robot treats `BLEACHED` coral by same-genet contact and skips `DEAD`, replacing grafting onto dead coral. Donors come from a base station of propagated coral. Genets come from UV fluorescence. Statuses `TREATED`, `RECOVERED`, `NOT_RECOVERED` replace `RESTORED`. Contract changes: registry gains `genet_id` and `uv_signature`, `RobotInterface` gains `get_uv_frame()`.
 - 2026-11-07: Physics simplified to zero gravity plus damping (section 5).
 - 2026-11-07: `run_mission` in `mission/` is the single entry point. `RobotInterface` stays frozen; `fragment_held` and `placement_verifier` are required arguments to `run_mission`.
 - 2026-11-07: No Claude attribution anywhere on GitHub (commits, PRs, comments). See section 8.

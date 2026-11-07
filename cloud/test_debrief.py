@@ -289,20 +289,26 @@ def test_samples_have_correct_pairing_costs():
     """A wrong sum in a sample would be a flaw nobody planted."""
     for path in (FLAWED, CLEAN):
         for row in DecisionLog.load(str(path)).entries:
-            if row.action != "select_donor_recipient_pair":
+            if row.action != "select_pair":
                 continue
             ev, w = row.evidence, row.evidence["weights"]
-            for c in ev["candidates"]:
-                d_rov = math.dist(ev["rov_position"], c["position_world"])
-                d_rec = math.dist(c["position_world"], ev["recipient"]["position_world"])
-                cost = w["w1"] * d_rov + w["w2"] * d_rec - w["w3"] * c["health_score"]
-                assert c["cost_J"] == pytest.approx(cost, abs=0.01)
-            assert ev["chosen_donor"] == min(ev["candidates"], key=lambda c: c["cost_J"])["cluster_id"]
+            c = ev["chosen"]
+            assert c["travel"] == pytest.approx(math.dist(ev["rov_position"], ev["station_position"]), abs=0.01)
+            assert c["transfer"] == pytest.approx(math.dist(ev["station_position"], ev["recipient"]["position_world"]), abs=0.01)
+            assert c["J"] == pytest.approx(w["w1"] * c["travel"] + w["w2"] * c["transfer"] - w["w3"] * c["health"], abs=0.01)
+
+
+def test_clean_sample_pairs_only_matching_genets():
+    for row in DecisionLog.load(str(CLEAN)).entries:
+        if row.action == "select_pair":
+            assert row.evidence["rack"]["genet_id"] == row.evidence["recipient"]["genet_id"]
+            assert row.evidence["recipient"]["health_status"] == "BLEACHED"
 
 
 def test_answer_key_points_at_the_flawed_entries():
     entries = DecisionLog.load(str(FLAWED)).entries
     key = {f["id"]: f["entry_indexes"][0] for f in json.loads((SAMPLES / "fabricated_flawed.expected.json").read_text())["planted_flaws"]}
-    assert entries[key["F1"]].evidence["chosen_donor"] == "L-07"
+    f1 = entries[key["F1"]].evidence
+    assert f1["rack"]["genet_id"] != f1["recipient"]["genet_id"]
     assert entries[key["F2"]].evidence["normal_dot_z"] == 0.71
-    assert entries[key["F3"]].evidence["push_test_displacement_m"] == 0.061
+    assert entries[key["F3"]].evidence["contact_maintained"] is False

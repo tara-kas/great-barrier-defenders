@@ -5,7 +5,7 @@
   {"cluster_id":"C-04","species_class":"Acropora cervicornis","health_status":"BLEACHED","health_score":0.48,"position_world":[4.0,5.6,-18.6],"bounding_box_extent":[0.7,0.6,0.6],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-05","species_class":"Acropora cervicornis","health_status":"LIVE","health_score":0.91,"position_world":[5.4,3.9,-18.9],"bounding_box_extent":[0.8,0.7,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-06","species_class":"Montipora digitata","health_status":"DEAD","health_score":0.11,"position_world":[6.6,5.2,-19.2],"bounding_box_extent":[0.5,0.5,0.4],"optimal_graft_pose_world":null,"sampled_or_restored":false},
-  {"cluster_id":"C-07","species_class":"Acropora palmata","health_status":"RESTORED","health_score":0.83,"position_world":[7.5,2.5,-18.7],"bounding_box_extent":[0.7,0.6,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":true},
+  {"cluster_id":"C-07","species_class":"Acropora palmata","health_status":"TREATED","health_score":0.83,"position_world":[7.5,2.5,-18.7],"bounding_box_extent":[0.7,0.6,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":true},
   {"cluster_id":"C-08","species_class":"Acropora cervicornis","health_status":"LIVE","health_score":0.86,"position_world":[8.4,6.8,-18.5],"bounding_box_extent":[0.8,0.6,0.6],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-09","species_class":"Montipora digitata","health_status":"DEAD","health_score":0.06,"position_world":[2.0,7.4,-19.0],"bounding_box_extent":[0.5,0.5,0.4],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-10","species_class":"Acropora palmata","health_status":"LIVE","health_score":0.89,"position_world":[5.9,7.8,-18.7],"bounding_box_extent":[0.8,0.6,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":false},
@@ -13,6 +13,6 @@
   {"cluster_id":"C-12","species_class":"Montipora digitata","health_status":"LIVE","health_score":0.92,"position_world":[9.1,4.3,-18.9],"bounding_box_extent":[0.5,0.5,0.4],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-13","species_class":"Acropora palmata","health_status":"DEAD","health_score":0.05,"position_world":[4.8,8.8,-19.3],"bounding_box_extent":[0.6,0.6,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":false},
   {"cluster_id":"C-14","species_class":"Acropora cervicornis","health_status":"LIVE","health_score":0.84,"position_world":[1.1,5.5,-18.5],"bounding_box_extent":[0.7,0.5,0.6],"optimal_graft_pose_world":null,"sampled_or_restored":false},
-  {"cluster_id":"C-15","species_class":"Montipora digitata","health_status":"RESTORED","health_score":0.78,"position_world":[8.7,1.2,-19.0],"bounding_box_extent":[0.5,0.5,0.4],"optimal_graft_pose_world":null,"sampled_or_restored":true},
+  {"cluster_id":"C-15","species_class":"Montipora digitata","health_status":"TREATED","health_score":0.78,"position_world":[8.7,1.2,-19.0],"bounding_box_extent":[0.5,0.5,0.4],"optimal_graft_pose_world":null,"sampled_or_restored":true},
   {"cluster_id":"C-16","species_class":"Acropora palmata","health_status":"LIVE","health_score":0.87,"position_world":[3.7,0.9,-18.6],"bounding_box_extent":[0.8,0.7,0.5],"optimal_graft_pose_world":null,"sampled_or_restored":false}
 ]

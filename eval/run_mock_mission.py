@@ -17,9 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:  # eval/ is not a package; make `agent`, `perception`, `eval` importable
     sys.path.insert(0, str(ROOT))
 
-from eval.mock_robot import MockRobotInterface  # noqa: E402
-from eval.moore_reef import MooreReefRobot  # noqa: E402
-from eval.synthetic_scene import generate_scene  # noqa: E402
+from eval.moore_reef import MooreReefRobot, genet_library, moore_station  # noqa: E402
 from mission.runner import run_mission  # noqa: E402
 from perception.gemma_client import GemmaClient  # noqa: E402
 
@@ -27,8 +25,6 @@ from perception.gemma_client import GemmaClient  # noqa: E402
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=ROOT / "eval/runs/mock")
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--scene", choices=["moore-reef", "generated"], default="moore-reef")
     parser.add_argument("--allow-remote-gemma", action="store_true", help="development only, e.g. Modal")
     args = parser.parse_args(argv)
 
@@ -38,11 +34,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(err, file=sys.stderr)
         return 1
 
-    robot = MooreReefRobot() if args.scene == "moore-reef" else MockRobotInterface(generate_scene(seed=args.seed))
+    robot = MooreReefRobot()
     try:
         summary = run_mission(
             robot,
             llm,
+            base_station=moore_station(),
+            genet_library=genet_library(),
+            revisit_observer=robot.observe_recovery,
             wait=robot.advance,
             fragment_held=robot.fragment_held,
             placement_verifier=robot.verify_placement,
@@ -53,11 +52,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(err, file=sys.stderr)
         return 1
 
-    print(f"{summary.final_state}: restored {len(summary.restored)}, unrestorable {len(summary.unrestorable)}")
+    print(f"{summary.final_state}: treated {len(summary.treated)}, skipped {len(summary.skipped)}")
     print("\nWatch it:")
-    frame_flag = " --synthetic-frame" if args.scene == "generated" else ""
     print(f"  python dashboard/server.py --registry {args.out}/registry.json "
-          f"--log {args.out}/decisions.jsonl --frame {args.out}/frame.png{frame_flag}")
+          f"--log {args.out}/decisions.jsonl --frame {args.out}/frame.png")
     print("Debrief it:")
     print(f"  python cloud/debrief.py --log {args.out}/decisions.jsonl --html {args.out}/report.html")
     return 0 if summary.final_state == "MISSION_COMPLETE" else 1

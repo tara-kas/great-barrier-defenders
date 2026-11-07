@@ -44,8 +44,8 @@
 
       <section class="metrics" aria-label="Mission summary">
         <div class="metric"><span>CLUSTERS MAPPED</span><div><strong id="metric-clusters">—</strong><small>in registry</small></div></div>
-        <div class="metric"><span>RESTORED SITES</span><div><strong id="metric-restored">—</strong><small>in registry</small></div></div>
-        <div class="metric"><span>NEEDS ATTENTION</span><div><strong id="metric-attention">—</strong><small>dead + bleached</small></div></div>
+        <div class="metric"><span>COLONIES TREATED</span><div><strong id="metric-treated">—</strong><small>in registry</small></div></div>
+        <div class="metric"><span>NEEDS ATTENTION</span><div><strong id="metric-attention">—</strong><small>bleached, untreated</small></div></div>
         <div class="metric link-metric"><span>ACOUSTIC LINK <i>SIMULATED</i></span><div><strong id="link-text">Connected</strong><button id="link-toggle" class="link-toggle" type="button" aria-label="Toggle simulated acoustic link" aria-pressed="true"><span></span></button></div></div>
       </section>
 
@@ -75,7 +75,7 @@
             <div class="rov-marker" title="ROV position is illustrative"><span class="rov-ring"></span><span class="rov-body">◆</span><span class="rov-label">ROV</span></div>
             <div class="map-scale"><span></span> <span id="map-scale-label">— m</span></div>
           </div>
-          <div class="map-legend" id="map-legend"><button data-filter="ALL" class="selected">ALL <b id="count-all">0</b></button><button data-filter="LIVE"><i class="legend-dot live"></i> LIVE <b id="count-live">0</b></button><button data-filter="DEAD"><i class="legend-dot dead"></i> DEAD <b id="count-dead">0</b></button><button data-filter="BLEACHED"><i class="legend-dot bleached"></i> BLEACHED <b id="count-bleached">0</b></button><button data-filter="RESTORED"><i class="legend-dot restored"></i> RESTORED <b id="count-restored">0</b></button></div>
+          <div class="map-legend" id="map-legend"><button data-filter="ALL" class="selected">ALL <b id="count-all">0</b></button><button data-filter="LIVE"><i class="legend-dot live"></i> LIVE <b id="count-live">0</b></button><button data-filter="DEAD"><i class="legend-dot dead"></i> DEAD <b id="count-dead">0</b></button><button data-filter="BLEACHED"><i class="legend-dot bleached"></i> BLEACHED <b id="count-bleached">0</b></button><button data-filter="TREATED"><i class="legend-dot treated"></i> TREATED <b id="count-treated">0</b></button><button data-filter="RECOVERED"><i class="legend-dot recovered"></i> RECOVERED <b id="count-recovered">0</b></button><button data-filter="NOT_RECOVERED"><i class="legend-dot not_recovered"></i> NOT RECOVERED <b id="count-not_recovered">0</b></button></div>
           <div id="cluster-detail" class="cluster-detail" aria-live="polite"><span>SELECT A MAP PIN</span><p>Inspect a cluster’s health, species and position.</p></div>
         </article>
 

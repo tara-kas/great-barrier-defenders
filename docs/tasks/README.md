@@ -1,5 +1,7 @@
 # Hackathon work split
 
+> **Historical.** These describe the original branches, now merged. The mission premise has since changed; see `CLAUDE.md` section 1 and section 15.
+
 4 independent branches, each scoped to its own directory so merges don't
 conflict. All 4 branch off `main` at the same commit, which already has the
 shared contracts: `agent/robot_interface.py`, `agent/decision_log.py`,

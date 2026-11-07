@@ -15,7 +15,9 @@
       0.1728
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-002",
@@ -33,7 +35,9 @@
       0.1889
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-003",
@@ -51,7 +55,13 @@
       0.2857
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "PD-01",
+    "uv_signature": [
+      0.1088,
+      0.6795,
+      0.2117
+    ]
   },
   {
     "cluster_id": "MR-004",
@@ -69,7 +79,13 @@
       0.248
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "MM-02",
+    "uv_signature": [
+      0.3213,
+      0.2973,
+      0.3814
+    ]
   },
   {
     "cluster_id": "MR-005",
@@ -87,7 +103,9 @@
       0.3081
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-006",
@@ -105,7 +123,13 @@
       0.2118
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "PD-01",
+    "uv_signature": [
+      0.1135,
+      0.6947,
+      0.1919
+    ]
   },
   {
     "cluster_id": "MR-007",
@@ -123,7 +147,13 @@
       0.1847
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "AT-01",
+    "uv_signature": [
+      0.4181,
+      0.4451,
+      0.1368
+    ]
   },
   {
     "cluster_id": "MR-008",
@@ -141,7 +171,9 @@
       0.2889
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-009",
@@ -159,7 +191,13 @@
       0.2353
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "PD-02",
+    "uv_signature": [
+      0.1107,
+      0.2769,
+      0.6124
+    ]
   },
   {
     "cluster_id": "MR-010",
@@ -177,7 +215,9 @@
       0.2914
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-011",
@@ -195,7 +235,13 @@
       0.2668
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": [
+      0.1139,
+      0.4936,
+      0.3925
+    ]
   },
   {
     "cluster_id": "MR-012",
@@ -213,7 +259,13 @@
       0.2638
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "AB-02",
+    "uv_signature": [
+      0.1793,
+      0.6091,
+      0.2116
+    ]
   },
   {
     "cluster_id": "MR-013",
@@ -231,7 +283,9 @@
       0.232
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-014",
@@ -249,7 +303,9 @@
       0.2074
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-015",
@@ -267,7 +323,13 @@
       0.2851
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "PD-02",
+    "uv_signature": [
+      0.1128,
+      0.2951,
+      0.5921
+    ]
   },
   {
     "cluster_id": "MR-016",
@@ -285,7 +347,13 @@
       0.2522
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "AB-01",
+    "uv_signature": [
+      0.542,
+      0.3523,
+      0.1057
+    ]
   },
   {
     "cluster_id": "MR-017",
@@ -303,7 +371,9 @@
       0.3105
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
   },
   {
     "cluster_id": "MR-018",
@@ -321,7 +391,13 @@
       0.2944
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "MM-01",
+    "uv_signature": [
+      0.0852,
+      0.2091,
+      0.7057
+    ]
   },
   {
     "cluster_id": "MR-019",
@@ -339,7 +415,13 @@
       0.2406
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": "AB-01",
+    "uv_signature": [
+      0.548,
+      0.3523,
+      0.0997
+    ]
   },
   {
     "cluster_id": "MR-020",
@@ -357,6 +439,12 @@
       0.2588
     ],
     "optimal_graft_pose_world": null,
-    "sampled_or_restored": false
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": [
+      0.1173,
+      0.4985,
+      0.3842
+    ]
   }
 ]

@@ -8,7 +8,7 @@ Coordinates are local metres, with the seabed datum at z = 0 and +z up, matching
 
 | File | Contents | Read by |
 |---|---|---|
-| `registry.json` | `SemanticSeabedRegistry.dump()` format, exactly the frozen contract | FSM, dashboard |
+| `registry.json` | `SemanticSeabedRegistry.dump()` format | FSM, dashboard |
 | `labels.json` | Full label per colony: registry fields plus `genet_id`, `uv_signature`, `uv_intensity`, `depth_m`, `expected_action` | evaluation, planning |
 | `genets.json` | Each genet's species, reference UV signature and stock count | genet matching |
 | `base_station.json` | Donor racks: slot, genet, fragments available, signature | planning |
@@ -26,12 +26,12 @@ Coordinates are local metres, with the seabed datum at z = 0 and +z up, matching
 | `expected_action` | Colonies | Why |
 |---|---|---|
 | `TREAT` | 8 | Bleached, and a UV match to an in-stock genet of the same species |
-| `SKIP_NO_MATCHING_GENET` | 2 | Bleached, but that genet isn't at the base station |
+| `SKIP_NO_MATCHING_GENET` | 2 | Bleached and matched, but that genet isn't at the base station |
 | `ABSTAIN_UV_MATCH_UNCERTAIN` | 2 | Bleached, but the UV reading falls between two genets |
 | `SKIP_DEAD` | 4 | Dead |
 | `LEAVE` | 4 | Healthy |
 
-Pocillopora has two genets, so matching on species alone gives wrong pairings here. A genet match needs the same species and an L1 distance of at most 0.15 between normalised signatures (`match_genet` in `eval/moore_reef.py`).
+Pocillopora has two genets, so matching on species alone gives wrong pairings here. A genet match needs the same species and an L1 distance of at most 0.15 between normalised signatures (`match_genet` in `perception/genet.py`).
 
 ## Using it
 
@@ -45,4 +45,4 @@ uv = robot.get_uv_frame()
 
 Run a mission: `python eval/run_mock_mission.py --scene moore-reef`. Rebuild the dataset: `python eval/generate_moore_reef.py`. Check it: `pytest eval/test_moore_reef.py`.
 
-`registry.json` is what the current FSM reads. Genet and UV fields are in `labels.json`, so the frozen registry contract is unchanged.
+`registry.json` is what a correct survey concludes: `genet_id` is the UV match, so it is empty for the two uncertain colonies. `labels.json` holds the true genet for every colony, for scoring.

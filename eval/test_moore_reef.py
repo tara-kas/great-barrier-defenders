@@ -17,11 +17,11 @@ if str(ROOT) not in sys.path:  # eval/ is not a package; make `agent`, `percepti
 from agent.robot_interface import Pose, RGBDFrame  # noqa: E402
 from eval.mock_robot import DOWN_CAMERA  # noqa: E402
 from eval.moore_reef import (  # noqa: E402
-    DATA_DIR, GENETS, MooreReefRobot, TextureSet, build_reef, match_genet, recovery_timeline, render_view,
+    DATA_DIR, GENETS, MooreReefRobot, TextureSet, build_reef, genet_library, moore_station, recovery_timeline, render_view,
 )
-from mission.runner import run_mission  # noqa: E402
 from perception.classify import CORAL_TYPES, HEALTH_VALUES  # noqa: E402
 from perception.gemma_client import GemmaReply  # noqa: E402
+from perception.genet import match_genet, read_signature  # noqa: E402
 from perception.projection import project_box  # noqa: E402
 from perception.registry import SemanticMapEntry, SemanticSeabedRegistry  # noqa: E402
 from perception.survey import Surveyor  # noqa: E402
@@ -77,18 +77,44 @@ def test_health_scores_fit_perception_bands():
 
 
 def test_every_expected_action_follows_from_the_data(reef):
-    """Matching against the stock has to reach each label's expected action on its own."""
+    """Matching against the library and stock has to reach each expected action on its own."""
+    stock = moore_station()
     for c in reef.clusters:
         if c.health_status == "DEAD":
             assert c.expected_action == "SKIP_DEAD" and c.genet_id is None
         elif c.health_status == "LIVE":
             assert c.expected_action == "LEAVE"
         else:
-            matched, _ = match_genet(c.species_class, c.uv_signature)
+            matched = match_genet(c.species_class, c.uv_signature, genet_library()).genet_id
             if c.expected_action == "TREAT":
-                assert matched == c.genet_id
+                assert matched == c.genet_id and stock.available(matched) > 0
+            elif c.expected_action == "SKIP_NO_MATCHING_GENET":
+                assert matched == c.genet_id and stock.available(matched) == 0
             else:
                 assert matched is None, c.cluster_id
+
+
+def test_stored_uv_frames_decode_to_each_colonys_signature():
+    """Read the saved crops the way the robot reads frames, with no labels involved."""
+    for row in load_jsonl("crops.jsonl"):
+        if row["health_status"] != "BLEACHED":
+            continue
+        uv = np.asarray(Image.open(DATA_DIR / row["uv"]).convert("RGB"))
+        read = read_signature(uv, (0, 0, uv.shape[1], uv.shape[0]))
+        assert np.abs(np.array(read) - np.array(row["uv_signature"])).sum() < 0.06, row["cluster_id"]
+
+
+def test_dead_colonies_give_no_uv_reading():
+    for row in load_jsonl("crops.jsonl"):
+        if row["health_status"] == "DEAD":
+            uv = np.asarray(Image.open(DATA_DIR / row["uv"]).convert("RGB"))
+            assert read_signature(uv, (0, 0, uv.shape[1], uv.shape[0])) is None
+
+
+def test_species_only_matching_would_get_this_reef_wrong(reef):
+    from agent.pairing import species_only_mismatches
+
+    assert species_only_mismatches(reef.scene.entries, moore_station())
 
 
 def test_scenario_covers_every_decision(reef):
@@ -198,42 +224,6 @@ def test_uv_colour_separates_decoy_genets(frames):
     pd1 = [green_share(r) for r in crops if r["genet_id"] == "PD-01" and r["cluster_id"] in treated]
     pd2 = [green_share(r) for r in crops if r["genet_id"] == "PD-02" and r["cluster_id"] in treated]
     assert min(pd1) > max(pd2)
-
-
-class LabelledLLM:
-    """Replays the dataset's labels as Gemma's answers, so the data itself is what's tested."""
-
-    def __init__(self, robot):
-        self.robot = robot
-
-    def ask(self, prompt, image_png, json_schema=None):
-        if '"objects"' in prompt:
-            view = render_view(self.robot.reef, self.robot.textures, self.robot.get_pose())
-            self.queue, boxes = [], []
-            for index in np.unique(view.cluster_index):
-                if index < 0:
-                    continue
-                rows, cols = np.nonzero(view.cluster_index == index)
-                self.queue.append(self.robot.reef.clusters[index])
-                height, width = view.cluster_index.shape
-                boxes.append({"label": "coral", "box_2d": [int(rows.min() / height * 1000), int(cols.min() / width * 1000),
-                                                           int(rows.max() / height * 1000), int(cols.max() / width * 1000)]})
-            return GemmaReply(text=json.dumps({"objects": boxes}), latency_ms=1.0)
-        cluster = self.queue.pop(0)
-        return GemmaReply(text=cls_json(status=cluster.health_status, ctype=cluster.species_class,
-                                        score=cluster.health_score), latency_ms=1.0)
-
-
-def test_the_mission_runs_on_moore_reef(tmp_path):
-    robot = MooreReefRobot()
-    summary = run_mission(
-        robot, LabelledLLM(robot), wait=robot.advance, fragment_held=robot.fragment_held,
-        placement_verifier=robot.verify_placement, out_dir=tmp_path,
-    )
-    saved = json.loads((tmp_path / "registry.json").read_text())["entries"]
-    assert summary.final_state == "MISSION_COMPLETE"
-    assert len(saved) == 20
-    assert {e["species_class"] for e in saved} == {c["species_class"] for c in load("labels.json")}
 
 
 def test_surveyor_reads_stored_frames(frames):

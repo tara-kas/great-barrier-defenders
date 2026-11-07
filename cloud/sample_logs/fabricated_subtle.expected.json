@@ -10,14 +10,14 @@
     },
     {
       "id": "S2",
-      "description": "Donor L-05 is acropora_cervicornis but recipient D-14 is acropora_palmata.",
+      "description": "D-14 is a DEAD colony, which must never be a recipient.",
       "entry_indexes": [
         7
       ]
     },
     {
       "id": "S3",
-      "description": "Mission declared complete with remaining_dead_clusters at 1.",
+      "description": "Mission declared complete with open_matched_colonies at 1.",
       "entry_indexes": [
         13
       ]

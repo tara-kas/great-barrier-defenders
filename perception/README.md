@@ -15,6 +15,7 @@ frame ─► detect.py (Gemma: boxes) ─► classify.py (Gemma: type + health p
 | `projection.py` | `P_world = T_world←robot · T_robot←cam · d·K⁻¹[u,v,1]ᵀ`; `project_box` gives a robust world centre + extent from all depth pixels in a box. |
 | `classify.py` | Prompt + typed parser. `species_class` ∈ `acropora_branching, acropora_table, pocillopora, stylophora, branching_other, massive_meandering, other_coral` (genus / growth form: what is visually separable). `health_status` ∈ `LIVE / BLEACHED / DEAD`, plus `health_score`, `confidence`, `is_coral`, and a one-line `evidence` string. |
 | `detect.py` | Gemma returns `box_2d = [ymin, xmin, ymax, xmax]` normalised to 0-1000; parsed, clipped, de-duplicated. |
+| `genet.py` | `read_signature(uv, box)` decodes the share across three UV bands; `match_genet` finds the closest same-species genet within `MATCH_MAX_DISTANCE`, else no match |
 | `survey.py` | `Surveyor.survey_frame(frame, pose)`: detect → classify → project → merge with nearby clusters (0.4 m) → upsert. Abstains (writes nothing) on low confidence, not-coral, missing depth, bad output, or endpoint down. Never overwrites entries the mission already acted on (`RESTORED` / `sampled_or_restored`), and keeps `optimal_graft_pose_world`. Every observation has an `evidence()` dict for the decision log. |
 | `gemma_client.py` | `GemmaClient` over `POST {GEMMA_BASE_URL}/chat/completions`, logs latency + token usage. |
 | `modal_vllm.py` | Deploys vLLM serving Gemma on Modal (spends credits, so check with the Modal owner first). |

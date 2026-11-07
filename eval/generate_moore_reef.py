@@ -30,9 +30,10 @@ from agent.config import FSMConfig  # noqa: E402
 from agent.fsm import lawnmower  # noqa: E402
 from agent.robot_interface import Pose  # noqa: E402
 from eval.mock_robot import DOWN_CAMERA  # noqa: E402
+from perception.genet import MATCH_MAX_DISTANCE  # noqa: E402
 from eval.moore_reef import (  # noqa: E402
     BASE_STATION, BOUNDS, CONTACT_DAYS_REQUIRED, DATA_DIR, EXPECTED_ACTION, FRAME_CAMERA, GENETS,
-    MATCH_MAX_DISTANCE, REVISIT_DAYS, SEED, SITE_DEPTH_M, TEXTURES, MooreReef, TextureSet,
+    REVISIT_DAYS, SEED, SITE_DEPTH_M, TEXTURES, MooreReef, TextureSet,
     base_station_stock, build_reef, recovery_timeline, render_view,
 )
 

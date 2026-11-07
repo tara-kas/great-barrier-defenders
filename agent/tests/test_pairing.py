@@ -1,91 +1,86 @@
 import pytest
 
+from agent.base_station import BaseStation, Rack
 from agent.config import PairingWeights
-from agent.pairing import best_recipient_for_carried, cost, nearest_donor_baseline, plan_pairs
+from agent.pairing import best_recipient_for_carried, cost, plan_pairs, species_only_mismatches
 from perception.registry import SemanticMapEntry
 
+ROV = (0.0, 0.0, 0.1)
 
-def entry(cid, status, x, y=0.0, score=0.9, species="a"):
-    return SemanticMapEntry(cid, species, status, score, (x, y, 0.1), (0.2, 0.2, 0.2))
+
+def entry(cid, status, x, y=0.0, score=0.4, species="a", genet=None):
+    return SemanticMapEntry(cid, species, status, score, (x, y, 0.1), (0.2, 0.2, 0.2), genet_id=genet)
+
+
+def bleached(cid, x, genet="g1", species="a"):
+    return entry(cid, "BLEACHED", x, species=species, genet=genet)
+
+
+def station(*racks):
+    return BaseStation((0.0, 0.0, 0.1), racks or [Rack("R1", "g1", "a", 3, 0.95)])
 
 
 def test_cost_terms_match_formula():
-    d, r = entry("d", "LIVE", 3.0, score=0.8), entry("r", "DEAD", 3.0, 4.0, score=0.0)
-    c = cost((0.0, 0.0, 0.1), d, r, PairingWeights(1.0, 1.5, 2.0))
+    rack = Rack("R1", "g1", "a", 1, 0.8)
+    c = cost((0.0, 0.0, 0.1), (3.0, 0.0, 0.1), rack, entry("r", "BLEACHED", 3.0, 4.0), PairingWeights(1.0, 1.5, 2.0))
     assert c.travel == pytest.approx(3.0)
     assert c.transfer == pytest.approx(4.0)
     assert c.J == pytest.approx(1.0 * 3.0 + 1.5 * 4.0 - 2.0 * 0.8)
 
 
-def test_healthier_far_donor_beats_weak_near_donor_with_defaults():
-    # near: J = 1 + 1.5*1 - 2*0.1 = 2.3 ; far: J = 2 + 1.5*2 - 2*1.0 = 3.0 -> near wins at defaults
-    # Raising w3 to 4 flips it: near = 2.5-0.4 = 2.1, far = 5-4 = 1.0
-    entries = [
-        entry("near", "LIVE", 1.0, score=0.1),
-        entry("far", "LIVE", -2.0, score=1.0),
-        entry("dead", "DEAD", 0.0, score=0.0),
-    ]
-    rov = (0.0, 0.0, 0.1)
-    assert plan_pairs(entries, rov).best.donor_id == "near"
-    assert plan_pairs(entries, rov, PairingWeights(w3=4.0)).best.donor_id == "far"
+def test_only_open_bleached_colonies_are_targets():
+    done = bleached("done", 0.2)
+    done.sampled_or_restored = True
+    entries = [bleached("b", 1.0), entry("d", "DEAD", 0.5), entry("l", "LIVE", 0.6), done]
+    plan = plan_pairs(entries, ROV, station())
+    assert [p.recipient_id for p in plan.pairings] == ["b"]
+    assert plan.ignored_dead == ("d",)
 
 
-def test_species_must_match_and_runners_up_recorded():
-    entries = [
-        entry("wrong_species", "LIVE", 0.1, species="b"),
-        entry("d1", "LIVE", 1.0),
-        entry("d2", "LIVE", 3.0),
-        entry("r", "DEAD", 0.5),
-    ]
-    best = plan_pairs(entries, (0, 0, 0.1)).best
-    assert best.donor_id == "d1"
-    assert [c.donor_id for c in best.runners_up] == ["d2"]
+def test_dead_colony_with_a_genet_is_still_not_a_target():
+    assert plan_pairs([entry("d", "DEAD", 1.0, genet="g1")], ROV, station()).pairings == ()
 
 
-def test_sorted_by_J_and_unrestorable_reported():
-    entries = [
-        entry("d", "LIVE", 0.0),
-        entry("r_far", "DEAD", 5.0),
-        entry("r_near", "DEAD", 1.0),
-        entry("r_orphan", "DEAD", 1.0, species="z"),
-        entry("bleached", "BLEACHED", 2.0, score=0.3),
-    ]
-    plan = plan_pairs(entries, (0, 0, 0.1))
-    assert [p.recipient_id for p in plan.pairings] == ["r_near", "r_far"]
-    assert [u.recipient_id for u in plan.unrestorable] == ["r_orphan"]
-    assert plan.ignored_bleached == ("bleached",)
+def test_pairs_with_the_rack_of_the_same_genet():
+    racks = [Rack("R1", "g1", "a", 3, 0.95), Rack("R2", "g2", "a", 3, 0.95)]
+    best = plan_pairs([bleached("b", 1.0, genet="g2")], ROV, station(*racks)).best
+    assert (best.donor_id, best.genet_id) == ("R2", "g2")
 
 
-def test_exclusions_restored_and_health_threshold():
-    restored = entry("done", "DEAD", 0.5)
-    restored.sampled_or_restored = True
-    entries = [
-        entry("weak", "LIVE", 0.1, score=0.3),
-        entry("bad", "LIVE", 0.2),
-        entry("ok", "LIVE", 4.0),
-        entry("r", "DEAD", 0.5),
-        entry("r_skip", "DEAD", 0.6),
-        restored,
-    ]
-    plan = plan_pairs(entries, (0, 0, 0.1), exclude_donors={"bad"}, exclude_recipients={"r_skip"}, min_donor_health=0.5)
-    assert [(p.donor_id, p.recipient_id) for p in plan.pairings] == [("ok", "r")]
-    assert {s.recipient_id for s in plan.skipped_donors} == {"weak", "bad"}
+def test_no_genet_match_is_skipped_not_guessed():
+    plan = plan_pairs([bleached("b", 1.0, genet=None)], ROV, station())
+    assert plan.pairings == ()
+    assert plan.skipped[0].reason == "no confident UV genet match"
 
 
-def test_harvest_cap():
-    entries = [entry("d1", "LIVE", 0.0), entry("d2", "LIVE", 3.0), entry("r", "DEAD", 0.5)]
-    plan = plan_pairs(entries, (0, 0, 0.1), harvest_counts={"d1": 2}, max_harvests_per_donor=2)
-    assert plan.best.donor_id == "d2"
+@pytest.mark.parametrize("racks", [[Rack("R1", "g2", "a", 3, 0.95)], [Rack("R1", "g1", "a", 0, 0.95)]])
+def test_genet_out_of_stock_is_skipped(racks):
+    plan = plan_pairs([bleached("b", 1.0)], ROV, station(*racks))
+    assert plan.pairings == () and "not in stock" in plan.skipped[0].reason
 
 
-def test_carry_aware_recipient_and_baseline():
-    entries = [
-        entry("d", "LIVE", 0.0),
-        entry("r1", "DEAD", 2.0),
-        entry("r2", "DEAD", 1.0),
-        entry("r3", "DEAD", 0.2, species="b"),
-    ]
-    rec, dist = best_recipient_for_carried("a", (0, 0, 0.1), entries, exclude={"r2"})
+def test_sorted_by_J_nearest_first():
+    plan = plan_pairs([bleached("far", 5.0), bleached("near", 1.0)], ROV, station())
+    assert [p.recipient_id for p in plan.pairings] == ["near", "far"]
+
+
+def test_exclusions_and_health_threshold():
+    entries = [bleached("r", 1.0), bleached("r_skip", 1.2)]
+    assert [p.recipient_id for p in plan_pairs(entries, ROV, station(), exclude_recipients={"r_skip"}).pairings] == ["r"]
+    rejected = plan_pairs(entries, ROV, station(), exclude_racks={"R1"})
+    assert rejected.pairings == () and "rejected" in rejected.skipped[0].reason
+    weak = plan_pairs(entries, ROV, station(Rack("R1", "g1", "a", 3, 0.3)), min_donor_health=0.5)
+    assert weak.pairings == () and "health_score" in weak.skipped[0].reason
+
+
+def test_carried_fragment_only_goes_to_its_own_genet():
+    entries = [bleached("r1", 2.0), bleached("r2", 1.0), bleached("other", 0.2, genet="g2")]
+    rec, dist = best_recipient_for_carried("g1", ROV, entries, exclude={"r2"})
     assert rec.cluster_id == "r1" and dist == pytest.approx(2.0)
-    assert best_recipient_for_carried("c", (0, 0, 0.1), entries) is None
-    assert {c.recipient_id for c in nearest_donor_baseline(entries, (0, 0, 0.1))} == {"r1", "r2"}
+    assert best_recipient_for_carried("g9", ROV, entries) is None
+
+
+def test_species_only_matching_would_pick_the_wrong_genet():
+    racks = [Rack("R1", "g1", "a", 3, 0.95), Rack("R2", "g2", "a", 3, 0.95)]
+    entries = [bleached("right", 1.0, genet="g1"), bleached("wrong", 2.0, genet="g2")]
+    assert species_only_mismatches(entries, station(*racks)) == ["wrong"]

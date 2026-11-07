@@ -44,7 +44,7 @@ class DashboardServerTest(unittest.TestCase):
         self.assertEqual(first["registry"][0]["health_status"], "DEAD")
         self.assertEqual(first["decisions"][0]["state"], "SURVEY_SEABED")
 
-        updated = {"entries": [{"cluster_id": "C-01", "health_status": "RESTORED", "position_world": [1, 2, -18]}],
+        updated = {"entries": [{"cluster_id": "C-01", "health_status": "TREATED", "position_world": [1, 2, -18]}],
                    "detections": [{"cluster_id": "C-01", "box": [0.1, 0.2, 0.3, 0.4]}]}
         replacement = self.registry.with_suffix(".tmp")
         replacement.write_text(json.dumps(updated))
@@ -53,7 +53,7 @@ class DashboardServerTest(unittest.TestCase):
             output.write("\n" + json.dumps({"timestamp": "2026-11-07T16:01:00Z", "state": "TRANSPLANT_FRAGMENT", "action": "Placed", "evidence": {"cluster_id": "C-01"}, "outcome": "Passed"}))
 
         second = self.get_state()
-        self.assertEqual(second["registry"][0]["health_status"], "RESTORED")
+        self.assertEqual(second["registry"][0]["health_status"], "TREATED")
         self.assertEqual(second["detections"][0]["box"], [0.1, 0.2, 0.3, 0.4])
         self.assertEqual(len(second["decisions"]), 2)
         self.assertEqual(second["decisions"][1]["evidence"]["cluster_id"], "C-01")

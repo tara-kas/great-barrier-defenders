@@ -53,8 +53,6 @@ class NavConfig:
 class FSMConfig:
     weights: PairingWeights = field(default_factory=PairingWeights)
     graft: GraftConfig = field(default_factory=GraftConfig)
-    # Harvest point on a LIVE donor: same selector, smaller patch is fine.
-    harvest: GraftConfig = field(default_factory=lambda: GraftConfig(min_patch_points=10))
     nav: NavConfig = field(default_factory=NavConfig)
 
     wrist_standoff: float = 0.35  # m above bbox top; inside the 0.15-0.5 m wrist camera range
@@ -68,11 +66,15 @@ class FSMConfig:
     survey_swath: float = 2.0  # m between lanes
     seabed_z: float = 0.0
 
-    min_donor_health: float = 0.5  # abstain from harvesting weaker LIVE donors
+    min_donor_health: float = 0.5  # abstain from using a weak base station rack
     max_attempts_per_recipient: int = 3
-    max_harvests_per_donor: Optional[int] = None  # None = donors reusable (narrative decision, see README)
     reobserve_attempts: int = 1  # extra wrist captures before giving up on a cluster
     max_perception_failures: int = 3  # consecutive failed survey frames before aborting
+    harvest_ik_attempts: int = 2  # tries at taking a fragment before rejecting the rack
+
+    # Return visits. Full recovery needed about a week of contact (Collins et al. 2026).
+    revisit_days: tuple[int, ...] = (7, 56)
+    recovered_density_pct: float = 80.0  # symbiont density vs healthy tissue at the last visit
 
     def to_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -80,14 +82,14 @@ class FSMConfig:
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "FSMConfig":
         d = dict(d)
-        nested = {"weights": PairingWeights, "graft": GraftConfig, "harvest": GraftConfig, "nav": NavConfig}
+        nested = {"weights": PairingWeights, "graft": GraftConfig, "nav": NavConfig}
         for key, cls in nested.items():
             if key in d and isinstance(d[key], dict):
                 sub = dict(d[key])
                 if "tool_axis" in sub:
                     sub["tool_axis"] = tuple(sub["tool_axis"])
                 d[key] = cls(**sub)
-        for key in ("wrist_depth_range", "hull_depth_range", "survey_bounds"):
+        for key in ("wrist_depth_range", "hull_depth_range", "survey_bounds", "revisit_days"):
             if key in d:
                 d[key] = tuple(d[key])
         return FSMConfig(**d)

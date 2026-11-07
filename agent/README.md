@@ -19,8 +19,9 @@ terminal: MISSION_COMPLETE | ABORTED
 
 | File | What | Pure? |
 |---|---|---|
-| `pairing.py` | `J(i,j) = w1·|x_rov−x_i| + w2·|x_i−x_j| − w3·H_i`, same-species LIVE donor per DEAD recipient, sorted by J; carry-aware recipient search; nearest-donor baseline | yes |
-| `graft_point.py` | PCA graft/harvest point: k-NN normals, up filter (cos 30°), upper 50th percentile, reach plus approach-cylinder rejection, largest contiguous patches → ranked `GraftCandidate`s (map to `GraftPose`) | yes |
+| `pairing.py` | `J(i,j) = w1·|x_rov−x_i| + w2·|x_i−x_j| − w3·H_i`: same-genet base station rack per open `BLEACHED` colony, sorted by J; carry-aware replan; species-only baseline | pure |
+| `base_station.py` | `BaseStation`, `Rack`: stock per genet, take and put back | pure |
+| `graft_point.py` | PCA contact point: k-NN normals, up filter (cos 30°), upper 50th percentile, reach plus approach-cylinder clearance, centroid of largest patch | pure |
 | `geometry.py` | depth → world points, pose matrices, bbox crop, approach quaternion | yes |
 | `config.py` | `FSMConfig` / `PairingWeights` / `GraftConfig` / `NavConfig`, with `to_dict`/`from_dict` | yes |
 | `memory.py` | `EpisodicMemory`: rejected donors and recipients with reasons, attempts, harvest counts | stateful |
@@ -61,7 +62,7 @@ Every `evidence` contains:
 - `next_state`
 - `rov_pose`
 - `sim_time_s`
-- `carrying` (donor id or null)
+- `carrying` (genet id or null)
 
 Consecutive entries chain: `entries[i].evidence.next_state == entries[i+1].state`.
 
@@ -71,14 +72,15 @@ Consecutive entries chain: `entries[i].evidence.next_state == entries[i+1].state
 |---|---|---|
 | `mission_start` | SURVEY_SEABED | `config`, `registry`, which hooks are injected |
 | `survey_registry_only` / `survey_waypoint` / `survey_waypoint_skipped` / `survey_complete` | SURVEY_SEABED | waypoint, `hull_frame` depth stats, `detections`, `new`/`updated` ids, `counts_by_status` |
-| `select_pair` | COMPUTE_RESTORATION_PLAN | `chosen` J terms (`travel`, `transfer`, `health`, `J`), `runners_up_donors`, `other_pairings`, `unrestorable`, `skipped_donors`, `ignored_bleached`, `memory` |
-| `select_recipient_for_carried` / `return_fragment_to_donor` | COMPUTE_RESTORATION_PLAN | carried species, recipient or donor, `carry_distance_m` |
+| `select_pair` | COMPUTE_RESTORATION_PLAN | `chosen` J terms (`travel`, `transfer`, `health`, `J`), `genet_id`, `rack`, `recipient`, `skipped`, `ignored_dead`, `stock` |
+| `select_recipient_for_carried` / `return_fragment_to_station` | COMPUTE_RESTORATION_PLAN | carried genet, recipient or reason |
 | `survey_waypoint_failed` | SURVEY_SEABED | `error`, `consecutive_failures`, `failure_limit`, `perception` |
-| `mission_complete` | COMPUTE_RESTORATION_PLAN | `restored`, `unrestorable_final` (id → reason) |
+| `mission_complete` | COMPUTE_RESTORATION_PLAN | `treated`, `skipped_final` (id → reason) |
+| `revisit_start` / `revisit_observation` / `revisit_complete` | RETURN_VISIT | `day`, `observation`, `results` |
 | `arrive_donor` / `arrive_recipient` / `navigate_failed` | NAVIGATE_* | `navigation`: start, target, final, `residual_m`, `path_ticks`, `max_speed` |
 | `fragment_dislodged` | NAVIGATE_TO_RECIPIENT | `navigation.fragment_held=false`, lost fragment, then re-plan |
-| `harvest_fragment` / `abstain_harvest` | HARVEST_FRAGMENT | `observations` (point counts after each filter, `patch_sizes`), `candidates`, `ik_results`, `chosen` (position, normal, quat) |
-| `transplant_fragment` / `abstain_transplant` / `placement_unstable` / `fragment_returned_to_donor` | TRANSPLANT_FRAGMENT | as for harvest, plus `recipient`, `attempt`, `placement_verification` |
+| `harvest_fragment` / `abstain_harvest` | HARVEST_FRAGMENT | `rack`, `ik_results`, `stock` |
+| `transplant_fragment` / `abstain_transplant` / `placement_unstable` / `fragment_returned_to_station` | TRANSPLANT_FRAGMENT | as above plus `placement_verification`, `recipient`, `attempt` |
 | `replan_target_changed` | NAVIGATE_* / HARVEST | the registry changed under us (target no longer LIVE or open) |
 | `abort` | any | reason; operator needed |
 
@@ -86,16 +88,16 @@ Consecutive entries chain: `entries[i].evidence.next_state == entries[i+1].state
 
 - **Re-plan every loop:** registry changes mid-mission (new detections, reclassification) change the next pairing.
 - **Abstain when unsure:**
-  - donors below `min_donor_health` are skipped;
+  - racks below `min_donor_health` are skipped;
   - a cluster with no valid graft patch is re-observed once, then rejected;
   - recipients over `max_attempts_per_recipient` are dropped;
-  - BLEACHED clusters are never touched (alive, may recover).
+  - DEAD colonies are never touched; a BLEACHED colony without a confident in-stock genet match is skipped.
 - **Dislodged mid-carry** (critical failure, root CLAUDE.md §12): detected through `fragment_held`, logged, then re-plan from the current position to re-acquire.
-- **IK unreachable:** try the next candidate patch. If none work, reject that donor or site and re-plan.
+- **IK unreachable:** at a colony, try the next candidate patch, then reject the site. At the base station, retry, then reject the rack. Then re-plan.
 - **Carry-aware:**
   - lower speed while carrying;
   - if a site is rejected while holding a fragment, try the nearest other recipient of that species;
-  - otherwise return the fragment to its donor.
+  - otherwise return the fragment to the base station.
 
 ## Open items for the team (not resolved here)
 
@@ -107,7 +109,7 @@ Consecutive entries chain: `entries[i].evidence.next_state == entries[i+1].state
    - end-effector approach axis = tool +z (`GraftConfig.tool_axis`).
 
    Sim and perception owners please confirm.
-3. Donors are reusable by default (`max_harvests_per_donor=None`). This depends on the open harvest-from-donor vs fragment-of-opportunity narrative decision.
+3. Stock is finite: each fragment taken comes off the rack, and a dislodged one is lost.
 4. Placement push test: the hook exists, but with no verifier the log says "unverified" rather than faking a check.
 5. `geometry.deproject_depth` overlaps perception's single-pixel `projection.py`. Consolidate after merge.
 6. Root §4's richer optimiser (flow, algae risk, uncertainty penalty, value of information) isn't built. `plan_pairs` keeps the same signature if it's extended.
