@@ -1,0 +1,462 @@
+{
+    "asset": {
+        "type": "application/si-dpo-3d.document+json",
+        "version": "1.0",
+        "generator": "Voyager",
+        "copyright": "(c) Smithsonian Institution. All rights reserved."
+    },
+    "scene": 0,
+    "scenes": [
+        {
+            "units": "mm",
+            "name": "Scene",
+            "nodes": [
+                0,
+                1,
+                6
+            ],
+            "meta": 0,
+            "setup": 0
+        }
+    ],
+    "nodes": [
+        {
+            "translation": [
+                -77.7736252,
+                213.5224962,
+                307.9045087
+            ],
+            "rotation": [
+                -0.2894336,
+                -0.1180272,
+                -0.0359888,
+                0.9492116
+            ],
+            "name": "Camera",
+            "camera": 0
+        },
+        {
+            "rotation": [
+                0,
+                -0.1233921,
+                0,
+                0.992358
+            ],
+            "name": "Lights",
+            "children": [
+                2,
+                3,
+                4,
+                5
+            ]
+        },
+        {
+            "translation": [
+                0,
+                0,
+                2
+            ],
+            "rotation": [
+                0.4829741,
+                -0.1070728,
+                0.1880998,
+                0.8484633
+            ],
+            "scale": [
+                1,
+                1,
+                1
+            ],
+            "name": "Key",
+            "light": 0
+        },
+        {
+            "rotation": [
+                0.3546969,
+                0.163893,
+                -0.3861077,
+                0.8356136
+            ],
+            "name": "Fill #1",
+            "light": 1
+        },
+        {
+            "translation": [
+                0,
+                0,
+                1
+            ],
+            "rotation": [
+                0.9374013,
+                -0.3018693,
+                0.0532277,
+                0.1652891
+            ],
+            "name": "Fill #2",
+            "light": 2
+        },
+        {
+            "translation": [
+                1,
+                0,
+                -1
+            ],
+            "rotation": [
+                0.373256,
+                0.6426073,
+                -0.5786063,
+                0.3360813
+            ],
+            "scale": [
+                1,
+                1,
+                1
+            ],
+            "name": "Rim",
+            "light": 3
+        },
+        {
+            "name": "usnm_268",
+            "model": 0,
+            "meta": 0
+        }
+    ],
+    "cameras": [
+        {
+            "type": "perspective",
+            "perspective": {
+                "yfov": 52,
+                "znear": 0.1,
+                "zfar": 100000
+            }
+        }
+    ],
+    "lights": [
+        {
+            "color": [
+                1,
+                0.95,
+                0.9
+            ],
+            "intensity": 1,
+            "type": "directional",
+            "shadowEnabled": true
+        },
+        {
+            "color": [
+                0.9,
+                0.95,
+                1
+            ],
+            "intensity": 0.7,
+            "type": "directional",
+            "shadowEnabled": true
+        },
+        {
+            "color": [
+                0.8,
+                0.85,
+                1
+            ],
+            "intensity": 0.5,
+            "type": "directional"
+        },
+        {
+            "color": [
+                0.85,
+                0.9078313,
+                1
+            ],
+            "intensity": 0.6,
+            "type": "directional"
+        }
+    ],
+    "models": [
+        {
+            "units": "m",
+            "translation": [
+                0.0037943,
+                -0.0837152,
+                -0.0691673
+            ],
+            "rotation": [
+                -0.0231863,
+                0.7067265,
+                0.7067266,
+                0.0231863
+            ],
+            "boundingBox": {
+                "min": [
+                    -0.129488,
+                    -0.043713,
+                    -0.000532
+                ],
+                "max": [
+                    0.128908,
+                    0.1790536,
+                    0.1679624
+                ]
+            },
+            "derivatives": [
+                {
+                    "usage": "Web3D",
+                    "quality": "Thumb",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-20k-thumb.glb",
+                            "type": "Model",
+                            "byteSize": 238108,
+                            "numFaces": 20000,
+                            "imageSize": 512
+                        }
+                    ]
+                },
+                {
+                    "usage": "Web3D",
+                    "quality": "Low",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-150k-1024-low.glb",
+                            "type": "Model",
+                            "byteSize": 1361484,
+                            "numFaces": 150000,
+                            "imageSize": 1024
+                        }
+                    ]
+                },
+                {
+                    "usage": "Web3D",
+                    "quality": "Medium",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-150k-2048-medium.glb",
+                            "type": "Model",
+                            "byteSize": 3228892,
+                            "numFaces": 150000,
+                            "imageSize": 2048
+                        }
+                    ]
+                },
+                {
+                    "usage": "Web3D",
+                    "quality": "High",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-150k-4096-high.glb",
+                            "type": "Model",
+                            "byteSize": 9529048,
+                            "numFaces": 150000,
+                            "imageSize": 4096
+                        }
+                    ]
+                },
+                {
+                    "usage": "Web3D",
+                    "quality": "AR",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-150k-2048-ar.glb",
+                            "type": "Model",
+                            "byteSize": 3228892,
+                            "numFaces": 100000,
+                            "imageSize": 2048
+                        }
+                    ]
+                },
+                {
+                    "usage": "App3D",
+                    "quality": "AR",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-01_AP_FIXED-100k-2048_std_draco.glb",
+                            "type": "Model",
+                            "byteSize": 3520908,
+                            "numFaces": 100000,
+                            "imageSize": 2048
+                        }
+                    ]
+                },
+                {
+                    "usage": "iOSApp3D",
+                    "quality": "AR",
+                    "assets": [
+                        {
+                            "uri": "usnm_268-01_AP_FIXED-100k-2048_std.usdz",
+                            "type": "Model",
+                            "byteSize": 11273850,
+                            "numFaces": 100000,
+                            "imageSize": 2048
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metas": [
+        {
+            "collection": {
+                "edanRecordId": "edanmdm:nmnhinvertebratezoology_11042783",
+                "title": "Acropora secale"
+            }
+        },
+        {
+            "images": [
+                {
+                    "uri": "scene-image-thumb.jpg",
+                    "quality": "Thumb",
+                    "byteSize": 12651,
+                    "width": 320,
+                    "height": 320
+                },
+                {
+                    "uri": "scene-image-low.jpg",
+                    "quality": "Low",
+                    "byteSize": 40971,
+                    "width": 640,
+                    "height": 640
+                },
+                {
+                    "uri": "scene-image-medium.jpg",
+                    "quality": "Medium",
+                    "byteSize": 136929,
+                    "width": 1280,
+                    "height": 1280
+                },
+                {
+                    "uri": "scene-image-high.jpg",
+                    "quality": "High",
+                    "byteSize": 461952,
+                    "width": 2560,
+                    "height": 2560
+                }
+            ]
+        }
+    ],
+    "setups": [
+        {
+            "interface": {
+                "visible": true,
+                "logo": true,
+                "menu": true,
+                "tools": true
+            },
+            "reader": {
+                "enabled": false,
+                "position": "Overlay"
+            },
+            "viewer": {
+                "shader": "Default",
+                "exposure": 1,
+                "gamma": 2
+            },
+            "navigation": {
+                "enabled": true,
+                "autoZoom": true,
+                "autoRotation": false,
+                "lightsFollowCamera": true,
+                "type": "Orbit",
+                "orbit": {
+                    "orbit": [
+                        -33.9150227,
+                        -14.1758231,
+                        0
+                    ],
+                    "offset": [
+                        -0.0000352,
+                        0.0000169,
+                        382.6823482
+                    ],
+                    "minOrbit": [
+                        -90,
+                        null,
+                        null
+                    ],
+                    "maxOrbit": [
+                        90,
+                        null,
+                        null
+                    ],
+                    "minOffset": [
+                        null,
+                        null,
+                        0.1
+                    ],
+                    "maxOffset": [
+                        null,
+                        null,
+                        10000
+                    ]
+                }
+            },
+            "background": {
+                "style": "RadialGradient",
+                "color0": [
+                    0.2,
+                    0.25,
+                    0.3
+                ],
+                "color1": [
+                    0.01,
+                    0.03,
+                    0.05
+                ]
+            },
+            "environment": {
+                "index": 0
+            },
+            "floor": {
+                "visible": false,
+                "position": [
+                    0,
+                    -25,
+                    0
+                ],
+                "size": 50,
+                "color": [
+                    0.6,
+                    0.75,
+                    0.8
+                ],
+                "opacity": 0.5,
+                "receiveShadow": false
+            },
+            "grid": {
+                "visible": false,
+                "color": [
+                    0.5,
+                    0.7,
+                    0.8
+                ]
+            },
+            "tape": {
+                "enabled": false,
+                "startPosition": [
+                    0,
+                    0,
+                    0
+                ],
+                "startDirection": [
+                    0,
+                    0,
+                    0
+                ],
+                "endPosition": [
+                    0,
+                    0,
+                    0
+                ],
+                "endDirection": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "slicer": {
+                "enabled": false,
+                "axis": "X",
+                "position": 0.5,
+                "inverted": false
+            }
+        }
+    ]
+}

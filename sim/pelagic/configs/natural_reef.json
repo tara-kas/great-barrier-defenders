@@ -1,0 +1,53 @@
+{
+  "mission": {
+    "attachment_method": "same_genet_contact",
+    "approach_duration": 2.5,
+    "close_duration": 1.4,
+    "detach_duration": 1.1,
+    "retract_duration": 2.1,
+    "lower_duration": 2.8,
+    "secure_duration": 2.5,
+    "open_duration": 1.6,
+    "retreat_duration": 2.1,
+    "verification_dwell": 1.3
+  },
+  "render": {
+    "show_telemetry": false,
+    "show_targets": false,
+    "particle_count": 1800,
+    "realistic_tissue": true,
+    "volumetric_water": true,
+    "soft_coral_count": 12,
+    "soft_coral_height": 0.56,
+    "soft_coral_radius": 0.28,
+    "moving_polyp_count": 24,
+    "visible_beam_scattering": true,
+    "visible_beam_gain": 1.0
+  },
+  "inspection": {
+    "enabled": true,
+    "mode": "auto",
+    "ambient_scale": 0.4,
+    "visible_uv_pilot": true,
+    "uv_pilot_intensity": 34000,
+    "white_intensity": 4000,
+    "blue_intensity": 2500,
+    "half_angle_degrees": 50,
+    "emission_gain": 0.07,
+    "auto_light_power": true,
+    "reference_distance_m": 1.1,
+    "require_detection": true,
+    "detection_duration": 3.0,
+    "detection_standoff": 1.1,
+    "min_detection_exposure": 0.1,
+    "range_m": 3.5
+  },
+  "assumptions": {
+    "biology": "Same-genet contact graft is inspired by controlled Pocillopora damicornis experiments (Collins et al. 2026, doi:10.1126/sciadv.aeh1580). Mechanical contact is verified immediately; tissue fusion, symbiont transfer and recovery over days/weeks remain pending and are not simulated.",
+    "assistance": "Only known same-genet healthy donor fragments may contact bleached but living recipients of the same species proxy. Dead, unknown-genet and mismatched-genet colonies cannot be paired. Red/green fluorescence is a marker for the known simulated lineages, not general genetic identification.",
+    "substrate": "The donor touches an accessible triangle of the unchanged scanned recipient colony. Only a small basal securing compound is separate geometry; there is no fabricated recipient branch.",
+    "scale": "The 14 cm visible cutting and robot contact fixture are enlarged engineering proxies for the study's 1\u20133 cm laboratory fragments. In-situ robotic graft placement and the fixture design are unvalidated extrapolations.",
+    "uv": "365nm UV excitation is invisible. A co-aligned visible violet aiming light supplies an RTX surface footprint and a depth-clipped analytical water-scattering cone. Source-to-water shadow transport and spectral fluorescence are not calibrated.",
+    "detection": "Wide-area UV fluorescence inspection must approve both the living bleached recipient and compatible healthy donor before any harvest. White light is used for collection, carrying, placement and mechanical checks. Detection is an analytical sensor proxy combined with known lineage/health metadata, not a trained image classifier or genotype inferred from colour."
+  }
+}

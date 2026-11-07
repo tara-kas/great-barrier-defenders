@@ -1,0 +1,6 @@
+# Keep vendored assets byte-for-byte for provenance checksums.
+assets/** -text
+web/vendor/** -text
+# Retain upstream formatting in these third-party files.
+assets/corals/usnm_268-voyager.json -whitespace
+web/vendor/three.module.js -whitespace

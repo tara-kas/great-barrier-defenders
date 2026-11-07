@@ -1,0 +1,22 @@
+{
+  "mission": {
+    "attachment_method": "same_genet_contact",
+    "approach_duration": 2.5,
+    "close_duration": 1.4,
+    "detach_duration": 1.1,
+    "retract_duration": 2.1,
+    "lower_duration": 2.8,
+    "secure_duration": 2.5,
+    "open_duration": 1.6,
+    "retreat_duration": 2.1,
+    "verification_dwell": 1.3
+  },
+  "render": {"show_telemetry": false, "show_targets": false, "particle_count": 1800},
+  "inspection": {"enabled": true, "mode": "auto", "ambient_scale": 0.32},
+  "assumptions": {
+    "biology": "Same-genet contact graft is inspired by controlled Pocillopora damicornis experiments (Collins et al. 2026, doi:10.1126/sciadv.aeh1580). Mechanical contact is verified immediately; tissue fusion, symbiont transfer and recovery over days/weeks remain pending and are not simulated.",
+    "assistance": "Only known same-genet healthy donor fragments may contact bleached but living recipients of the same species proxy. Dead, unknown-genet and mismatched-genet colonies cannot be paired. Red/green fluorescence is a marker for the known simulated lineages, not general genetic identification.",
+    "substrate": "A permanent living recipient branch contacts the donor stem; an abstract pre-existing collar supports the skeleton below the tissue interface. No nearby separate limestone outplant, generated roots or new coral tissue is created at release.",
+    "scale": "The 14 cm visible cutting and robot contact fixture are enlarged engineering proxies for the study's 1–3 cm laboratory fragments. In-situ robotic graft placement and the fixture design are unvalidated extrapolations."
+  }
+}

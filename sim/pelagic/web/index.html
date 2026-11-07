@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#071e25" />
+    <title>PELAGIC — Reef restoration mission</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b2930'/%3E%3Cpath d='M4 20c5-12 7 6 12-6s7 6 12-6' fill='none' stroke='%2384ded0' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main id="mission">
+      <canvas
+        id="ocean"
+        aria-label="Interactive three-dimensional underwater mission preview"
+      ></canvas>
+      <img
+        id="rtx-frame"
+        alt="Live spectator camera from Isaac Sim 6.0"
+        hidden
+      />
+      <div class="vignette"></div>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Pelagic home"
+          ><svg viewBox="0 0 32 32">
+            <path
+              d="M3 19c6-12 8 6 14-6S23 16 29 5M3 27c6-12 8 6 14-6s6 3 12-8"
+            /></svg
+          ><span
+            >PELAGIC<span class="brand-sub">REEF RESTORATION SYSTEM</span></span
+          ></a
+        >
+        <div class="top-center">
+          <span class="status-dot" id="connection-dot"></span
+          ><span id="runtime">CONNECTING TO MISSION</span>
+        </div>
+        <div class="top-right">
+          <span class="spark-label">ISAAC SIM 6.0 TARGET</span
+          ><span class="session">EXPEDITION <b>001</b></span>
+        </div>
+      </header>
+      <section class="mission-heading">
+        <div class="eyebrow">
+          <span class="small-cross">+</span> AUTONOMOUS FIELD OPERATIONS
+        </div>
+        <h1>A future beneath<br />the surface.</h1>
+        <p>Survey. Understand. Restore.</p>
+        <div class="location">
+          <span class="coordinates">LOCAL REEF · 10 × 10 M</span
+          ><span class="divider"></span><span id="elapsed">T+ 00:00</span>
+        </div>
+      </section>
+      <aside class="left-panel glass">
+        <div class="panel-head">
+          <span class="eyebrow">MISSION OBJECTIVE</span
+          ><span class="tiny-number">01 / 03</span>
+        </div>
+        <h2>Restore the reef.<br />One fragment at a time.</h2>
+        <p class="muted">
+          A shared map. Two autonomous vehicles.<br />A more resilient
+          underwater world.
+        </p>
+        <div class="mission-progress">
+          <div><span>SURVEY COVERAGE</span><b id="coverage-label">0%</b></div>
+          <div class="progress-track"><i id="coverage-bar"></i></div>
+        </div>
+        <div class="robot-list" id="robot-list">
+          <div class="waiting">Awaiting vehicle telemetry…</div>
+        </div>
+        <div class="panel-foot">
+          <span class="legend-dot teal"></span>SHARED MISSION INTELLIGENCE
+        </div>
+      </aside>
+      <aside class="right-panel">
+        <section class="map-panel glass">
+          <div class="panel-head">
+            <span class="eyebrow">SEMANTIC REEF MAP</span
+            ><span class="map-live">LIVE</span>
+          </div>
+          <canvas
+            id="map"
+            width="560"
+            height="410"
+            aria-label="Top down map of observed coral and robot locations"
+          ></canvas>
+          <div class="map-legend">
+            <span><i class="legend-dot teal"></i>Healthy</span
+            ><span><i class="legend-dot pale"></i>Bleached / alive</span
+            ><span><i class="legend-dot amber"></i>Dead / excluded</span
+            ><span><i class="legend-dot blue"></i>Assisted</span>
+          </div>
+        </section>
+        <section class="water-panel glass">
+          <div class="panel-head">
+            <span class="eyebrow">WATER COLUMN</span
+            ><span class="water-symbol">≈</span>
+          </div>
+          <label for="visibility"
+            >Visibility
+            <strong><span id="visibility-value">—</span> m</strong></label
+          ><input
+            id="visibility"
+            type="range"
+            min="1"
+            max="12"
+            step="0.2"
+            value="5"
+            aria-label="Underwater visibility in meters"
+          />
+          <div class="range-labels"><span>TURBID</span><span>CLEAR</span></div>
+          <label for="current"
+            >Current
+            <strong><span id="current-value">—</span> m/s</strong></label
+          ><input
+            id="current"
+            type="range"
+            min="0"
+            max="0.45"
+            step="0.01"
+            value="0.08"
+            aria-label="Ocean current speed"
+          />
+          <div class="water-note">
+            <span class="status-dot"></span>Conditions affect sensing & vehicle
+            motion
+          </div>
+        </section>
+      </aside>
+      <section class="scene-label">
+        <span class="small-cross">+</span>
+        <div>
+          <span id="camera-label">REEF OVERVIEW</span
+          ><small>Drag to orbit · scroll to explore</small>
+        </div>
+      </section>
+      <div class="view-controls glass">
+        <button
+          id="rtx-toggle"
+          title="Switch between actual Isaac RTX camera and explorable 3D preview"
+          hidden
+        >
+          <span>◉</span><span class="rtx-button-label">RTX view</span>
+        </button>
+        <button id="overview" class="active" title="Overview camera">
+          <span>◈</span> Overview</button
+        ><button id="follow" title="Follow restoration vehicle">
+          <span>⌖</span> Follow ROV</button
+        ><span class="control-divider"></span
+        ><button id="pause" title="Pause mission">
+          <span>Ⅱ</span><span class="pause-text">Pause</span></button
+        ><button id="reset" class="icon-button" title="Reset mission">↺</button>
+      </div>
+      <footer class="bottom-bar glass">
+        <div class="metric">
+          <span class="metric-number" id="metric-observed"
+            >00<span> / —</span></span
+          ><span class="metric-label">COLONIES OBSERVED</span>
+        </div>
+        <div class="metric">
+          <span class="metric-number" id="metric-planted">00</span
+          ><span class="metric-label">VERIFIED OUTPLANTS</span>
+        </div>
+        <div class="metric">
+          <span class="metric-number" id="metric-stock">—</span
+          ><span class="metric-label">FRAGMENTS AVAILABLE</span>
+        </div>
+        <div class="event-area">
+          <span class="eyebrow">MISSION FEED</span>
+          <div id="event-text">Establishing telemetry connection…</div>
+        </div>
+        <div class="preview-badge">
+          <span id="view-badge-title">3D PREVIEW</span
+          ><span id="view-badge-detail"
+            >Live mission telemetry · not an RTX camera feed</span
+          >
+        </div>
+      </footer>
+      <div id="toast" role="status"></div>
+      <div id="offline" role="alert" hidden>
+        Telemetry disconnected. Reconnecting…
+      </div>
+      <button class="about-button" id="about" title="About this simulation">
+        i
+      </button>
+      <dialog id="about-dialog">
+        <button id="close-about" aria-label="Close">×</button>
+        <div class="eyebrow">ABOUT THIS VIEW</div>
+        <h2>Explore a living mission.</h2>
+        <p>
+          This WebGL scene is a portable preview of the mission running in the
+          Python backend. The Isaac Sim 6.0 adapter renders the same world
+          separately on DGX Spark.
+        </p>
+        <p>
+          Coral geometry, water effects and vehicle models are procedural.
+          Perception and hydrodynamics are simplified models. Planting attaches
+          a fragment; it does not instantly revive dead coral.
+        </p>
+        <p>
+          Use the visibility and current controls to change actual mission
+          conditions.
+        </p>
+      </dialog>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

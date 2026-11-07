@@ -1,0 +1,101 @@
+{
+  "asset": "pocillopora_tissue_materials",
+  "license": "CC0-1.0",
+  "source_specimen": "Smithsonian USNM 46926, dried Pocillopora damicornis",
+  "source_record": "https://3d.si.edu/es/object/3d/pocillopora-damicornis%3Aae26ad01-e7be-4664-8a3a-b8bffd42a186",
+  "source_diffuse_sha256": "0021119b10252acd2fb8e073403e745063440e57f4571a9be75ceed6d6912608",
+  "source_normal_sha256": "22a27558e29a48b81a542b4b0f092ee2f0d5bd3ace03fdb30c887fcca38e8141",
+  "source_occlusion_sha256": "ecaad7031bbcb010c8007726e92aa02069620ad67a58606e33f4bb88faf7bbaf",
+  "geometry_changed": false,
+  "uv_layout_changed": false,
+  "colour_space": {
+    "diffuse": "sRGB",
+    "roughness": "raw linear",
+    "normal": "raw linear OpenGL"
+  },
+  "interpretation": "Artistic healthy/partially bleached/dead tissue proxy derived from a dried specimen atlas; not calibrated tissue or a fluorescence map",
+  "method": "Partial local illumination normalization; local-normalized original GLB occlusion atlas restores calice cup contrast without broad AO shading; deterministic muted tissue pigmentation and residual pigment islands; high varying roughness; original normal atlas reused",
+  "phenotypes": [
+    "tan",
+    "violet",
+    "blue",
+    "yellow",
+    "red",
+    "pink",
+    "green"
+  ],
+  "files": {
+    "bleached_alive_blue_diffuse.jpg": {
+      "bytes": 713342,
+      "sha256": "e0a7056e3b6416e06f627ef177d9cee87b1b137cdb407502b9ca0f2ea7024443"
+    },
+    "bleached_alive_green_diffuse.jpg": {
+      "bytes": 731055,
+      "sha256": "bb42aab4c1832c4af33926b94c66be65850e1e3e3c0d2c40d8959e1cf10a6ad8"
+    },
+    "bleached_alive_pink_diffuse.jpg": {
+      "bytes": 756085,
+      "sha256": "49234f5033ac19a6b598ba40ec2b8036949e861ef39dd82276e465bcf3b44282"
+    },
+    "bleached_alive_red_diffuse.jpg": {
+      "bytes": 763119,
+      "sha256": "176821a8f6b3deb10e7e59c523860b3d1f36842f093163c7360a520d6579ebc7"
+    },
+    "bleached_alive_tan_diffuse.jpg": {
+      "bytes": 761944,
+      "sha256": "c0beb7d5d6e6d43a8b3780ecdc4b337dab74f6fcb99a108acf8af5119d48f7d1"
+    },
+    "bleached_alive_violet_diffuse.jpg": {
+      "bytes": 727833,
+      "sha256": "3bb95aa5051d0b44c218d1462e7407176fd395b857859b12dcd860b97b079aca"
+    },
+    "bleached_alive_yellow_diffuse.jpg": {
+      "bytes": 768243,
+      "sha256": "63352bdef126b0ef2aa9360219b540333b5cfc6a763bcdf5b0772e4368d4a337"
+    },
+    "dead_diffuse.jpg": {
+      "bytes": 568858,
+      "sha256": "7a4081c6df9bd64f0edcf286c4c770c1a677e86a9522fa51c3039433ee7c4945"
+    },
+    "healthy_blue_diffuse.jpg": {
+      "bytes": 605133,
+      "sha256": "a200561942bd33ee00a543e4eec4d2b5c7b354d12c4049f46e3cd6328a5b3eab"
+    },
+    "healthy_green_diffuse.jpg": {
+      "bytes": 618270,
+      "sha256": "969d397cd1d0b5be78c4bba18af85d9e5ab2cf8b962af2093faaf41d4f2a6ccd"
+    },
+    "healthy_pink_diffuse.jpg": {
+      "bytes": 712925,
+      "sha256": "b76cddf217e9f026029d8d440248de204be278f9ef8a0a7149d2beafe0684740"
+    },
+    "healthy_red_diffuse.jpg": {
+      "bytes": 739328,
+      "sha256": "c1de542f33c8b05fcedd054d52d98bb47cb98457b4ac8cd208444895d868cbcb"
+    },
+    "healthy_tan_diffuse.jpg": {
+      "bytes": 750651,
+      "sha256": "50a58c608e267a39dbc95df774254893c779bb4f70f7a743f313026594d18a9d"
+    },
+    "healthy_violet_diffuse.jpg": {
+      "bytes": 588800,
+      "sha256": "55c6d969d27d179a14e86aa5d11f7ce3bbe86485c1cf1cedfa046c2cbb7df452"
+    },
+    "healthy_yellow_diffuse.jpg": {
+      "bytes": 794134,
+      "sha256": "bdfde2e9f1c6db8fa9803f63d6877ef099cfa401acc60be1e9bba039b51276ca"
+    },
+    "bleached_alive_roughness.png": {
+      "bytes": 230052,
+      "sha256": "c77ff53853c3a52db9bb3f099bb60977365d28cf0feb5f29d561e4899bfe85c9"
+    },
+    "dead_roughness.png": {
+      "bytes": 219872,
+      "sha256": "3bb96efd1df781200490595dd5901d6b858ccd22f84376bef9613cc9ff849d16"
+    },
+    "healthy_roughness.png": {
+      "bytes": 249988,
+      "sha256": "1e0b069f9ea17ea8f447108860e7f1ac18c59ae2df757cb390d3cd157b1b0908"
+    }
+  }
+}

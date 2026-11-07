@@ -1,0 +1,232 @@
+{
+  "description": "Locally bundled offline PBR materials. No runtime download.",
+  "total_texture_bytes": 24479318,
+  "assets": [
+    {
+      "path": "materials/coral/coral_albedo_detail.png",
+      "bytes": 642177,
+      "sha256": "0b27743d0c9ff5ef8352082c45e74a19ecd335c469a96b12f5109cd2113d2ec6",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "source": "original procedural",
+      "generator": "scripts/build_material_assets.py",
+      "seed": 26,
+      "color_space": "sRGB",
+      "normal_convention": null,
+      "suggested_tile_width_m": 0.1
+    },
+    {
+      "path": "materials/coral/coral_height.png",
+      "bytes": 1902756,
+      "sha256": "2637d3b7146b9e0fb301d2709dfd2a8951499a80f10e7b23f8fd124aba69aca1",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "mode": "I;16",
+      "source": "original procedural",
+      "generator": "scripts/build_material_assets.py",
+      "seed": 26,
+      "color_space": "raw",
+      "normal_convention": null,
+      "suggested_tile_width_m": 0.1
+    },
+    {
+      "path": "materials/coral/coral_normal_gl.png",
+      "bytes": 1707373,
+      "sha256": "c4704c2c143e3e1e64a3fcd3cf7567e0bf6e2649365de578161c764e0f760793",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "source": "original procedural",
+      "generator": "scripts/build_material_assets.py",
+      "seed": 26,
+      "color_space": "raw",
+      "normal_convention": "OpenGL +Y",
+      "suggested_tile_width_m": 0.1
+    },
+    {
+      "path": "materials/coral/coral_roughness.png",
+      "bytes": 538322,
+      "sha256": "16cd89c05c818cda7858bd7ea5a67ce4cdff4af5e5131a6729a34f861a20a97c",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "source": "original procedural",
+      "generator": "scripts/build_material_assets.py",
+      "seed": 26,
+      "color_space": "raw",
+      "normal_convention": null,
+      "suggested_tile_width_m": 0.1
+    },
+    {
+      "path": "materials/seabed/fine_sand_diffuse.jpg",
+      "bytes": 3353581,
+      "sha256": "538453033d28a64c671b89389a6ee904184af18d365adb5a15d5ea9e1eb5705b",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "sand_03",
+      "source_url": "https://polyhaven.com/a/sand_03",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sand_03/sand_03_diff_2k.jpg",
+      "author": "Charlotte Baglioni",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "sRGB",
+      "normal_convention": null
+    },
+    {
+      "path": "materials/seabed/fine_sand_normal_gl.jpg",
+      "bytes": 3654915,
+      "sha256": "ce870ef363010e0b96faa47f3fac47982cdbb40e3a59c0fe23fa64f587f54c7f",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "sand_03",
+      "source_url": "https://polyhaven.com/a/sand_03",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sand_03/sand_03_nor_gl_2k.jpg",
+      "author": "Charlotte Baglioni",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "raw",
+      "normal_convention": "OpenGL +Y"
+    },
+    {
+      "path": "materials/seabed/fine_sand_roughness.jpg",
+      "bytes": 1543849,
+      "sha256": "f42030a395cf54fee47e8d2f36c9c0d3600a61564c12f728497da3e21b17a381",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "L",
+      "source_asset": "sand_03",
+      "source_url": "https://polyhaven.com/a/sand_03",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sand_03/sand_03_rough_2k.jpg",
+      "author": "Charlotte Baglioni",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "raw",
+      "normal_convention": null
+    },
+    {
+      "path": "materials/seabed/rubble_diffuse.jpg",
+      "bytes": 2728909,
+      "sha256": "2905e2711da7e5945bd0e92d22277102c30d58388f9dd3719611c80646e03797",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "coral_ground_02",
+      "source_url": "https://polyhaven.com/a/coral_ground_02",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coral_ground_02/coral_ground_02_diff_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "sRGB",
+      "normal_convention": null
+    },
+    {
+      "path": "materials/seabed/rubble_normal_gl.jpg",
+      "bytes": 4453312,
+      "sha256": "9d97d761d7bae874cbda178c8d3d8ed22c8ac88b03754c58b3519e4ec8373e34",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "coral_ground_02",
+      "source_url": "https://polyhaven.com/a/coral_ground_02",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coral_ground_02/coral_ground_02_nor_gl_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "raw",
+      "normal_convention": "OpenGL +Y"
+    },
+    {
+      "path": "materials/seabed/rubble_roughness.jpg",
+      "bytes": 2127529,
+      "sha256": "1d648b8051d29238c92083710d0ede686113bbe98470054c477c42cd4649dea9",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "L",
+      "source_asset": "coral_ground_02",
+      "source_url": "https://polyhaven.com/a/coral_ground_02",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coral_ground_02/coral_ground_02_rough_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 2,
+      "color_space": "raw",
+      "normal_convention": null
+    },
+    {
+      "path": "materials/seabed/sand_diffuse.jpg",
+      "bytes": 457152,
+      "sha256": "1803d7e2861b304bea6d2e124dcd4c657fcb93843b84c17bb2db98ce48a87e4e",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "aerial_beach_01",
+      "source_url": "https://polyhaven.com/a/aerial_beach_01",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_diff_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 30,
+      "color_space": "sRGB",
+      "normal_convention": null
+    },
+    {
+      "path": "materials/seabed/sand_normal_gl.jpg",
+      "bytes": 863847,
+      "sha256": "0f35185b7225fe2027897bb7e4586c7deb048817524f1ed104fdae7ce80bdc06",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "RGB",
+      "source_asset": "aerial_beach_01",
+      "source_url": "https://polyhaven.com/a/aerial_beach_01",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_nor_gl_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 30,
+      "color_space": "raw",
+      "normal_convention": "OpenGL +Y"
+    },
+    {
+      "path": "materials/seabed/sand_roughness.jpg",
+      "bytes": 505596,
+      "sha256": "318b440c109de7411f9e7443f38ae3cf873f34e90afd762c931bae3b23426da2",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "mode": "L",
+      "source_asset": "aerial_beach_01",
+      "source_url": "https://polyhaven.com/a/aerial_beach_01",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_rough_2k.jpg",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "native_width_m": 30,
+      "color_space": "raw",
+      "normal_convention": null
+    }
+  ]
+}

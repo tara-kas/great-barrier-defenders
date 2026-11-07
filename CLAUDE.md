@@ -226,3 +226,5 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 - 2026-11-07: Physics simplified to zero gravity plus damping (section 5).
 - 2026-11-07: `run_mission` in `mission/` is the single entry point. `RobotInterface` stays frozen; `fragment_held` and `placement_verifier` are required arguments to `run_mission`.
 - 2026-11-07: No Claude attribution anywhere on GitHub (commits, PRs, comments). See section 8.
+
+- 2026-11-07 (`simulation` branch): Imported the standalone PELAGIC Isaac Sim 6.0.x / DGX Spark checkpoint under `sim/pelagic/`. Its demo collects from living donor reef and gates harvesting on recipient/donor UV approvals; it uses an analytical optical/registry proxy and an independent mission controller. It is not yet the team `RobotInterface` implementation. Keep integration differences explicit in `sim/README.md`; preserve existing mission/perception contracts. Offline recording is the validated workflow, with no camera streaming server.

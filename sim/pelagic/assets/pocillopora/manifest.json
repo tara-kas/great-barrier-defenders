@@ -1,0 +1,115 @@
+{
+  "asset": "pocillopora_damicornis",
+  "specimen": "USNM 46926",
+  "institution": "Smithsonian Institution, National Museum of Natural History, Invertebrate Zoology",
+  "published_name": "Pocillopora damicornis (Linnaeus, 1758)",
+  "record_id": "nmnhinvertebratezoology_957085",
+  "preparation": "Dry",
+  "locality": "Fernandina Island, Punta Esperoso, patch reef in lagoon, Galapagos Islands, Ecuador, South Pacific Ocean",
+  "license": "CC0-1.0",
+  "media_rights": "Official record identifies the 3D media as public domain, free of copyright restrictions.",
+  "record_url": "https://3d.si.edu/es/object/3d/pocillopora-damicornis%3Aae26ad01-e7be-4664-8a3a-b8bffd42a186",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "smithsonian_terms": "https://www.si.edu/openaccess/faq",
+  "source_url": "https://3d-api.si.edu/content/document/3d_package:ae26ad01-e7be-4664-8a3a-b8bffd42a186/USNM_46926-150k-1024-low.glb",
+  "voyager_url": "https://3d-api.si.edu/content/document/3d_package:ae26ad01-e7be-4664-8a3a-b8bffd42a186/scene.svx.json",
+  "preview_url": "https://3d-api.si.edu/content/document/3d_package:ae26ad01-e7be-4664-8a3a-b8bffd42a186/scene-image-medium.jpg",
+  "retrieved": "2026-11-07",
+  "source_triangles": 150000,
+  "derived_triangles": 19908,
+  "derived_vertices": 9952,
+  "source_radius_m": 0.059991662733775854,
+  "source_height_m": 0.06466388946034082,
+  "height_radius_ratio": 1.077881267390418,
+  "conversion": {
+    "trimesh": "5.2.0",
+    "DracoPy": "2.2.0",
+    "fast_simplification": "0.2.0",
+    "method": "weld coincident vertices; QEM target20000 agg7; remove degenerate triangles and isolated 2-4 triangle artefacts; keep connected whole colony",
+    "normalization": "sourceZup; centreXY; groundminimumZ0; normalizehorizontalradius1,height1; runtimepreservesoriginalaspectbydefault",
+    "trim": "none; no museum plinth found",
+    "uv_and_colour": "nearest source vertex UV and sampled original diffuse colour; original normal texture retained",
+    "normal_handling": "recompute smooth vertex normals; inverse-transpose coordinate normalization; source normal fallback for rare degenerate vertex normals"
+  },
+  "files": {
+    "convert_source.py": {
+      "bytes": 3406,
+      "sha256": "13fd91fbbf21d485edc67f77c1c6abe076ad89fac117e01e2c9185cb9d5e03d6"
+    },
+    "geometry-review.png": {
+      "bytes": 235833,
+      "sha256": "d4cca9c331ccf6e3433d8e6eeecafd430de9f5135c756023f0853fb0bb81d294"
+    },
+    "pocillopora_basecolor.jpg": {
+      "bytes": 329190,
+      "sha256": "0021119b10252acd2fb8e073403e745063440e57f4571a9be75ceed6d6912608"
+    },
+    "pocillopora_damicornis_20k.json.gz": {
+      "bytes": 480788,
+      "sha256": "c6563645a55cc8b05ff91955049c55bcf57555028e55fc5fa742b144ed46f24c"
+    },
+    "pocillopora_normal.png": {
+      "bytes": 2165832,
+      "sha256": "22a27558e29a48b81a542b4b0f092ee2f0d5bd3ace03fdb30c887fcca38e8141"
+    },
+    "source-preview.jpg": {
+      "bytes": 123196,
+      "sha256": "fa6121724d408f1deefe8855641ddeb5558d199830133f102e6ac8de7551620f"
+    },
+    "usnm_46926-source.glb": {
+      "bytes": 1272180,
+      "sha256": "0ccb9adf413b88a67b128768a6c62fbaa68394edf2f8f8bb8bbcc1e3a3719ed1"
+    },
+    "usnm_46926-voyager.json": {
+      "bytes": 4116,
+      "sha256": "7d16c6e634007e1d69222eea5a16db1415dc98296b0ffbb3566790f4f6161fda"
+    },
+    "convert_hero.py": {
+      "bytes": 2365,
+      "sha256": "2b73ce680086cfb6f9ac3755a15d0f3fe9bcc3d3b460ea88f2e351071ef81ee2"
+    },
+    "pocillopora_damicornis_hero.json.gz": {
+      "bytes": 3685140,
+      "sha256": "7df288a24e9df220bf59d672533938aed2237d9f2a9c1af93220238459864d68"
+    },
+    "pocillopora_occlusion.png": {
+      "bytes": 722250,
+      "sha256": "ecaad7031bbcb010c8007726e92aa02069620ad67a58606e33f4bb88faf7bbaf"
+    }
+  },
+  "validation": {
+    "result": "PASS",
+    "health_states": [
+      "healthy",
+      "bleached_alive",
+      "dead"
+    ],
+    "aspect_modes": [
+      true,
+      false
+    ],
+    "checks": [
+      "single_connected_component",
+      "valid_indices",
+      "finite_attributes",
+      "unit_normals",
+      "requested_bounds",
+      "preserved_natural_aspect",
+      "deterministic_replay",
+      "independent_returned_arrays",
+      "invalid_dimension_rejection"
+    ],
+    "source_dimensions": {
+      "radius": 0.059991662733775854,
+      "height": 0.06466388946034082,
+      "height_radius_ratio": 1.077881267390418,
+      "specimen": "USNM 46926"
+    }
+  },
+  "hero": {
+    "vertices": 90281,
+    "triangles": 150000,
+    "file": "pocillopora_damicornis_hero.json.gz",
+    "conversion": "Original geometry, normals and UV seams; no simplification or nearest-vertex UV transfer. Fallback unit normals only at degenerate source vertices."
+  }
+}

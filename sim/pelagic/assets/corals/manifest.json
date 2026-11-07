@@ -1,0 +1,53 @@
+{
+  "asset": "acropora_secale",
+  "title": "Acropora secale",
+  "specimen": "USNM 268",
+  "institution": "Smithsonian Institution, National Museum of Natural History, Invertebrate Zoology",
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "record_url": "https://3d.si.edu/es/object/3d/acropora-secale%3Acb2e1f4d-8eaa-454b-b61d-cc78b6b64b7b",
+  "source_url": "https://3d-api.si.edu/content/document/3d_package:cb2e1f4d-8eaa-454b-b61d-cc78b6b64b7b/usnm_268-150k-1024-low.glb",
+  "manifest_url": "https://3d-api.si.edu/content/document/3d_package:cb2e1f4d-8eaa-454b-b61d-cc78b6b64b7b/scene.svx.json",
+  "retrieved": "2026-11-07",
+  "source_triangles": 150000,
+  "derived_triangles": 14999,
+  "derived_vertices": 7443,
+  "conversion": {
+    "trimesh": "5.2.0",
+    "DracoPy": "2.2.0",
+    "fast_simplification": "0.2.0",
+    "target_count": 15000,
+    "agg": 7,
+    "up": "Z",
+    "normalization": "center XY; base Z0; radius1,height1",
+    "uv_color_transfer": "nearest source vertex",
+    "pedestal_trim": "Remove triangles with any source vertex below Z=.041m; removes museum plinth",
+    "merge_vertices": "weld coincident geometry before QEM"
+  },
+  "files": {
+    "acropora_secale_15k.json.gz": {
+      "bytes": 349594,
+      "sha256": "5f0421e2e69b7375b3903c456632ba29269694bb6805c621e274c462aa9e1e34"
+    },
+    "acropora_secale_basecolor.jpg": {
+      "bytes": 277699,
+      "sha256": "80df023f934c39eaf9db704134a2a72b00c5bce0b908f434943fea28a0ae3ffa"
+    },
+    "acropora_secale_normal.png": {
+      "bytes": 2173433,
+      "sha256": "8addce7e0eefb16b4d0da54296d22fc9dc34b33d71113ee8e7bcc511f8355a50"
+    },
+    "convert_source.py": {
+      "bytes": 2558,
+      "sha256": "df3f5453b131ab526775fbbc9eb6d1474193efebe40a8b32c56cb97afcb7736a"
+    },
+    "usnm_268-source.glb": {
+      "bytes": 1361484,
+      "sha256": "141d379617fadff6f2517faa99d8857f0f47e68c828a571d09f006662249a626"
+    },
+    "usnm_268-voyager.json": {
+      "bytes": 12712,
+      "sha256": "2d7c0a478618c452a0e2452c363137745b230e4bbf6e13a6567f8975837d6af3"
+    }
+  }
+}

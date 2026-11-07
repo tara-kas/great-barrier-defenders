@@ -48,3 +48,7 @@ docs/        Technical summary and supporting assets
 ## Setup
 
 See `SETUP.md` for environment setup and connecting to a remote Isaac Sim instance.
+
+## Isaac Sim checkpoint
+
+The `simulation` branch includes the offline DGX Spark simulator, bundled assets, configurations and tests under [`sim/pelagic/`](sim/pelagic/README.md). Start with [`sim/README.md`](sim/README.md) for run commands and the remaining integration work with the team mission stack.

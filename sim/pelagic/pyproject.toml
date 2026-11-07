@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pelagic-reefsim"
+version = "0.1.0"
+description = "Configurable underwater coral restoration missions for Isaac Sim 6.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+optics = ["numpy>=1.23", "Pillow>=9"]
+
+[project.scripts]
+reefsim = "reefsim.__main__:main"
+
+[tool.setuptools]
+packages = ["reefsim"]

@@ -1,0 +1,33 @@
+{
+  "seed": 26,
+  "world": {"width": 10, "length": 10, "depth": 8},
+  "water": {
+    "visibility": 3.8,
+    "turbidity": 0.48,
+    "current": [0.10, 0.035, 0.0],
+    "density": 1025,
+    "attenuation_rgb": [0.65, 0.19, 0.10],
+    "backscatter_rgb": [0.025, 0.15, 0.18]
+  },
+  "robot": {
+    "mass": 18,
+    "max_speed": 1.05,
+    "max_thrust": 38,
+    "survey_altitude": 1.65,
+    "working_altitude": 1.05,
+    "camera_half_fov_degrees": 58,
+    "attachment_position_tolerance": 0.16,
+    "attachment_speed_tolerance": 0.08,
+    "attachment_dwell": 2
+  },
+  "assumptions": {
+    "assistance": "Healthy donor cuttings assist bleached but living coral only. Dead coral is excluded. Placement beside a recipient is an engineering demonstration, with no instant biological recovery."
+  },
+  "donors": {"fragments_per_colony": 2, "max_fragments": 6},
+  "mission": {
+    "planting_sites": 4, "verification_dwell": 1,
+    "approach_duration": 2, "close_duration": 1.1, "detach_duration": 0.9,
+    "retract_duration": 1.7, "lower_duration": 2.4, "secure_duration": 1,
+    "open_duration": 1.3, "retreat_duration": 1.6
+  }
+}
