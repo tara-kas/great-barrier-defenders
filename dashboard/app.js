@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const state = { registry: [], decisions: [], detections: [], filter: 'ALL', selectedCluster: null, selectedDecision: null, paused: false, boxes: true, link: true, frameUpdated: null, lastPayload: null };
-const statusNames = { LIVE: 'Live', DEAD: 'Dead', BLEACHED: 'Bleached', RESTORED: 'Restored' };
-const colors = { LIVE: '#a6ddba', DEAD: '#eb8f83', BLEACHED: '#e6be80', RESTORED: '#77bdf0' };
+const statusNames = { LIVE: 'Live', DEAD: 'Dead', BLEACHED: 'Bleached', TREATED: 'Treated', RECOVERED: 'Recovered', NOT_RECOVERED: 'Not recovered' };
+const colors = { LIVE: '#a6ddba', DEAD: '#eb8f83', BLEACHED: '#e6be80', TREATED: '#77bdf0', RECOVERED: '#6fe0c8', NOT_RECOVERED: '#c7a4e8' };
 
 function safe(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
 function number(value, digits = 1) { return Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '—'; }
@@ -13,9 +13,9 @@ function renderMetrics() {
   const entries = state.registry;
   const count = (status) => entries.filter((entry) => entry.health_status === status).length;
   $('metric-clusters').textContent = entries.length;
-  $('metric-restored').textContent = count('RESTORED');
-  $('metric-attention').textContent = count('DEAD') + count('BLEACHED');
-  for (const status of ['LIVE','DEAD','BLEACHED','RESTORED']) $('count-' + status.toLowerCase()).textContent = count(status);
+  $('metric-treated').textContent = count('TREATED') + count('RECOVERED') + count('NOT_RECOVERED');
+  $('metric-attention').textContent = count('BLEACHED');
+  for (const status of ['LIVE','DEAD','BLEACHED','TREATED','RECOVERED','NOT_RECOVERED']) $('count-' + status.toLowerCase()).textContent = count(status);
   $('count-all').textContent = entries.length;
   const latest = state.decisions.at(-1);
   $('mission-phase').textContent = latest ? titleCase(latest.state) : 'Awaiting decisions';

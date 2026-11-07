@@ -1,0 +1,93 @@
+{
+  "seabed": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdfWGJ2YXN2Nk91alU3TThQNm96R3NBdxIXX1hidmFzdjZPdWpVN004UDZvekdzQXc",
+    "prompt": "Great Barrier Reef seabed of pale coral rubble, sand and bare rock. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 13.8,
+    "total_tokens": 1897
+  },
+  "pocillopora_live": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdfWGJ2YXBqVE00U3BrZFVQb19fb3VRdxIXX1hidmFwalRNNFNwa2RVUG9fX291UXc",
+    "prompt": "Close-up of a Pocillopora cauliflower coral colony with bushy, wart-covered branches, on the Great Barrier Reef. Healthy living tissue, rich brown and tan pigment. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 16.2,
+    "total_tokens": 2231
+  },
+  "pocillopora_bleached": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChZfWGJ2YXZ1X09QaXBuc0VQNjVtSUFREhZfWGJ2YXZ1X09QaXBuc0VQNjVtSUFR",
+    "prompt": "Close-up of a Pocillopora cauliflower coral colony with bushy, wart-covered branches, on the Great Barrier Reef. Bleached: bright white tissue, still intact and clean, with no algae. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 15.3,
+    "total_tokens": 1914
+  },
+  "pocillopora_dead": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdfWGJ2YXBueUs3ZmN4czBQeWRfdDJBSRIXX1hidmFwbnlLN2ZjeHMwUHlkX3QyQUk",
+    "prompt": "Close-up of a Pocillopora cauliflower coral colony with bushy, wart-covered branches, on the Great Barrier Reef. Dead: dull grey eroded skeleton covered in fuzzy green-brown algal turf. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 15.1,
+    "total_tokens": 2063
+  },
+  "acropora_branching_live": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdDbmZ2YXA2eEtZamF4czBQNXRmRnlBSRIXQ25mdmFwNnhLWWpheHMwUDV0ZkZ5QUk",
+    "prompt": "Close-up of a staghorn Acropora colony with many slender branches, on the Great Barrier Reef. Healthy living tissue, rich brown and tan pigment. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 14.4,
+    "total_tokens": 2182
+  },
+  "acropora_branching_bleached": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdDM2Z2YXZUNE44enV4czBQNmZ1ODhRTRIXQzNmdmF2VDROOHp1eHMwUDZmdTg4UU0",
+    "prompt": "Close-up of a staghorn Acropora colony with many slender branches, on the Great Barrier Reef. Bleached: bright white tissue, still intact and clean, with no algae. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 16.1,
+    "total_tokens": 2542
+  },
+  "acropora_branching_dead": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdESGZ2YXF5T0NMV00yOG9QcU1pUm9RNBIXREhmdmFxeU9DTFdNMjhvUHFNaVJvUTQ",
+    "prompt": "Close-up of a staghorn Acropora colony with many slender branches, on the Great Barrier Reef. Dead: dull grey eroded skeleton covered in fuzzy green-brown algal turf. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 16.9,
+    "total_tokens": 2427
+  },
+  "acropora_table_live": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChZEWGZ2YXF1OUJabTZ2ZElQaDZhdldBEhZEWGZ2YXF1OUJabTZ2ZElQaDZhdldB",
+    "prompt": "Close-up of a flat table Acropora colony with a fine plate surface, on the Great Barrier Reef. Healthy living tissue, rich brown and tan pigment. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 15.9,
+    "total_tokens": 2607
+  },
+  "acropora_table_bleached": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdHWGZ2YXJxdUJiTDVuc0VQLXRTMnNRdxIXR1hmdmFycXVCYkw1bnNFUC10UzJzUXc",
+    "prompt": "Close-up of a flat table Acropora colony with a fine plate surface, on the Great Barrier Reef. Bleached: bright white tissue, still intact and clean, with no algae. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 16.2,
+    "total_tokens": 2675
+  },
+  "acropora_table_dead": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChZISGZ2YXAtaEFlRFB2ZElQM092WVdREhZISGZ2YXAtaEFlRFB2ZElQM092WVdR",
+    "prompt": "Close-up of a flat table Acropora colony with a fine plate surface, on the Great Barrier Reef. Dead: dull grey eroded skeleton covered in fuzzy green-brown algal turf. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 12.7,
+    "total_tokens": 2037
+  },
+  "massive_meandering_live": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChZISGZ2YXZIa045X3d2ZElQNnNlSWFREhZISGZ2YXZIa045X3d2ZElQNnNlSWFR",
+    "prompt": "Close-up of a massive brain coral boulder with meandering ridges, on the Great Barrier Reef. Healthy living tissue, rich brown and tan pigment. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 14.5,
+    "total_tokens": 2176
+  },
+  "massive_meandering_bleached": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdIWGZ2YXNfcEFxeXIzYm9QbVBTdDhRRRIXSFhmdmFzX3BBcXlyM2JvUG1QU3Q4UUU",
+    "prompt": "Close-up of a massive brain coral boulder with meandering ridges, on the Great Barrier Reef. Bleached: bright white tissue, still intact and clean, with no algae. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 12.8,
+    "total_tokens": 2055
+  },
+  "massive_meandering_dead": {
+    "model": "gemini-nano-banana-2.1",
+    "interaction_id": "v1_ChdLSGZ2YXV1UUw0djh2ZElQbzR1Ym9RTRIXS0hmdmF1dVFMNHY4dmRJUG80dWJvUU0",
+    "prompt": "Close-up of a massive brain coral boulder with meandering ridges, on the Great Barrier Reef. Dead: dull grey eroded skeleton covered in fuzzy green-brown algal turf. Photorealistic underwater photo looking straight down from directly above, the subject filling the whole square frame edge to edge, soft even light, no fish, no divers, no text or watermark.",
+    "latency_s": 15.8,
+    "total_tokens": 2253
+  }
+}

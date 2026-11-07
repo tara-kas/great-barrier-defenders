@@ -5,7 +5,7 @@ dashboard all read/write. Schema matches the spec PDF section 5.1 exactly.
 from dataclasses import asdict, dataclass
 from typing import Literal, Optional
 
-HealthStatus = Literal["LIVE", "DEAD", "BLEACHED", "RESTORED"]
+HealthStatus = Literal["LIVE", "DEAD", "BLEACHED", "TREATED", "RECOVERED", "NOT_RECOVERED"]
 
 
 @dataclass
@@ -24,7 +24,9 @@ class SemanticMapEntry:
     position_world: tuple[float, float, float]
     bounding_box_extent: tuple[float, float, float]
     optimal_graft_pose_world: Optional[GraftPose] = None
-    sampled_or_restored: bool = False
+    sampled_or_restored: bool = False  # the mission has acted on this colony
+    genet_id: Optional[str] = None  # set only by a confident UV match
+    uv_signature: Optional[tuple[float, float, float]] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

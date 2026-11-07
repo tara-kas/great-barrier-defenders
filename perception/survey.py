@@ -69,6 +69,13 @@ class SurveyResult:
         }
 
 
+def _touches_frame_edge(box_xyxy: tuple[int, int, int, int], frame: RGBDFrame, margin: int = 2) -> bool:
+    """A box at the frame edge shows part of a colony, so its size and centre are wrong."""
+    height, width = np.asarray(frame.rgb).shape[:2]
+    x0, y0, x1, y1 = box_xyxy
+    return x0 <= margin or y0 <= margin or x1 >= width - margin or y1 >= height - margin
+
+
 class Surveyor:
     def __init__(
         self,
@@ -86,6 +93,8 @@ class Surveyor:
         # Confidence of the classification currently stored per cluster, so a
         # blurrier later view does not overwrite a clearer earlier one.
         self._confidence: dict[str, float] = {}
+        # Clusters whose stored position came from a view cut off by the frame edge.
+        self._clipped: dict[str, bool] = {}
 
     def _next_cluster_id(self) -> str:
         nums = [int(m.group(1)) for e in self.registry.all() if (m := re.fullmatch(r"cluster_(\d+)", e.cluster_id))]
@@ -122,14 +131,21 @@ class Surveyor:
                 classification=cls, projection=proj,
             )
 
+        clipped = _touches_frame_edge(det.box_xyxy, frame)
         existing = self._nearest(proj.position_world)
         if existing is not None:
-            if existing.sampled_or_restored or existing.health_status == "RESTORED":
+            if existing.sampled_or_restored:
                 return Observation(
                     det, "kept", "matches an entry the mission already acted on",
                     cluster_id=existing.cluster_id, classification=cls, projection=proj,
                 )
-            if cls.confidence < self._confidence.get(existing.cluster_id, 0.0):
+            if clipped and not self._clipped.get(existing.cluster_id, False):
+                return Observation(
+                    det, "kept", "this view is cut off by the frame edge; an earlier one is complete",
+                    cluster_id=existing.cluster_id, classification=cls, projection=proj,
+                )
+            was_clipped = self._clipped.get(existing.cluster_id, False)
+            if cls.confidence < self._confidence.get(existing.cluster_id, 0.0) and not (was_clipped and not clipped):
                 return Observation(
                     det, "kept", "earlier view of this cluster was more confident",
                     cluster_id=existing.cluster_id, classification=cls, projection=proj,
@@ -150,6 +166,7 @@ class Surveyor:
             )
         )
         self._confidence[cid] = cls.confidence
+        self._clipped[cid] = clipped
         return Observation(det, action, reason, cluster_id=cid, classification=cls, projection=proj)  # type: ignore[arg-type]
 
     def survey_frame(self, frame: RGBDFrame, pose: Pose) -> SurveyResult:

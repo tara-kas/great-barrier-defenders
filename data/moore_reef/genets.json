@@ -1,0 +1,65 @@
+{
+  "PD-01": {
+    "species_class": "pocillopora",
+    "signature": [
+      0.1,
+      0.7,
+      0.2
+    ],
+    "stock": 6
+  },
+  "PD-02": {
+    "species_class": "pocillopora",
+    "signature": [
+      0.12,
+      0.3,
+      0.58
+    ],
+    "stock": 4
+  },
+  "AB-01": {
+    "species_class": "acropora_branching",
+    "signature": [
+      0.55,
+      0.35,
+      0.1
+    ],
+    "stock": 5
+  },
+  "AB-02": {
+    "species_class": "acropora_branching",
+    "signature": [
+      0.18,
+      0.62,
+      0.2
+    ],
+    "stock": 0
+  },
+  "AT-01": {
+    "species_class": "acropora_table",
+    "signature": [
+      0.4,
+      0.45,
+      0.15
+    ],
+    "stock": 3
+  },
+  "MM-01": {
+    "species_class": "massive_meandering",
+    "signature": [
+      0.08,
+      0.22,
+      0.7
+    ],
+    "stock": 3
+  },
+  "MM-02": {
+    "species_class": "massive_meandering",
+    "signature": [
+      0.3,
+      0.3,
+      0.4
+    ],
+    "stock": 0
+  }
+}

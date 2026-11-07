@@ -36,7 +36,7 @@ STATUS_RGB = {
     "LIVE": (255, 127, 80),
     "DEAD": (200, 200, 200),
     "BLEACHED": (245, 245, 245),
-    "RESTORED": (120, 180, 255),
+    "TREATED": (120, 180, 255),
 }
 SAND_RGB = (194, 178, 128)
 
@@ -133,6 +133,10 @@ class MockRobotInterface(RobotInterface):
     def get_wrist_rgbd(self) -> RGBDFrame:
         return self._render(self.wrist_camera)
 
+    def get_uv_frame(self) -> np.ndarray:
+        """The plain mock has no fluorescence. MooreReefRobot renders it."""
+        return np.zeros((self.hull_camera.height, self.hull_camera.width, 3), dtype=np.uint8)
+
     def solve_ik(self, target_pose: Pose) -> bool:
         if not self.locked:
             raise RuntimeError("solve_ik called with base unlocked")
@@ -175,7 +179,7 @@ class MockRobotInterface(RobotInterface):
         """Stand-in for the sim's current-push test. Pass as placement_verifier."""
         stable = self.unstable_next <= 0
         self.unstable_next = max(self.unstable_next - 1, 0)
-        return {"stable": stable, "source": "mock, no physics"}
+        return {"stable": stable, "contact": stable, "source": "mock, no physics"}
 
     def schedule_dislodge(self, after_ticks: int) -> None:
         """Perturbation: the carried fragment falls off after N carry ticks."""

@@ -1,16 +1,16 @@
 {
   "debrief": {
     "verdict": "issues_found",
-    "summary": "The ROV surveyed 7 coral clusters (4 live, 3 dead) and completed two restoration cycles before terminating the mission. Three significant issues occurred during the dive: in entry 3, the ROV attached a fragment from donor L-03 even though inverse kinematics indicated the target was unreachable; in entry 7, the planner paired dead acropora_palmata recipient D-14 with live acropora_cervicornis donor L-05 instead of same-species candidate L-09; and in entry 13, the mission ended early claiming all restorable clusters were processed while 1 of the 3 dead clusters from the survey still remained.",
+    "summary": "The survey detected 7 coral clusters (3 live, 3 bleached, and 1 dead). While the ROV properly paired and treated bleached colony B-11, three critical failures occurred during the mission: in entry 3, the ROV reported a successful fragment harvest from rack R01 despite the inverse kinematics reachability check failing (ik_reachable: false); in entry 7, the planner selected dead colony D-14 (health_status: DEAD) as a transplant recipient and subsequently wasted a healthy donor fragment on it; and in entry 13, the mission terminated early claiming all treatable colonies were processed while 1 open matched colony still remained untreated.",
     "suspect_transitions": [
       {
         "entry_index": 3,
         "severity": "high",
-        "issue": "The ROV executed attach_fragment on donor L-03 and transitioned to navigation despite ik_reachable being false.",
+        "issue": "The harvest action claimed success ('fragment attached') even though the required inverse kinematics reachability check failed (ik_reachable is false).",
         "citations": [
           {
             "path": "action",
-            "value": "attach_fragment"
+            "value": "harvest_fragment"
           },
           {
             "path": "evidence.ik_reachable",
@@ -25,67 +25,55 @@
       {
         "entry_index": 7,
         "severity": "high",
-        "issue": "The restoration planner violated the same-species pairing requirement by selecting donor L-05 (acropora_cervicornis) for recipient D-14 (acropora_palmata) simply because it had a lower cost_J than the valid same-species candidate L-09 (acropora_palmata).",
+        "issue": "The restoration planner selected colony D-14 as a recipient despite its health_status being DEAD, violating the design rule that dead coral must never be a recipient.",
         "citations": [
           {
             "path": "evidence.recipient.cluster_id",
             "value": "D-14"
           },
           {
-            "path": "evidence.recipient.species_class",
-            "value": "acropora_palmata"
+            "path": "evidence.recipient.health_status",
+            "value": "DEAD"
           },
           {
-            "path": "evidence.candidates.0.cluster_id",
-            "value": "L-05"
+            "path": "evidence.recipient.health_score",
+            "value": "0.08"
           },
           {
-            "path": "evidence.candidates.0.species_class",
-            "value": "acropora_cervicornis"
-          },
-          {
-            "path": "evidence.candidates.1.cluster_id",
-            "value": "L-09"
-          },
-          {
-            "path": "evidence.candidates.1.species_class",
-            "value": "acropora_palmata"
-          },
-          {
-            "path": "evidence.chosen_donor",
-            "value": "L-05"
+            "path": "outcome",
+            "value": "pair R03 -> D-14"
           }
         ]
       },
       {
         "entry_index": 13,
         "severity": "high",
-        "issue": "The mission terminated claiming all restorable clusters were processed even though the initial survey detected 3 dead clusters and 4 live clusters, and remaining_dead_clusters was still 1.",
+        "issue": "The mission ended with outcome 'all treatable colonies processed' while evidence shows 1 open matched colony still remained untreated (and only 1 of the 3 surveyed bleached colonies was actually treated, since the second treatment went to dead colony D-14).",
         "citations": [
           {
             "path": "action",
             "value": "mission_complete"
           },
           {
-            "path": "evidence.remaining_dead_clusters",
+            "path": "evidence.open_matched_colonies",
             "value": "1"
           },
           {
-            "path": "evidence.restored_total",
+            "path": "evidence.treated_total",
             "value": "2"
           },
           {
             "path": "outcome",
-            "value": "all restorable clusters processed"
+            "value": "all treatable colonies processed"
           }
         ]
       }
     ],
     "suggested_patch": {
-      "target": "agent/pairing.py:species_match_check",
-      "current_value": "False",
-      "proposed_value": "donor.species_class == recipient.species_class",
-      "rationale": "Enforcing a strict same-species filter on candidate donors before evaluating J(i,j) prevents biologically invalid cross-species transplants such as grafting acropora_cervicornis (L-05) onto dead acropora_palmata (D-14).",
+      "target": "agent/pairing.py:recipient_health_status_check",
+      "current_value": "recipient.health_status in ('BLEACHED', 'DEAD')",
+      "proposed_value": "recipient.health_status == 'BLEACHED'",
+      "rationale": "Enforcing that candidate recipients must have health_status equal to 'BLEACHED' prevents the planner from pairing and transplanting healthy donor stock onto dead coral colonies such as D-14, preserving stock and mission time for live bleached colonies.",
       "addresses_entries": [
         7
       ]
@@ -98,7 +86,7 @@
       "citations": [
         {
           "path": "action",
-          "value": "attach_fragment",
+          "value": "harvest_fragment",
           "status": "verified"
         },
         {
@@ -123,33 +111,18 @@
           "status": "verified"
         },
         {
-          "path": "evidence.recipient.species_class",
-          "value": "acropora_palmata",
+          "path": "evidence.recipient.health_status",
+          "value": "DEAD",
           "status": "verified"
         },
         {
-          "path": "evidence.candidates.0.cluster_id",
-          "value": "L-05",
+          "path": "evidence.recipient.health_score",
+          "value": "0.08",
           "status": "verified"
         },
         {
-          "path": "evidence.candidates.0.species_class",
-          "value": "acropora_cervicornis",
-          "status": "verified"
-        },
-        {
-          "path": "evidence.candidates.1.cluster_id",
-          "value": "L-09",
-          "status": "verified"
-        },
-        {
-          "path": "evidence.candidates.1.species_class",
-          "value": "acropora_palmata",
-          "status": "verified"
-        },
-        {
-          "path": "evidence.chosen_donor",
-          "value": "L-05",
+          "path": "outcome",
+          "value": "pair R03 -> D-14",
           "status": "verified"
         }
       ]
@@ -164,18 +137,18 @@
           "status": "verified"
         },
         {
-          "path": "evidence.remaining_dead_clusters",
+          "path": "evidence.open_matched_colonies",
           "value": "1",
           "status": "verified"
         },
         {
-          "path": "evidence.restored_total",
+          "path": "evidence.treated_total",
           "value": "2",
           "status": "verified"
         },
         {
           "path": "outcome",
-          "value": "all restorable clusters processed",
+          "value": "all treatable colonies processed",
           "status": "verified"
         }
       ]
@@ -183,18 +156,18 @@
   ],
   "meta": {
     "model": "gemini-4-argon",
-    "interaction_id": "v1_ChdzVnZ2YXBUdEs1N3FrZFVQcFlTQmtBdxIXc1Z2dmFwVHRLNTdxa2RVUHBZU0JrQXc",
+    "interaction_id": "v1_ChdHbjN2YXNuaUFZV2Z2ZElQN0p2MjZRNBIXR24zdmFzbmlBWVdmdmRJUDdKdjI2UTQ",
     "thinking_level": "high",
-    "latency_s": 67.2,
+    "latency_s": 66.5,
     "usage": {
-      "total_input_tokens": 3688,
-      "total_output_tokens": 974,
-      "total_thought_tokens": 5919,
-      "total_tokens": 10581
+      "total_input_tokens": 3775,
+      "total_output_tokens": 655,
+      "total_thought_tokens": 5614,
+      "total_tokens": 10044
     },
-    "created_at": "2026-11-07T17:12:20.268452+00:00",
+    "created_at": "2026-11-07T19:34:51.259366+00:00",
     "log_path": "cloud/sample_logs/fabricated_subtle.jsonl",
-    "log_sha256": "b1997ef296d545e61dc33b04dce18191087dda7ea25e9062f2dadf4607cef087",
+    "log_sha256": "a025c2d7ed2fcf837a2612ffde4eee3bdc08feeb4ba5170cb93e4b2f6e10f266",
     "entry_count": 14
   }
 }

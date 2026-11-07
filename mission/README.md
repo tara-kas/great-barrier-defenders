@@ -10,15 +10,20 @@ from mission.runner import run_mission
 summary = run_mission(
     robot,                                # a RobotInterface
     GemmaClient(),
+    base_station=BaseStation.load("data/moore_reef/base_station.json"),
+    genet_library=library,                # list of GenetRecord
     wait=sim_step,                        # advances sim time between control ticks
     fragment_held=gripper_has_fragment,   # () -> bool
-    placement_verifier=push_test,         # (Pose) -> {"stable": bool, ...}
+    placement_verifier=push_test,         # (Pose) -> {"stable": bool, "contact": bool, ...}
     out_dir="eval/runs/take1",
     on_step=director,                     # optional, runs between FSM steps
+    revisit_observer=observe,             # optional, (entry, day) -> what a return visit finds
 )
 ```
 
 **Safeguards.** It refuses to start without `fragment_held` and `placement_verifier`, unless you pass `allow_unverified=True`. It refuses a Gemma endpoint that isn't on this machine, unless you pass `allow_remote_perception=True`, which is for development only.
+
+**Genets.** After each survey frame, bleached colonies get a UV reading from `robot.get_uv_frame()`. The reading from the fullest view is kept and matched to the library, and the match is logged per observation.
 
 **Perception failures.** A frame that could not be processed is logged as `survey_waypoint_failed`. Three in a row abort the mission (`FSMConfig.max_perception_failures`). A frame that processed fine and shows no coral is not a failure.
 

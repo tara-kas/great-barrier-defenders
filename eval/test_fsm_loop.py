@@ -21,21 +21,21 @@ import json  # noqa: E402
 import numpy as np  # noqa: E402
 import pytest  # noqa: E402
 
-from agent.config import FSMConfig, PairingWeights  # noqa: E402
+from agent.config import FSMConfig  # noqa: E402
 from agent.decision_log import DecisionLog  # noqa: E402
 from agent.fsm import MissionFSM, MissionState  # noqa: E402
-from agent.pairing import nearest_donor_baseline, plan_pairs  # noqa: E402
 from eval.mock_robot import MockRobotInterface  # noqa: E402
 from eval.synthetic_scene import SyntheticScene, generate_scene  # noqa: E402
 from perception.registry import SemanticSeabedRegistry  # noqa: E402
 
 
-def make_mission(scene: SyntheticScene, *, survey: bool = False, config: FSMConfig = FSMConfig()):
+def make_mission(scene: SyntheticScene, *, survey: bool = False, config: FSMConfig = FSMConfig(), station=None):
     robot = MockRobotInterface(scene)
     registry = SemanticSeabedRegistry() if survey else scene.registry()
     fsm = MissionFSM(
         robot,
         registry,
+        base_station=station or scene.base_station(),
         config=config,
         wait=robot.advance,
         perceiver=robot.perceiver() if survey else None,
@@ -86,25 +86,27 @@ def test_scene_matches_spec(scene):
         assert 0 <= e.position_world[0] <= 10 and 0 <= e.position_world[1] <= 10
 
 
-def test_every_dead_cluster_restored(scene, tmp_path):
+def test_every_bleached_colony_treated(scene, tmp_path):
     fsm, robot, registry = make_mission(scene)
-    dead = set(scene.ids("DEAD"))
+    bleached = set(scene.ids("BLEACHED"))
     summary = fsm.run()
 
     assert summary.final_state == MissionState.MISSION_COMPLETE.value
-    assert set(summary.restored) == dead
-    assert summary.unrestorable == {}
-    for cid in dead:
+    assert set(summary.treated) == bleached
+    assert summary.skipped == {}
+    for cid in bleached:
         e = registry.get(cid)
-        assert e.health_status == "RESTORED" and e.sampled_or_restored
+        assert e.health_status == "TREATED" and e.sampled_or_restored
         assert e.optimal_graft_pose_world is not None
-    # Bleached (alive, may recover) clusters are left alone.
-    for cid in scene.ids("BLEACHED"):
-        assert registry.get(cid).health_status == "BLEACHED"
+    # Dead and healthy colonies are never touched.
+    for status in ("DEAD", "LIVE"):
+        for cid in scene.ids(status):
+            assert registry.get(cid).health_status == status
+            assert not registry.get(cid).sampled_or_restored
 
-    # Each fragment was placed on top of its recipient structure.
-    assert len(robot.placements) == len(dead)
-    restored_by_pose = {registry.get(c).optimal_graft_pose_world.position: c for c in dead}
+    # Each fragment was placed on top of its colony.
+    assert len(robot.placements) == len(bleached)
+    restored_by_pose = {registry.get(c).optimal_graft_pose_world.position: c for c in bleached}
     for _, pose in robot.placements:
         e = registry.get(restored_by_pose[pose.position])
         top = e.position_world[2] + e.bounding_box_extent[2] / 2
@@ -115,7 +117,7 @@ def test_every_dead_cluster_restored(scene, tmp_path):
     assert_log_well_formed(fsm.log)
     a = actions(fsm.log)
     assert a[0] == "mission_start" and a[-1] == "mission_complete"
-    assert a.count("transplant_fragment") == len(dead)
+    assert a.count("transplant_fragment") == len(bleached)
 
     path = tmp_path / "log.jsonl"
     fsm.log.save(str(path))
@@ -146,7 +148,7 @@ def test_survey_with_perceiver_builds_registry_then_restores(scene):
     summary = fsm.run()
     assert summary.final_state == "MISSION_COMPLETE"
     assert {e.cluster_id for e in registry.all()} == {e.cluster_id for e in scene.entries}
-    assert set(summary.restored) == set(scene.ids("DEAD"))
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
     assert "survey_waypoint" in actions(fsm.log) and "survey_complete" in actions(fsm.log)
     assert_log_well_formed(fsm.log)
 
@@ -165,7 +167,7 @@ def test_unseeded_live_scene_runs():
     fsm, _, _ = make_mission(scene)
     summary = fsm.run()
     assert summary.final_state == "MISSION_COMPLETE"
-    assert set(summary.restored) == set(scene.ids("DEAD"))
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
 
 
 # ----------------------------------------------------- adaptation / failures
@@ -183,7 +185,7 @@ def test_fragment_dislodged_mid_carry_is_reacquired(scene):
     summary = fsm.run(on_step=director)
     assert fired
     assert summary.final_state == "MISSION_COMPLETE"
-    assert set(summary.restored) == set(scene.ids("DEAD"))
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
     assert summary.memory["dislodge_events"] == 1
     a = actions(fsm.log)
     i = a.index("fragment_dislodged")
@@ -194,68 +196,137 @@ def test_fragment_dislodged_mid_carry_is_reacquired(scene):
     assert_log_well_formed(fsm.log)
 
 
-def test_new_dead_cluster_mid_mission_is_restored(scene):
+def test_new_bleached_colony_mid_mission_is_treated(scene):
     fsm, robot, registry = make_mission(scene)
-    species = scene.entries[0].species_class
+    known = registry.get(scene.ids("BLEACHED")[0])
     added = []
 
     def director(f: MissionFSM) -> None:
         if not added and "transplant_fragment" in actions(f.log):
-            e = scene.add_cluster("cluster_new", species, "DEAD", 0.05, free_spot(scene))
+            e = scene.add_cluster("cluster_new", known.species_class, "BLEACHED", 0.4, free_spot(scene), genet_id=known.genet_id)
             registry.upsert(e)
             added.append(e.cluster_id)
 
     summary = fsm.run(on_step=director)
     assert added
-    assert "cluster_new" in summary.restored
-    assert set(summary.restored) == set(scene.ids("DEAD"))
+    assert "cluster_new" in summary.treated
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
 
 
-def test_ik_failure_falls_through_to_next_donor(scene):
-    fsm, robot, registry = make_mission(scene)
+def test_one_ik_failure_at_the_rack_is_retried(scene):
+    fsm, robot, _ = make_mission(scene)
     robot.ik_fail_next = 1
+    summary = fsm.run()
+    assert "abstain_harvest" not in actions(fsm.log)
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
+
+
+def test_rack_that_stays_unreachable_is_rejected(scene):
+    fsm, robot, _ = make_mission(scene)
+    robot.ik_fail_next = 2
     summary = fsm.run()
     a = actions(fsm.log)
     i = a.index("abstain_harvest")
-    ev = fsm.log.entries[i].evidence
-    assert ev["ik_results"][0]["reachable"] is False
+    assert [r["reachable"] for r in fsm.log.entries[i].evidence["ik_results"]] == [False, False]
     assert "IK unreachable" in fsm.log.entries[i].outcome
     assert summary.memory["donor_rejections"]
-    assert a[i + 1] == "select_pair"
+    assert a[i + 1] in ("select_pair", "mission_complete")
     assert summary.final_state == "MISSION_COMPLETE"
-    assert set(summary.restored) == set(scene.ids("DEAD"))
+    assert all("rejected" in reason for reason in summary.skipped.values())
 
 
 def test_unsuitable_site_is_rejected_and_remembered(scene):
-    target = scene.ids("DEAD")[0]
+    target = scene.ids("BLEACHED")[0]
     scene.make_pillar(target)
     fsm, robot, registry = make_mission(scene)
     summary = fsm.run()
     assert summary.final_state == "MISSION_COMPLETE"
-    assert target in summary.unrestorable
-    assert "patch" in summary.unrestorable[target] or "points" in summary.unrestorable[target]
-    assert set(summary.restored) == set(scene.ids("DEAD")) - {target}
+    assert target in summary.skipped
+    assert "patch" in summary.skipped[target] or "points" in summary.skipped[target]
+    assert set(summary.treated) == set(scene.ids("BLEACHED")) - {target}
     # Never retried after rejection.
     assert sum(1 for e in fsm.log.entries if e.action == "abstain_transplant") == 1
-    assert robot.holding is None  # carried fragment went to another recipient or back to the donor
+    assert robot.holding is None  # carried fragment went to another colony or back to the station
 
 
-def test_species_without_donor_is_reported_unrestorable(scene):
-    scene.add_cluster("orphan", "species_without_donor", "DEAD", 0.02, free_spot(scene))
-    fsm, _, _ = make_mission(scene)
+def test_genet_not_in_stock_is_skipped(scene):
+    station = scene.base_station()
+    scene.add_cluster("orphan", "species_x", "BLEACHED", 0.3, free_spot(scene), genet_id="unstocked")
+    fsm, _, _ = make_mission(scene, station=station)
     summary = fsm.run()
     assert summary.final_state == "MISSION_COMPLETE"
-    assert "no eligible LIVE donor" in summary.unrestorable["orphan"]
+    assert "not in stock" in summary.skipped["orphan"]
+
+
+def test_colony_without_a_genet_match_is_never_touched(scene):
+    scene.add_cluster("unknown", "species_x", "BLEACHED", 0.3, free_spot(scene))
+    fsm, robot, registry = make_mission(scene)
+    summary = fsm.run()
+    assert summary.skipped["unknown"] == "no confident UV genet match"
+    assert registry.get("unknown").health_status == "BLEACHED"
+
+
+def test_dead_colonies_are_reported_as_ignored(scene):
+    fsm, _, _ = make_mission(scene)
+    fsm.run()
+    assert set(fsm.log.entries[-1].evidence["ignored_dead"]) == set(scene.ids("DEAD"))
+
+
+def test_stock_runs_out_and_later_colonies_are_skipped(scene):
+    registry_entries = [e for e in scene.entries if e.genet_id]
+    genet = registry_entries[0].genet_id
+    same = [e.cluster_id for e in registry_entries if e.genet_id == genet]
+    assert len(same) >= 2
+    station = scene.base_station()
+    while station.available(genet) > 1:
+        station.take(genet)
+    fsm, _, _ = make_mission(scene, station=station)
+    summary = fsm.run()
+    assert station.available(genet) == 0
+    assert sum(cid in summary.treated for cid in same) == 1
+    assert sum("not in stock" in summary.skipped.get(cid, "") for cid in same) == len(same) - 1
+
+
+def test_lost_contact_fails_the_push_test(scene):
+    fsm, robot, registry = make_mission(scene)
+    fsm.placement_verifier = lambda pose: {"stable": True, "contact": False}
+    summary = fsm.run()
+    assert summary.treated == []
+    assert "placement_unstable" in actions(fsm.log)
+    assert all(registry.get(c).health_status == "BLEACHED" for c in scene.ids("BLEACHED"))
+
+
+@pytest.mark.parametrize("day,observation,expected", [
+    (7, {"contact_maintained": True, "symbiont_density_pct_of_healthy": 45}, "TREATED"),
+    (7, {"contact_maintained": False, "symbiont_density_pct_of_healthy": 2}, "NOT_RECOVERED"),
+    (56, {"contact_maintained": True, "symbiont_density_pct_of_healthy": 95}, "RECOVERED"),
+    (56, {"contact_maintained": True, "symbiont_density_pct_of_healthy": 5}, "NOT_RECOVERED"),
+])
+def test_return_visit_decisions(scene, day, observation, expected):
+    fsm, _, registry = make_mission(scene)
+    fsm.run()
+    results = fsm.revisit(day, lambda entry, d: observation)
+    assert set(results) == set(scene.ids("BLEACHED"))
+    assert set(results.values()) == {expected}
+    assert registry.get(scene.ids("BLEACHED")[0]).health_status == expected
+    assert_log_well_formed(fsm.log)
+
+
+def test_return_visit_skips_colonies_already_decided(scene):
+    fsm, _, _ = make_mission(scene)
+    fsm.run()
+    fsm.revisit(7, lambda entry, d: {"contact_maintained": False})
+    assert fsm.revisit(56, lambda entry, d: {"contact_maintained": True}) == {}
 
 
 def test_weak_donor_abstention(scene):
     cfg = FSMConfig(min_donor_health=0.99)  # every donor below threshold
     fsm, robot, _ = make_mission(scene, config=cfg)
     summary = fsm.run()
-    assert summary.restored == []
+    assert summary.treated == []
     assert robot.ticks == 0  # never moved
     ev = fsm.log.entries[-1].evidence
-    assert ev["skipped_donors"] and all("health_score" in s["reason"] for s in ev["skipped_donors"])
+    assert ev["skipped"] and all("health_score" in s["reason"] for s in ev["skipped"])
 
 
 def test_patched_weights_still_pass(scene):
@@ -263,14 +334,7 @@ def test_patched_weights_still_pass(scene):
     patched = FSMConfig.from_dict({**FSMConfig().to_dict(), "weights": {"w1": 1.0, "w2": 1.5, "w3": 4.0}})
     fsm, _, _ = make_mission(scene, config=patched)
     summary = fsm.run()
-    assert set(summary.restored) == set(scene.ids("DEAD"))
-
-
-def test_optimiser_never_worse_than_nearest_donor_baseline(scene):
-    rov = (0.0, 0.0, 2.0)
-    plan = {p.recipient_id: p.cost.J for p in plan_pairs(scene.entries, rov, PairingWeights()).pairings}
-    for b in nearest_donor_baseline(scene.entries, rov):
-        assert plan[b.recipient_id] <= b.J + 1e-9
+    assert set(summary.treated) == set(scene.ids("BLEACHED"))
 
 
 # ------------------------------------------------------------ sample output
@@ -280,8 +344,9 @@ def run_showcase(seed: int = 0):
     """Survey + one unsuitable site + one dislodge mid-carry: the sample log
     handed to the dashboard and cloud-debrief branches."""
     scene = generate_scene(seed=seed)
-    scene.make_pillar(scene.ids("DEAD")[-1])
+    scene.make_pillar(scene.ids("BLEACHED")[-1])
     fsm, robot, registry = make_mission(scene, survey=True)
+    fsm.placement_verifier = robot.verify_placement
     fired = []
 
     def director(f: MissionFSM) -> None:
@@ -297,7 +362,7 @@ def test_showcase_run():
     fsm, _, summary = run_showcase()
     assert summary.final_state == "MISSION_COMPLETE"
     assert summary.memory["dislodge_events"] == 1
-    assert len(summary.unrestorable) == 1
+    assert len(summary.skipped) == 1
     assert_log_well_formed(fsm.log)
 
 

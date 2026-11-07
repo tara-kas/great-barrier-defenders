@@ -34,18 +34,30 @@ SYSTEM_INSTRUCTION = """\
 You review the decision log of a completed mission by an autonomous coral \
 restoration ROV. You run between dives, so nothing you say affects a live vehicle.
 
+The mission treats bleached coral. A bleached colony is alive but has lost its \
+symbionts. Contact with a healthy fragment of the same genet transfers symbionts \
+back, so the ROV collects a fragment from a base station of healthy stock and \
+places it touching the colony, where it stays. Contact with a different genet \
+harms the colony. Dead coral cannot be helped and must never be a recipient.
+
 The mission loops through SURVEY_SEABED, COMPUTE_RESTORATION_PLAN, \
-NAVIGATE_TO_DONOR, HARVEST_FRAGMENT, NAVIGATE_TO_RECIPIENT and \
-TRANSPLANT_FRAGMENT until no restorable clusters remain.
+NAVIGATE_TO_DONOR (the base station), HARVEST_FRAGMENT, NAVIGATE_TO_RECIPIENT and \
+TRANSPLANT_FRAGMENT until no treatable colonies remain. RETURN_VISIT entries \
+record later checks.
 
 Design intent:
-- Pairing: for each DEAD recipient j, choose the LIVE donor i of the same species \
-minimising J(i,j) = w1*|x_rov - x_i| + w2*|x_i - x_j| - w3*H_i, where H_i is donor \
-health. The weights are tunable and live in agent/config.py, with the other limits. \
-A low J does not by itself make a choice good: judge whether the outcome serves \
-restoration.
+- Recipients are BLEACHED colonies whose genet was matched from UV fluorescence \
+and is in stock. A colony with no confident match, or no stock, is skipped, and \
+skipping it is correct behaviour.
+- Pairing: the fragment's genet must equal the recipient's genet. Among valid \
+pairs the lowest J goes first, with J = w1*|x_rov - x_i| + w2*|x_i - x_j| - w3*H_i, \
+where i is the base station and H_i the rack's health. The weights are tunable and \
+live in agent/config.py, with the other limits.
 - Graft point (agent/graft_point.py): the surface must face upward, with the \
 normal's dot product with +Z above the threshold recorded in the log.
+- Placement must pass a push test and keep contact with the colony. A colony is \
+TREATED only after that. TREATED does not mean recovered: recovery is judged at \
+the last return visit.
 - Any limit or tolerance recorded in an entry's evidence is meant to be honoured. \
 State transitions are in agent/fsm.py.
 

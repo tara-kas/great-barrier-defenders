@@ -1,12 +1,11 @@
 """Integration tests: the real Surveyor, FSM and output files working together.
 
-Only the model is faked. PixelLLM finds coral in the rendered pixels, so boxes,
-depth projection and registry merging all run for real.
+Only the model is faked (ScenarioLLM), so depth projection, UV genet reading,
+planning and placement all run for real.
 """
 
 from __future__ import annotations
 
-import io
 import json
 import re
 import sys
@@ -15,8 +14,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 import requests
-from PIL import Image
-from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:  # eval/ is not a package; make `agent`, `perception`, `eval` importable
@@ -24,40 +21,15 @@ if str(ROOT) not in sys.path:  # eval/ is not a package; make `agent`, `percepti
 
 from agent.decision_log import DecisionLog  # noqa: E402
 from agent.fsm import MissionFSM, PerceptionFailure  # noqa: E402
-from eval.mock_robot import SAND_RGB, MockRobotInterface  # noqa: E402
+from eval.mock_robot import MockRobotInterface  # noqa: E402
+from eval.moore_reef import MooreReefRobot, genet_library, moore_station, recovery_timeline  # noqa: E402
+from eval.scenario_llm import ScenarioLLM  # noqa: E402
 from eval.synthetic_scene import generate_scene  # noqa: E402
 from mission.runner import SurveyPerceiver, is_local_endpoint, run_mission  # noqa: E402
 from perception.gemma_client import GemmaReply  # noqa: E402
 from perception.registry import SemanticSeabedRegistry  # noqa: E402
 from perception.survey import Surveyor  # noqa: E402
-from perception.tests.fakes import cls_json, flat_frame  # noqa: E402
-
-
-class PixelLLM:
-    """Boxes come from real rendered pixels. Every third classification is DEAD."""
-
-    def __init__(self) -> None:
-        self.classifications = 0
-
-    def ask(self, prompt, image_png, json_schema=None) -> GemmaReply:
-        if '"objects"' in prompt:
-            return GemmaReply(text=json.dumps({"objects": self._boxes(image_png)}), latency_ms=1.0)
-        self.classifications += 1
-        status = "DEAD" if self.classifications % 3 == 0 else "LIVE"
-        return GemmaReply(text=cls_json(status=status, score=0.1 if status == "DEAD" else 0.9), latency_ms=1.0)
-
-    @staticmethod
-    def _boxes(image_png) -> list[dict]:
-        pixels = np.asarray(Image.open(io.BytesIO(image_png)).convert("RGB")).astype(int)
-        coral = (np.abs(pixels - np.array(SAND_RGB)).sum(2) > 30) & (pixels.sum(2) > 0)
-        labelled, _ = ndimage.label(coral)
-        height, width = coral.shape
-        boxes = []
-        for rows, cols in ndimage.find_objects(labelled):
-            if (rows.stop - rows.start) * (cols.stop - cols.start) >= 30:
-                box = [rows.start / height, cols.start / width, rows.stop / height, cols.stop / width]
-                boxes.append({"label": "coral", "box_2d": [int(v * 1000) for v in box]})
-        return boxes
+from perception.tests.fakes import flat_frame  # noqa: E402
 
 
 class DownLLM:
@@ -65,11 +37,11 @@ class DownLLM:
         raise requests.ConnectionError("endpoint unreachable")
 
 
-class FlakyLLM(PixelLLM):
+class FlakyLLM(ScenarioLLM):
     """Fails the first N detection calls, then recovers."""
 
-    def __init__(self, failures: int) -> None:
-        super().__init__()
+    def __init__(self, robot, failures: int) -> None:
+        super().__init__(robot)
         self.failures = failures
 
     def ask(self, prompt, image_png, json_schema=None) -> GemmaReply:
@@ -79,47 +51,109 @@ class FlakyLLM(PixelLLM):
         return super().ask(prompt, image_png, json_schema)
 
 
-class ClassifierDownLLM(PixelLLM):
+class ClassifierDownLLM(ScenarioLLM):
     def ask(self, prompt, image_png, json_schema=None) -> GemmaReply:
         if '"objects"' not in prompt:
             raise requests.ConnectionError("endpoint unreachable")
         return super().ask(prompt, image_png, json_schema)
 
 
-def mission(llm, tmp_path, robot=None, **overrides):
-    robot = robot or MockRobotInterface(generate_scene(seed=0))
+def mission(make_llm, tmp_path, **overrides):
+    """Runs Moore Reef. make_llm builds the model stand-in from the robot."""
+    robot = MooreReefRobot()
     kwargs = {
+        "base_station": moore_station(),
+        "genet_library": genet_library(),
         "wait": robot.advance,
         "fragment_held": robot.fragment_held,
         "placement_verifier": robot.verify_placement,
         "out_dir": tmp_path,
     }
-    return run_mission(robot, llm, **{**kwargs, **overrides}), robot
+    return run_mission(robot, make_llm(robot), **{**kwargs, **overrides}), robot
 
 
 def saved_log(tmp_path) -> list:
     return DecisionLog.load(str(tmp_path / "decisions.jsonl")).entries
 
 
-def test_real_perception_drives_a_full_mission(tmp_path):
-    summary, robot = mission(PixelLLM(), tmp_path)
+def by_true_cluster(saved: list[dict], robot) -> dict:
+    """Saved registry rows keyed by the scenario colony each one sits on."""
+    out = {}
+    for row in saved:
+        x, y = row["position_world"][:2]
+        c = min(robot.reef.clusters, key=lambda c: np.hypot(c.shape.center[0] - x, c.shape.center[1] - y))
+        assert c.cluster_id not in out, "two registry rows on one colony"
+        out[c.cluster_id] = row
+    return out
+
+
+def test_every_colony_gets_its_expected_action(tmp_path):
+    """The whole pipeline: survey, UV genet reading, planning, placement, on all 20 colonies."""
+    summary, robot = mission(ScenarioLLM, tmp_path)
+    saved = json.loads((tmp_path / "registry.json").read_text())["entries"]
+    rows = by_true_cluster(saved, robot)
     assert summary.final_state == "MISSION_COMPLETE"
-    assert summary.restored
+    assert len(rows) == 20
+    expected_status = {
+        "TREAT": "TREATED",
+        "SKIP_NO_MATCHING_GENET": "BLEACHED",
+        "ABSTAIN_UV_MATCH_UNCERTAIN": "BLEACHED",
+        "SKIP_DEAD": "DEAD",
+        "LEAVE": "LIVE",
+    }
+    for c in robot.reef.clusters:
+        assert rows[c.cluster_id]["health_status"] == expected_status[c.expected_action], c.cluster_id
+    assert len(robot.placements) == 8
     assert summary.unverified_placements == []
-    assert len(robot.placements) == len(summary.restored)
+
+
+def test_skip_reasons_match_the_scenario(tmp_path):
+    summary, robot = mission(ScenarioLLM, tmp_path)
+    rows = by_true_cluster(json.loads((tmp_path / "registry.json").read_text())["entries"], robot)
+    for c in robot.reef.clusters:
+        reason = summary.skipped.get(rows[c.cluster_id]["cluster_id"], "")
+        if c.expected_action == "SKIP_NO_MATCHING_GENET":
+            assert "not in stock" in reason
+        elif c.expected_action == "ABSTAIN_UV_MATCH_UNCERTAIN":
+            assert reason == "no confident UV genet match"
+
+
+def test_each_fragment_goes_to_its_own_genet(tmp_path):
+    """Genets are read from UV pixels here, and every pairing must match the true genet."""
+    _, robot = mission(ScenarioLLM, tmp_path)
+    rows = by_true_cluster(json.loads((tmp_path / "registry.json").read_text())["entries"], robot)
+    for c in robot.reef.clusters:
+        if c.expected_action == "TREAT":
+            assert rows[c.cluster_id]["genet_id"] == c.genet_id
+
+
+def test_stock_is_used_exactly_once_per_treated_colony(tmp_path):
+    station = moore_station()
+    before = sum(station.stock().values())
+    mission(ScenarioLLM, tmp_path, base_station=station)
+    assert before - sum(station.stock().values()) == 8
+
+
+def test_return_visits_reach_the_scenario_outcomes(tmp_path):
+    summary, robot = mission(ScenarioLLM, tmp_path, revisit_observer=None)
+    robot2 = MooreReefRobot()
+    summary, robot = mission(ScenarioLLM, tmp_path, revisit_observer=robot2.observe_recovery)
+    rows = by_true_cluster(json.loads((tmp_path / "registry.json").read_text())["entries"], robot)
+    for record in recovery_timeline(robot.reef):
+        assert rows[record["cluster_id"]]["health_status"] == record["outcome"]
+    assert sum(e.action == "revisit_complete" for e in saved_log(tmp_path)) == 2
 
 
 def test_registry_positions_match_the_scene(tmp_path):
-    scene = generate_scene(seed=0)
-    mission(PixelLLM(), tmp_path, MockRobotInterface(scene))
-    truth = np.array([e.position_world[:2] for e in scene.entries])
+    _, robot = mission(ScenarioLLM, tmp_path)
     saved = json.loads((tmp_path / "registry.json").read_text())["entries"]
+    truth = np.array([c.shape.center for c in robot.reef.clusters])
     errors = [np.linalg.norm(truth - np.array(e["position_world"][:2]), axis=1).min() for e in saved]
-    assert saved and max(errors) < 0.3
+    assert max(errors) < 0.1
 
 
 def test_gemma_reasoning_reaches_the_decision_log(tmp_path):
-    mission(PixelLLM(), tmp_path)
+    mission(ScenarioLLM, tmp_path)
     frames = [e for e in saved_log(tmp_path) if e.action == "survey_waypoint" and e.evidence["detections"]]
     observation = frames[0].evidence["perception"]["observations"][0]
     assert "confidence" in observation["classification"]
@@ -127,8 +161,19 @@ def test_gemma_reasoning_reaches_the_decision_log(tmp_path):
     assert frames[0].evidence["merged_by_perceiver"]
 
 
+def test_uv_reasoning_reaches_the_decision_log(tmp_path):
+    mission(ScenarioLLM, tmp_path)
+    readings = [
+        o["genet"]
+        for e in saved_log(tmp_path) if e.action == "survey_waypoint"
+        for o in e.evidence["perception"]["observations"] if "genet" in o
+    ]
+    assert readings and all("uv_signature" in r for r in readings)
+    assert {"genet_id", "distance", "nearest"} <= set(readings[0])
+
+
 def test_gemma_down_aborts_instead_of_reporting_success(tmp_path):
-    summary, _ = mission(DownLLM(), tmp_path)
+    summary, _ = mission(lambda r: DownLLM(), tmp_path)
     entries = saved_log(tmp_path)
     assert summary.final_state == "ABORTED"
     assert entries[-1].action == "abort"
@@ -138,12 +183,12 @@ def test_gemma_down_aborts_instead_of_reporting_success(tmp_path):
 
 
 def test_classifier_down_also_aborts(tmp_path):
-    summary, _ = mission(ClassifierDownLLM(), tmp_path)
+    summary, _ = mission(ClassifierDownLLM, tmp_path)
     assert summary.final_state == "ABORTED"
 
 
 def test_a_brief_outage_is_survived_and_recorded(tmp_path):
-    summary, _ = mission(FlakyLLM(failures=2), tmp_path)
+    summary, _ = mission(lambda r: FlakyLLM(r, failures=2), tmp_path)
     entries = saved_log(tmp_path)
     assert summary.final_state == "MISSION_COMPLETE"
     survey = next(e for e in entries if e.action == "survey_complete")
@@ -156,7 +201,7 @@ def test_empty_seabed_is_not_a_failure():
             return GemmaReply(text='{"objects": []}', latency_ms=1.0)
 
     registry = SemanticSeabedRegistry()
-    perceiver = SurveyPerceiver(Surveyor(NoCoral(), registry))
+    perceiver = SurveyPerceiver(Surveyor(NoCoral(), registry), lambda: flat_frame().rgb, genet_library())
     assert perceiver(flat_frame(), pose()) == []
 
 
@@ -168,7 +213,7 @@ def test_unexpected_perception_error_becomes_a_failure():
             raise KeyError("bug")
 
     with pytest.raises(PerceptionFailure, match="KeyError"):
-        SurveyPerceiver(Broken())(flat_frame(), pose())
+        SurveyPerceiver(Broken(), lambda: None, [])(flat_frame(), pose())
 
 
 def pose():
@@ -180,26 +225,29 @@ def pose():
 @pytest.mark.parametrize("missing", ["fragment_held", "placement_verifier"])
 def test_refuses_to_run_without_safety_hooks(tmp_path, missing):
     with pytest.raises(ValueError, match=missing):
-        mission(PixelLLM(), tmp_path, **{missing: None})
+        mission(ScenarioLLM, tmp_path, **{missing: None})
 
 
 def test_unverified_run_is_possible_but_says_so(tmp_path):
-    summary, _ = mission(PixelLLM(), tmp_path, placement_verifier=None, allow_unverified=True)
+    summary, _ = mission(ScenarioLLM, tmp_path, placement_verifier=None, allow_unverified=True)
     placed = [e for e in saved_log(tmp_path) if e.action == "transplant_fragment"]
     assert placed and all(e.outcome == "placed, unverified" for e in placed)
-    assert summary.unverified_placements == summary.restored
+    assert summary.unverified_placements == summary.treated
 
 
 def test_failed_push_test_leaves_site_open_and_gives_up(tmp_path):
-    robot = MockRobotInterface(generate_scene(seed=0))
-    robot.unstable_next = 3  # the first site fails every attempt
-    summary, _ = mission(PixelLLM(), tmp_path, robot)
-    entries = saved_log(tmp_path)
-    failed = [e for e in entries if e.action == "placement_unstable"]
+    fails = {"left": 3}
+
+    def verifier(pose):
+        fails["left"] -= 1
+        return {"stable": fails["left"] < 0, "contact": True}
+
+    summary, _ = mission(ScenarioLLM, tmp_path, placement_verifier=verifier)
+    failed = [e for e in saved_log(tmp_path) if e.action == "placement_unstable"]
     site = failed[0].evidence["recipient"]["cluster_id"]
     assert len(failed) == 3
-    assert site not in summary.restored
-    assert "push test" in summary.unrestorable[site]
+    assert site not in summary.treated
+    assert "push test" in summary.skipped[site]
 
 
 @pytest.mark.parametrize("url,local", [
@@ -212,17 +260,21 @@ def test_endpoint_locality(url, local):
     assert is_local_endpoint(url) is local
 
 
-def test_remote_gemma_is_refused_unless_allowed(tmp_path):
-    llm = PixelLLM()
+def remote(robot):
+    llm = ScenarioLLM(robot)
     llm.base_url = "https://team--reef-gemma-serve.modal.run/v1"
+    return llm
+
+
+def test_remote_gemma_is_refused_unless_allowed(tmp_path):
     with pytest.raises(ValueError, match="not local"):
-        mission(llm, tmp_path)
-    assert mission(llm, tmp_path, allow_remote_perception=True)[0].final_state == "MISSION_COMPLETE"
+        mission(remote, tmp_path)
+    assert mission(remote, tmp_path, allow_remote_perception=True)[0].final_state == "MISSION_COMPLETE"
 
 
 def test_outputs_are_written_during_the_run_not_after(tmp_path):
     sizes = []
-    mission(PixelLLM(), tmp_path, on_step=lambda _: sizes.append((tmp_path / "decisions.jsonl").stat().st_size))
+    mission(ScenarioLLM, tmp_path, on_step=lambda _: sizes.append((tmp_path / "decisions.jsonl").stat().st_size))
     assert len(set(sizes)) > 10 and sizes == sorted(sizes)
 
 
@@ -235,7 +287,7 @@ def test_outputs_fit_the_dashboard_format(tmp_path):
     def capture(_):
         seen.extend(json.loads((tmp_path / "registry.json").read_text())["detections"])
 
-    mission(PixelLLM(), tmp_path, on_step=capture)
+    mission(ScenarioLLM, tmp_path, on_step=capture)
     entries, _ = read_registry(tmp_path / "registry.json")
     assert entries and read_decisions(tmp_path / "decisions.jsonl")
     assert (tmp_path / "frame.png").read_bytes().startswith(b"\x89PNG")
@@ -248,7 +300,7 @@ def test_outputs_fit_the_dashboard_format(tmp_path):
 def test_mission_log_works_with_the_debrief(tmp_path):
     from cloud.debrief import build_input
 
-    mission(PixelLLM(), tmp_path)
+    mission(ScenarioLLM, tmp_path)
     assert "survey_waypoint" in build_input(saved_log(tmp_path))
 
 
@@ -260,6 +312,9 @@ def test_agent_package_stays_free_of_network_code():
 
 
 def test_fsm_without_perceiver_evidence_still_runs():
-    robot = MockRobotInterface(generate_scene(seed=0))
-    fsm = MissionFSM(robot, SemanticSeabedRegistry(), wait=robot.advance, perceiver=robot.perceiver())
+    scene = generate_scene(seed=0)
+    robot = MockRobotInterface(scene)
+    fsm = MissionFSM(
+        robot, SemanticSeabedRegistry(), base_station=scene.base_station(), wait=robot.advance, perceiver=robot.perceiver()
+    )
     assert fsm.run(max_steps=2000).final_state == "MISSION_COMPLETE"

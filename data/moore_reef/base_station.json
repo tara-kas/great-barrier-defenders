@@ -1,0 +1,74 @@
+{
+  "position_world": [
+    -1.5,
+    5.0,
+    0.0
+  ],
+  "racks": [
+    {
+      "slot": "R01",
+      "genet_id": "PD-01",
+      "species_class": "pocillopora",
+      "fragments_available": 6,
+      "health_status": "LIVE",
+      "health_score": 0.95,
+      "uv_signature": [
+        0.1,
+        0.7,
+        0.2
+      ]
+    },
+    {
+      "slot": "R02",
+      "genet_id": "PD-02",
+      "species_class": "pocillopora",
+      "fragments_available": 4,
+      "health_status": "LIVE",
+      "health_score": 0.95,
+      "uv_signature": [
+        0.12,
+        0.3,
+        0.58
+      ]
+    },
+    {
+      "slot": "R03",
+      "genet_id": "AB-01",
+      "species_class": "acropora_branching",
+      "fragments_available": 5,
+      "health_status": "LIVE",
+      "health_score": 0.95,
+      "uv_signature": [
+        0.55,
+        0.35,
+        0.1
+      ]
+    },
+    {
+      "slot": "R05",
+      "genet_id": "AT-01",
+      "species_class": "acropora_table",
+      "fragments_available": 3,
+      "health_status": "LIVE",
+      "health_score": 0.95,
+      "uv_signature": [
+        0.4,
+        0.45,
+        0.15
+      ]
+    },
+    {
+      "slot": "R06",
+      "genet_id": "MM-01",
+      "species_class": "massive_meandering",
+      "fragments_available": 3,
+      "health_status": "LIVE",
+      "health_score": 0.95,
+      "uv_signature": [
+        0.08,
+        0.22,
+        0.7
+      ]
+    }
+  ]
+}

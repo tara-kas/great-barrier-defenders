@@ -1,0 +1,450 @@
+[
+  {
+    "cluster_id": "MR-001",
+    "species_class": "acropora_table",
+    "health_status": "DEAD",
+    "health_score": 0.186,
+    "position_world": [
+      7.1735,
+      5.1303,
+      0.0864
+    ],
+    "bounding_box_extent": [
+      0.5583,
+      0.5583,
+      0.1728
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-002",
+    "species_class": "acropora_table",
+    "health_status": "LIVE",
+    "health_score": 0.754,
+    "position_world": [
+      3.6138,
+      3.0899,
+      0.0944
+    ],
+    "bounding_box_extent": [
+      0.5438,
+      0.5438,
+      0.1889
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-003",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.481,
+    "position_world": [
+      2.6465,
+      5.222,
+      0.1429
+    ],
+    "bounding_box_extent": [
+      0.5456,
+      0.5456,
+      0.2857
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "PD-01",
+    "uv_signature": [
+      0.1088,
+      0.6795,
+      0.2117
+    ]
+  },
+  {
+    "cluster_id": "MR-004",
+    "species_class": "massive_meandering",
+    "health_status": "BLEACHED",
+    "health_score": 0.29,
+    "position_world": [
+      4.4058,
+      6.4034,
+      0.124
+    ],
+    "bounding_box_extent": [
+      0.4308,
+      0.4308,
+      0.248
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "MM-02",
+    "uv_signature": [
+      0.3213,
+      0.2973,
+      0.3814
+    ]
+  },
+  {
+    "cluster_id": "MR-005",
+    "species_class": "acropora_branching",
+    "health_status": "DEAD",
+    "health_score": 0.09,
+    "position_world": [
+      0.8104,
+      4.5502,
+      0.1541
+    ],
+    "bounding_box_extent": [
+      0.5583,
+      0.5583,
+      0.3081
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-006",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.492,
+    "position_world": [
+      5.8158,
+      4.4437,
+      0.1059
+    ],
+    "bounding_box_extent": [
+      0.4753,
+      0.4753,
+      0.2118
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "PD-01",
+    "uv_signature": [
+      0.1135,
+      0.6947,
+      0.1919
+    ]
+  },
+  {
+    "cluster_id": "MR-007",
+    "species_class": "acropora_table",
+    "health_status": "BLEACHED",
+    "health_score": 0.565,
+    "position_world": [
+      8.2218,
+      7.5582,
+      0.0924
+    ],
+    "bounding_box_extent": [
+      0.5677,
+      0.5677,
+      0.1847
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "AT-01",
+    "uv_signature": [
+      0.4181,
+      0.4451,
+      0.1368
+    ]
+  },
+  {
+    "cluster_id": "MR-008",
+    "species_class": "massive_meandering",
+    "health_status": "DEAD",
+    "health_score": 0.133,
+    "position_world": [
+      8.8427,
+      5.545,
+      0.1444
+    ],
+    "bounding_box_extent": [
+      0.4825,
+      0.4825,
+      0.2889
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-009",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.588,
+    "position_world": [
+      4.4218,
+      8.4439,
+      0.1177
+    ],
+    "bounding_box_extent": [
+      0.4244,
+      0.4244,
+      0.2353
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "PD-02",
+    "uv_signature": [
+      0.1107,
+      0.2769,
+      0.6124
+    ]
+  },
+  {
+    "cluster_id": "MR-010",
+    "species_class": "pocillopora",
+    "health_status": "DEAD",
+    "health_score": 0.084,
+    "position_world": [
+      3.4463,
+      6.6856,
+      0.1457
+    ],
+    "bounding_box_extent": [
+      0.4641,
+      0.4641,
+      0.2914
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-011",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.321,
+    "position_world": [
+      6.7272,
+      2.6599,
+      0.1334
+    ],
+    "bounding_box_extent": [
+      0.4573,
+      0.4573,
+      0.2668
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": [
+      0.1139,
+      0.4936,
+      0.3925
+    ]
+  },
+  {
+    "cluster_id": "MR-012",
+    "species_class": "acropora_branching",
+    "health_status": "BLEACHED",
+    "health_score": 0.357,
+    "position_world": [
+      2.3246,
+      6.9887,
+      0.1319
+    ],
+    "bounding_box_extent": [
+      0.533,
+      0.533,
+      0.2638
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "AB-02",
+    "uv_signature": [
+      0.1793,
+      0.6091,
+      0.2116
+    ]
+  },
+  {
+    "cluster_id": "MR-013",
+    "species_class": "acropora_branching",
+    "health_status": "LIVE",
+    "health_score": 0.836,
+    "position_world": [
+      5.417,
+      6.0449,
+      0.116
+    ],
+    "bounding_box_extent": [
+      0.4073,
+      0.4073,
+      0.232
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-014",
+    "species_class": "pocillopora",
+    "health_status": "LIVE",
+    "health_score": 0.933,
+    "position_world": [
+      3.9004,
+      4.3137,
+      0.1037
+    ],
+    "bounding_box_extent": [
+      0.6247,
+      0.6247,
+      0.2074
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-015",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.593,
+    "position_world": [
+      4.2799,
+      0.7155,
+      0.1425
+    ],
+    "bounding_box_extent": [
+      0.5725,
+      0.5725,
+      0.2851
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "PD-02",
+    "uv_signature": [
+      0.1128,
+      0.2951,
+      0.5921
+    ]
+  },
+  {
+    "cluster_id": "MR-016",
+    "species_class": "acropora_branching",
+    "health_status": "BLEACHED",
+    "health_score": 0.332,
+    "position_world": [
+      1.5036,
+      8.4805,
+      0.1261
+    ],
+    "bounding_box_extent": [
+      0.5591,
+      0.5591,
+      0.2522
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "AB-01",
+    "uv_signature": [
+      0.542,
+      0.3523,
+      0.1057
+    ]
+  },
+  {
+    "cluster_id": "MR-017",
+    "species_class": "massive_meandering",
+    "health_status": "LIVE",
+    "health_score": 0.764,
+    "position_world": [
+      9.2117,
+      1.2051,
+      0.1553
+    ],
+    "bounding_box_extent": [
+      0.5197,
+      0.5197,
+      0.3105
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": null
+  },
+  {
+    "cluster_id": "MR-018",
+    "species_class": "massive_meandering",
+    "health_status": "BLEACHED",
+    "health_score": 0.527,
+    "position_world": [
+      8.9428,
+      8.3402,
+      0.1472
+    ],
+    "bounding_box_extent": [
+      0.4495,
+      0.4495,
+      0.2944
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "MM-01",
+    "uv_signature": [
+      0.0852,
+      0.2091,
+      0.7057
+    ]
+  },
+  {
+    "cluster_id": "MR-019",
+    "species_class": "acropora_branching",
+    "health_status": "BLEACHED",
+    "health_score": 0.456,
+    "position_world": [
+      1.4988,
+      0.8106,
+      0.1203
+    ],
+    "bounding_box_extent": [
+      0.6111,
+      0.6111,
+      0.2406
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": "AB-01",
+    "uv_signature": [
+      0.548,
+      0.3523,
+      0.0997
+    ]
+  },
+  {
+    "cluster_id": "MR-020",
+    "species_class": "pocillopora",
+    "health_status": "BLEACHED",
+    "health_score": 0.337,
+    "position_world": [
+      7.4744,
+      6.1956,
+      0.1294
+    ],
+    "bounding_box_extent": [
+      0.6206,
+      0.6206,
+      0.2588
+    ],
+    "optimal_graft_pose_world": null,
+    "sampled_or_restored": false,
+    "genet_id": null,
+    "uv_signature": [
+      0.1173,
+      0.4985,
+      0.3842
+    ]
+  }
+]

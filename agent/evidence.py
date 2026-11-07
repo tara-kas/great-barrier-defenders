@@ -48,4 +48,5 @@ def entry_summary(entry: SemanticMapEntry) -> dict:
         "health_score": round(float(entry.health_score), 4),
         "position_world": [round(float(v), 4) for v in entry.position_world],
         "sampled_or_restored": entry.sampled_or_restored,
+        "genet_id": entry.genet_id,
     }

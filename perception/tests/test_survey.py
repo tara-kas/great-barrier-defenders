@@ -76,13 +76,13 @@ def test_restored_entries_and_graft_pose_are_preserved():
     s = Surveyor(FakeLLM(responder(cls_json("DEAD", conf=0.8))), reg)
     s.survey_frame(flat_frame(), POSE)
     left, right = sorted(reg.all(), key=lambda e: e.position_world[0])
-    left.health_status, left.sampled_or_restored = "RESTORED", True
+    left.health_status, left.sampled_or_restored = "TREATED", True
     gp = GraftPose((1, 0, 0), (0, 0, 0, 1), (0, 0, 1))
     right.optimal_graft_pose_world = gp
 
     res = s.survey_frame(flat_frame(), POSE)
     assert [o.action for o in res.observations] == ["kept", "updated"]
-    assert reg.get(left.cluster_id).health_status == "RESTORED"
+    assert reg.get(left.cluster_id).health_status == "TREATED"
     assert reg.get(right.cluster_id).optimal_graft_pose_world == gp
 
 
@@ -100,3 +100,39 @@ def test_detection_failure_reported_not_raised():
     reg = SemanticSeabedRegistry()
     res = Surveyor(FakeLLM(responder(cls_json(), boxes="nope")), reg).survey_frame(flat_frame(), POSE)
     assert res.error and res.observations == []
+
+
+def box_reply(box):
+    return json.dumps({"objects": [{"label": "coral", "box_2d": box}]})
+
+
+def survey(reg, surveyor_boxes):
+    llm_boxes = iter(surveyor_boxes)
+
+    def f(prompt, _img):
+        return box_reply(next(llm_boxes)) if prompt == DETECT_PROMPT else cls_json()
+
+    surveyor = Surveyor(FakeLLM(f), reg)
+    return [surveyor.survey_frame(flat_frame(), POSE) for _ in surveyor_boxes]
+
+
+WHOLE = [300, 800, 700, 980]
+CLIPPED = [300, 800, 700, 1000]  # the same colony, running off the right edge
+
+
+def test_view_cut_off_by_the_frame_edge_cannot_replace_a_complete_one():
+    reg = SemanticSeabedRegistry()
+    results = survey(reg, [WHOLE, CLIPPED])
+    assert results[1].observations[0].action == "kept"
+    assert "frame edge" in results[1].observations[0].reason
+    assert len(reg.all()) == 1
+    alone = SemanticSeabedRegistry()
+    survey(alone, [WHOLE])
+    assert reg.all()[0].bounding_box_extent == alone.all()[0].bounding_box_extent
+
+
+def test_complete_view_replaces_a_clipped_one():
+    reg = SemanticSeabedRegistry()
+    results = survey(reg, [CLIPPED, WHOLE])
+    assert results[1].observations[0].action == "updated"
+    assert len(reg.all()) == 1

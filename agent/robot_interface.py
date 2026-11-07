@@ -49,13 +49,17 @@ class RobotInterface(ABC):
         """Wrist-mounted close-range camera, for graft-point selection (0.15m - 0.5m)."""
 
     @abstractmethod
+    def get_uv_frame(self) -> Any:
+        """HxWx3 uint8 hull view under UV excitation, pixel-aligned with get_hull_rgbd()."""
+
+    @abstractmethod
     def solve_ik(self, target_pose: Pose) -> bool:
         """Drive the end-effector toward target_pose. Returns whether it was reachable."""
 
     @abstractmethod
     def attach_fragment(self, cluster_id: str) -> None:
-        """Kinematically weld a fragment harvested from cluster_id to the gripper."""
+        """Kinematically weld a fragment to the gripper. cluster_id is the base station rack slot."""
 
     @abstractmethod
     def detach_fragment(self, at_pose: Pose) -> None:
-        """Weld the carried fragment onto the structure at at_pose."""
+        """Place the carried fragment at at_pose, in contact with the colony there."""
