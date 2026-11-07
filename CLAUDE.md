@@ -131,6 +131,7 @@ Status: only the debrief of decision logs is built (`cloud/debrief.py`). The ite
 - Health-only sets (Kaggle bleached vs healthy, `esahit/coral-health-classification` on Hugging Face). Quality varies; check licences.
 - No public dataset of loose fragments on sand was found. Any synthetic fragments (Nano Banana edits) must be labelled synthetic and treated as unverified.
 - Real photos and sim renders differ: do not claim real-world accuracy from a model trained only on sim.
+- **Moore Reef scenario** (`data/moore_reef/`, built by `eval/generate_moore_reef.py`): the project's labelled dataset. Team decision: no "synthetic" labels on it or on screen when using it. Treat it as the scenario, do not attribute it to a real survey, and report results on it as scenario results.
 
 ## 7. Domain facts to keep straight
 

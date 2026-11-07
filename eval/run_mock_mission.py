@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:  # eval/ is not a package; make `agent`, `percepti
     sys.path.insert(0, str(ROOT))
 
 from eval.mock_robot import MockRobotInterface  # noqa: E402
+from eval.moore_reef import MooreReefRobot  # noqa: E402
 from eval.synthetic_scene import generate_scene  # noqa: E402
 from mission.runner import run_mission  # noqa: E402
 from perception.gemma_client import GemmaClient  # noqa: E402
@@ -27,6 +28,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=ROOT / "eval/runs/mock")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--scene", choices=["moore-reef", "generated"], default="moore-reef")
     parser.add_argument("--allow-remote-gemma", action="store_true", help="development only, e.g. Modal")
     args = parser.parse_args(argv)
 
@@ -36,7 +38,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(err, file=sys.stderr)
         return 1
 
-    robot = MockRobotInterface(generate_scene(seed=args.seed))
+    robot = MooreReefRobot() if args.scene == "moore-reef" else MockRobotInterface(generate_scene(seed=args.seed))
     try:
         summary = run_mission(
             robot,
@@ -53,8 +55,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     print(f"{summary.final_state}: restored {len(summary.restored)}, unrestorable {len(summary.unrestorable)}")
     print("\nWatch it:")
+    frame_flag = " --synthetic-frame" if args.scene == "generated" else ""
     print(f"  python dashboard/server.py --registry {args.out}/registry.json "
-          f"--log {args.out}/decisions.jsonl --frame {args.out}/frame.png --synthetic-frame")
+          f"--log {args.out}/decisions.jsonl --frame {args.out}/frame.png{frame_flag}")
     print("Debrief it:")
     print(f"  python cloud/debrief.py --log {args.out}/decisions.jsonl --html {args.out}/report.html")
     return 0 if summary.final_state == "MISSION_COMPLETE" else 1

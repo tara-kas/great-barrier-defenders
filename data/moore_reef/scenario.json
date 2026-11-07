@@ -1,0 +1,38 @@
+{
+  "name": "Moore Reef",
+  "region": "Great Barrier Reef, Queensland",
+  "seed": 2026,
+  "frame": "local metres, seabed datum at z = 0, +z up",
+  "bounds": [
+    0.0,
+    10.0,
+    0.0,
+    10.0
+  ],
+  "site_depth_m": 8.0,
+  "base_station": [
+    -1.5,
+    5.0,
+    0.0
+  ],
+  "rules": {
+    "contact_days_required": 7,
+    "revisit_days": [
+      7,
+      56
+    ],
+    "uv_match_max_l1_distance": 0.15
+  },
+  "camera": {
+    "width": 512,
+    "height": 512,
+    "fov_deg": 70.0
+  },
+  "expected_actions": [
+    "ABSTAIN_UV_MATCH_UNCERTAIN",
+    "LEAVE",
+    "SKIP_DEAD",
+    "SKIP_NO_MATCHING_GENET",
+    "TREAT"
+  ]
+}

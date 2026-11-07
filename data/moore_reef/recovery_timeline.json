@@ -1,0 +1,210 @@
+[
+  {
+    "cluster_id": "MR-003",
+    "genet_id": "PD-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 35,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 93,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  },
+  {
+    "cluster_id": "MR-006",
+    "genet_id": "PD-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 2,
+        "contact_maintained": false
+      },
+      {
+        "day": 56,
+        "status": "NOT_RECOVERED",
+        "symbiont_density_pct_of_healthy": 5,
+        "contact_maintained": false
+      }
+    ],
+    "outcome": "NOT_RECOVERED",
+    "failure_reason": "contact_lost"
+  },
+  {
+    "cluster_id": "MR-007",
+    "genet_id": "AT-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 45,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 93,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  },
+  {
+    "cluster_id": "MR-009",
+    "genet_id": "PD-02",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 49,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 92,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  },
+  {
+    "cluster_id": "MR-015",
+    "genet_id": "PD-02",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 47,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 95,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  },
+  {
+    "cluster_id": "MR-016",
+    "genet_id": "AB-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 37,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 88,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  },
+  {
+    "cluster_id": "MR-018",
+    "genet_id": "MM-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 43,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "NOT_RECOVERED",
+        "symbiont_density_pct_of_healthy": 5,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "NOT_RECOVERED",
+    "failure_reason": "algal_overgrowth"
+  },
+  {
+    "cluster_id": "MR-019",
+    "genet_id": "AB-01",
+    "observations": [
+      {
+        "day": 0,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 0,
+        "contact_maintained": true
+      },
+      {
+        "day": 7,
+        "status": "TREATED",
+        "symbiont_density_pct_of_healthy": 53,
+        "contact_maintained": true
+      },
+      {
+        "day": 56,
+        "status": "RECOVERED",
+        "symbiont_density_pct_of_healthy": 88,
+        "contact_maintained": true
+      }
+    ],
+    "outcome": "RECOVERED",
+    "failure_reason": null
+  }
+]
