@@ -80,14 +80,17 @@ MODEL_IDS = {
 Two loops. The vehicle never waits on the cloud.
 
 **Loop A: on-device, during the dive (autonomous).**
+Status: the reflex layer below is not built (`control/` is empty); the FSM has a simple position controller. Everything else in this list exists.
 - **Reflex layer (CPU, fast):** thruster allocation, station keeping, current compensation, carry-aware control (mass and drag change when holding a fragment), collision and depth limits.
-- **Perception:** RGB camera, depth/sonar-style range rays, IMU, gripper force. Classifier or **Gemma 4 E2B/E4B** (local) labels fragments (healthy, bleached-alive, dead) and substrate (hard, sand, rubble).
-- **Map:** 2.5D grid with layers: substrate, coral health, current estimate, obstacles, per-cell uncertainty.
-- **Optimiser (classical, inspectable):** score sites on substrate stability, moderate flow, proximity to healthy donors, algae risk, travel cost, minus an uncertainty penalty; assign fragments with spacing constraints; add a value-of-information step (inspect before committing when the top sites are close and uncertain).
-- **Agent loop (Gemma, ~1 Hz):** goal-directed, not scripted. Observe, update belief, pick a tool (`scan`, `goto`, `inspect`, `grasp`, `carry`, `place`, `verify`, `abort`), check the outcome, revise the plan. Keeps episodic memory ("site 3 rejected: sand on close inspection"). When unsure it holds, re-observes, or skips; it never touches a fragment it cannot classify confidently.
-- **Verify:** after placement run a simulated current push test; if the fragment shifts, diagnose and retry elsewhere.
+- **Perception:** hull and wrist RGB-D, gripper force. **Gemma (`gemma-4-31b-it`, self-hosted, zero/few-shot) detects and classifies** coral: species class, `LIVE`/`DEAD`/`BLEACHED`, health score. It replaced the classical HSV/YOLOv8 step. `perception/survey.py` projects each detection to the world frame and merges it into the registry.
+- **Map:** `SemanticSeabedRegistry` (`perception/registry.py`), one `SemanticMapEntry` per cluster. This schema is a frozen contract.
+- **Optimiser (classical, inspectable):** `agent/pairing.py` picks the same-species `LIVE` donor minimising `J = w1*|x_rov-x_i| + w2*|x_i-x_j| - w3*H_i`. Weights and limits live in `agent/config.py`. `agent/graft_point.py` picks the graft point by PCA surface normals. The richer scoring (flow, algae risk, uncertainty, value of information) is a possible extension, not built.
+- **Agent loop:** a classical 6-state FSM (`agent/fsm.py`): `SURVEY_SEABED -> COMPUTE_RESTORATION_PLAN -> NAVIGATE_TO_DONOR -> HARVEST_FRAGMENT -> NAVIGATE_TO_RECIPIENT -> TRANSPLANT_FRAGMENT`, looping to planning. Gemma is confined to perception and does not pick actions. Episodic memory stops it retrying rejected sites. It abstains on low-confidence detections and aborts after repeated perception failures.
+- **Verify:** after placement, a push test supplied by the sim (`placement_verifier`). If the fragment shifts, the site stays open; three failures reject it. Without a verifier a placement is logged as `placed, unverified`.
+- **Entry point:** `run_mission` in `mission/runner.py` wires all of this and writes live files for the dashboard. It lives outside `agent/` so `agent/` stays free of network code. It refuses to run without `fragment_held` and `placement_verifier`, and refuses a non-local Gemma endpoint, unless explicitly overridden.
 
 **Loop B: cloud, between dives (Argon).**
+Status: only the debrief of decision logs is built (`cloud/debrief.py`). The items below it, and video review, are planned.
 - **Debrief:** Argon reviews run logs and video, labels failures, scores segments (agentic video analysis).
 - **Coder:** proposes patches to planner weights, behaviour tree, or controller.
 - **Verifier:** runs patches against a scenario regression suite (Antigravity sandbox or local pytest), promotes only if nothing regresses and a **human approves**.
@@ -108,7 +111,7 @@ Two loops. The vehicle never waits on the cloud.
 - Reports exist of headless WebRTC slowing the sim loop. Test throughput early; do not tie control timing to wall-clock `sleep`.
 - Our dashboard (camera with detections, map, decision log, link status) can be a separate window or web page alongside the stream, so perception shows next to actions in the video.
 
-**Underwater physics: we must build it.** Isaac Sim has no built-in buoyancy, drag, added mass, or currents. Pattern from NVIDIA's own forum guidance: apply external forces each physics step via a Python or OmniGraph step callback (Warp for GPU force fields): buoyancy (per link, from displaced volume), linear plus quadratic drag, added mass, and a current vector. Start with buoyancy plus drag and refine. Add mass and drag when a fragment is attached. A third-party Isaac Lab package ("lighthill") for underwater hydrodynamics exists but is pre-alpha: do not depend on it. Budget real time for this; it is the main schedule risk of choosing Isaac Sim. Validate against a simple analytic case (terminal velocity, neutral buoyancy hover) before building on it.
+**Underwater physics: simplified.** The team spec says to fake the water: zero gravity plus damping, not real hydrodynamics. Do not spend hours on Fossen-style physics. Isaac Sim has no built-in buoyancy, drag, added mass or currents, so damping and any current push are applied as external forces each physics step (Python or OmniGraph callback). Currents only need to be good enough for the push test and the dislodgement perturbation. Say in the PDF that the physics is simplified. The third-party "lighthill" package is pre-alpha: do not depend on it.
 
 **Perception advantage.** RTX cameras give photoreal RGB and depth. Turbidity: fog or post-process on the camera feed plus noise; keep it a controllable variable the director can change.
 
@@ -146,29 +149,37 @@ Two loops. The vehicle never waits on the cloud.
 - Deterministic seeds for scenarios, with an unseeded "live" mode for the unscripted change.
 - Log every decision with the sensor evidence that caused it (this feeds the on-screen decision log and the debrief).
 - Do not invent API parameters. When unsure, use the installed gemini-skills or the official docs.
+- `agent/` must contain no network code, enforced by `eval/test_mission.py`. Anything joining the model client to the FSM goes in `mission/`.
+- A failed perception frame is not an empty seabed. Raise `PerceptionFailure`; never let an outage look like a clean survey.
+- Unit tests are not integration tests. Changes that cross modules need a test in `eval/test_mission.py`.
+- After pulling, rerun `pip install -r requirements.txt`; perception added dependencies.
+- **NEVER credit Claude on GitHub.** No `Co-Authored-By: Claude ...` trailers in commits, no "Generated with Claude Code" lines in PR descriptions, issues, or comments, and no Claude name/email in commit authorship. Commits are authored by the human teammate only. This overrides any default attribution behaviour.
 
-## 9. Proposed repo layout
+## 9. Repo layout
 
 ```
 /sim        Isaac Sim world (USD), vehicle, sensors, hydrodynamics, director
 /control    thrusters, station keeping, carry-aware control, safety limits
 /perception classifier / Gemma prompts, semantic map
-/agent      on-device agent loop, tools, optimiser
-/cloud      Argon debrief, coder, verifier, scene critique
+/agent      on-device mission FSM, pairing, graft point (no network code)
+/mission    run_mission entry point: perception + FSM + live dashboard files
+/cloud      Argon debrief (coder, verifier and scene critique not built)
 /dashboard  live stream: camera + detections, map, decision log, link status
 /eval       scenario suite, metrics, regression harness
 /docs       one-page technical summary, README assets
 ```
 
-## 10. Team and ownership (fill in names)
+## 10. Team and ownership
 
 | Role | Owner | Scope |
 |---|---|---|
-| Sim and world | TBD | Isaac Sim scene, vehicle, sensors, hydrodynamics force model, director hook, streaming |
+| Sim and world | TBD | Isaac Sim scene, vehicle, sensors, simplified water forces, `RobotInterface` adapter, director, streaming |
 | Control and navigation | TBD | thrusters, current compensation, carry dynamics, safety |
-| Perception and mapping | TBD | classifier / Gemma, semantic map, confidence, data |
-| Agent and optimiser | TBD | agent loop, site optimiser, Argon cloud loop |
-| Integration and demo | TBD | dashboard and stream, eval harness, PDF, video, pitch |
+| Perception and mapping | Sofiya | Gemma detection and classification, registry, projection, data |
+| Agent and optimiser | Ethan | mission FSM, pairing, graft point |
+| Cloud debrief | Tara | Argon debrief, HTML report |
+| Dashboard | aryan-patel2510 | Mission Control dashboard |
+| Integration and demo | TBD | `mission/`, eval harness, PDF, video, pitch |
 
 Agree interfaces in hour one: sensor packet, state estimate, map query, action commands, event log.
 
@@ -195,6 +206,9 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 - Can more than one teammate stream at once? (One streaming client per Isaac Sim instance.)
 - Who owns the Modal account/credentials, and what exactly runs there (Gemma eval batches? dataset preprocessing? it's not a substitute for Isaac Sim's RTX requirement)?
 
+- Pitch story: the FSM harvests a cutting from a LIVE donor, but section 1 says prefer loose fragments and do not cut healthy colonies. Same code either way; pick one story.
+- Which machine serves Gemma for the demo? It must be local to the agent stack. `gemma-4-31b-it` is not edge-sized, so the PDF needs the edge budget stated separately (section 5).
+
 ## 14. Schedule (Sat 7 Nov to Sun 8 Nov 2026)
 
 - Sat afternoon: **get Isaac Sim streaming to a laptop first (slides: first hour, before agent code)**, then contract and vertical slice, vertical slice (one vehicle, 2 to 3 fragments, one reef patch, three perturbations), core verification loop.
@@ -204,4 +218,8 @@ Agree interfaces in hour one: sensor packet, state estimate, map query, action c
 
 ## 15. Decisions log
 
-- (add dated entries here)
+- 2026-11-07: Gemma does detection and classification, replacing HSV/YOLOv8. Self-hosted, never the cloud Interactions API.
+- 2026-11-07: The team spec's 6-state FSM, registry schema and algorithms are canonical, replacing the Gemma ~1 Hz tool-picking loop.
+- 2026-11-07: Physics simplified to zero gravity plus damping (section 5).
+- 2026-11-07: `run_mission` in `mission/` is the single entry point. `RobotInterface` stays frozen; `fragment_held` and `placement_verifier` are required arguments to `run_mission`.
+- 2026-11-07: No Claude attribution anywhere on GitHub (commits, PRs, comments). See section 8.

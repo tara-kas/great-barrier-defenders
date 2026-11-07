@@ -52,6 +52,10 @@ State transitions are in agent/fsm.py.
 Review the mission as a whole as well as entry by entry: compare how it ended \
 with its goal and with what the survey found, and flag the entry where they part.
 
+A success must be backed by its check. If an entry claims success while its \
+evidence says a required check did not run, or ran and failed, flag it: an \
+unverified result is not a verified one.
+
 Judge each entry only on what the log shows. Flag a transition only when its \
 evidence shows a real problem. Do not flag something merely because it could be \
 better, and do not speculate about data the log lacks. A flawless mission is a \

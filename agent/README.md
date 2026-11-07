@@ -73,6 +73,7 @@ Consecutive entries chain: `entries[i].evidence.next_state == entries[i+1].state
 | `survey_registry_only` / `survey_waypoint` / `survey_waypoint_skipped` / `survey_complete` | SURVEY_SEABED | waypoint, `hull_frame` depth stats, `detections`, `new`/`updated` ids, `counts_by_status` |
 | `select_pair` | COMPUTE_RESTORATION_PLAN | `chosen` J terms (`travel`, `transfer`, `health`, `J`), `runners_up_donors`, `other_pairings`, `unrestorable`, `skipped_donors`, `ignored_bleached`, `memory` |
 | `select_recipient_for_carried` / `return_fragment_to_donor` | COMPUTE_RESTORATION_PLAN | carried species, recipient or donor, `carry_distance_m` |
+| `survey_waypoint_failed` | SURVEY_SEABED | `error`, `consecutive_failures`, `failure_limit`, `perception` |
 | `mission_complete` | COMPUTE_RESTORATION_PLAN | `restored`, `unrestorable_final` (id → reason) |
 | `arrive_donor` / `arrive_recipient` / `navigate_failed` | NAVIGATE_* | `navigation`: start, target, final, `residual_m`, `path_ticks`, `max_speed` |
 | `fragment_dislodged` | NAVIGATE_TO_RECIPIENT | `navigation.fragment_held=false`, lost fragment, then re-plan |

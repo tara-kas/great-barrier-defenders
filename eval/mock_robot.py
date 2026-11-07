@@ -100,6 +100,7 @@ class MockRobotInterface(RobotInterface):
     placements: list[tuple[str, Pose]] = field(default_factory=list, init=False)
     ik_calls: list[tuple[Pose, bool]] = field(default_factory=list, init=False)
     ik_fail_next: int = field(default=0, init=False)  # perturbation: force N IK failures
+    unstable_next: int = field(default=0, init=False)  # perturbation: fail the next N push tests
     ticks: int = field(default=0, init=False)
     _dislodge_in: Optional[int] = field(default=None, init=False)
     _cache: dict = field(default_factory=dict, init=False)
@@ -169,6 +170,12 @@ class MockRobotInterface(RobotInterface):
 
     def fragment_held(self) -> bool:
         return self.holding is not None
+
+    def verify_placement(self, at_pose: Pose) -> dict:
+        """Stand-in for the sim's current-push test. Pass as placement_verifier."""
+        stable = self.unstable_next <= 0
+        self.unstable_next = max(self.unstable_next - 1, 0)
+        return {"stable": stable, "source": "mock, no physics"}
 
     def schedule_dislodge(self, after_ticks: int) -> None:
         """Perturbation: the carried fragment falls off after N carry ticks."""

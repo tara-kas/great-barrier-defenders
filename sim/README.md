@@ -6,6 +6,15 @@ Owner: TBD (see CLAUDE.md section 10).
 
 Runs on the Linux/Windows RTX-class GPU host, not on your Mac. See `SETUP.md` at the repo root for how to connect as a viewer.
 
+## Connecting to the mission
+
+Call `run_mission` from `mission/runner.py` (see `mission/README.md`). Besides a `RobotInterface`, it needs two functions that the interface doesn't cover, and it won't start without them:
+
+- `fragment_held() -> bool`: is the fragment still in the gripper? This is how a dislodged fragment gets detected.
+- `placement_verifier(pose) -> {"stable": bool, ...}`: the post-placement current-push test.
+
+Pass the director as `on_step`, and a sim-stepping function as `wait`.
+
 Suggested layout as this fills in:
 - `scenes/` — USD reef scene, materials, fragment rigid bodies
 - `vehicle/` — AUV URDF/USD, gripper, thruster rig
