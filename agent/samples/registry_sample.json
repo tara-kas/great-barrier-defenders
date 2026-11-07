@@ -1,0 +1,464 @@
+[
+ {
+  "cluster_id": "cluster_00",
+  "species_class": "acropora_cervicornis",
+  "health_status": "LIVE",
+  "health_score": 0.767,
+  "position_world": [
+   2.9281,
+   0.8688,
+   0.0794
+  ],
+  "bounding_box_extent": [
+   0.3402,
+   0.3402,
+   0.1588
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_07",
+  "species_class": "porites_astreoides",
+  "health_status": "RESTORED",
+  "health_score": 0.017,
+  "position_world": [
+   4.3042,
+   0.7549,
+   0.1476
+  ],
+  "bounding_box_extent": [
+   0.3484,
+   0.3484,
+   0.2952
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    4.304185735009382,
+    0.7559233427944533,
+    0.29174642400732376
+   ],
+   "orientation_quat": [
+    0.9999946618039492,
+    -3.13611955648765e-20,
+    0.0005121671911723672,
+    0.003227080472121484
+   ],
+   "surface_normal": [
+    -0.00102432891424698,
+    0.006454126490666381,
+    0.9999786472727895
+   ]
+  },
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_12",
+  "species_class": "porites_astreoides",
+  "health_status": "LIVE",
+  "health_score": 0.6,
+  "position_world": [
+   4.0003,
+   1.7159,
+   0.0944
+  ],
+  "bounding_box_extent": [
+   0.29,
+   0.29,
+   0.1888
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_18",
+  "species_class": "orbicella_faveolata",
+  "health_status": "BLEACHED",
+  "health_score": 0.329,
+  "position_world": [
+   6.1087,
+   1.2561,
+   0.1482
+  ],
+  "bounding_box_extent": [
+   0.2782,
+   0.2782,
+   0.2965
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_17",
+  "species_class": "porites_astreoides",
+  "health_status": "LIVE",
+  "health_score": 0.446,
+  "position_world": [
+   8.5125,
+   2.5444,
+   0.1458
+  ],
+  "bounding_box_extent": [
+   0.3124,
+   0.3124,
+   0.2916
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_06",
+  "species_class": "acropora_cervicornis",
+  "health_status": "RESTORED",
+  "health_score": 0.079,
+  "position_world": [
+   5.3732,
+   3.1974,
+   0.1301
+  ],
+  "bounding_box_extent": [
+   0.2663,
+   0.2663,
+   0.2602
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    5.373706210458643,
+    3.1962144087177746,
+    0.25746556452348457
+   ],
+   "orientation_quat": [
+    0.9999827880289822,
+    1.9550951225432169e-19,
+    -0.0031929126404518105,
+    -0.004922291605968732
+   ],
+   "surface_normal": [
+    0.00638571536826396,
+    -0.009844413767256659,
+    0.9999311527084325
+   ]
+  },
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_16",
+  "species_class": "orbicella_faveolata",
+  "health_status": "BLEACHED",
+  "health_score": 0.325,
+  "position_world": [
+   3.5412,
+   4.0246,
+   0.0757
+  ],
+  "bounding_box_extent": [
+   0.3328,
+   0.3328,
+   0.1515
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_13",
+  "species_class": "orbicella_faveolata",
+  "health_status": "LIVE",
+  "health_score": 0.915,
+  "position_world": [
+   3.2922,
+   4.8725,
+   0.119
+  ],
+  "bounding_box_extent": [
+   0.2461,
+   0.2461,
+   0.2379
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_15",
+  "species_class": "porites_astreoides",
+  "health_status": "BLEACHED",
+  "health_score": 0.378,
+  "position_world": [
+   3.7202,
+   5.6438,
+   0.0859
+  ],
+  "bounding_box_extent": [
+   0.3357,
+   0.3357,
+   0.1718
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_09",
+  "species_class": "acropora_cervicornis",
+  "health_status": "BLEACHED",
+  "health_score": 0.441,
+  "position_world": [
+   6.3247,
+   6.0385,
+   0.095
+  ],
+  "bounding_box_extent": [
+   0.3478,
+   0.3478,
+   0.1899
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_03",
+  "species_class": "porites_astreoides",
+  "health_status": "RESTORED",
+  "health_score": 0.014,
+  "position_world": [
+   7.0655,
+   5.3926,
+   0.1254
+  ],
+  "bounding_box_extent": [
+   0.2478,
+   0.2478,
+   0.2508
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    7.0646268827846725,
+    5.391410498699727,
+    0.24836504429884043
+   ],
+   "orientation_quat": [
+    0.9999785903785782,
+    -2.2095622126852137e-19,
+    0.00360848893611382,
+    -0.005458717071775445
+   ],
+   "surface_normal": [
+    -0.0072168233594635854,
+    -0.0109172004054191,
+    0.9999143624310565
+   ]
+  },
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_02",
+  "species_class": "orbicella_faveolata",
+  "health_status": "LIVE",
+  "health_score": 0.923,
+  "position_world": [
+   8.7148,
+   5.9597,
+   0.0789
+  ],
+  "bounding_box_extent": [
+   0.2369,
+   0.2369,
+   0.1578
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_04",
+  "species_class": "orbicella_faveolata",
+  "health_status": "BLEACHED",
+  "health_score": 0.389,
+  "position_world": [
+   8.9157,
+   7.8427,
+   0.108
+  ],
+  "bounding_box_extent": [
+   0.3483,
+   0.3483,
+   0.2161
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_11",
+  "species_class": "porites_astreoides",
+  "health_status": "RESTORED",
+  "health_score": 0.114,
+  "position_world": [
+   9.3275,
+   6.6699,
+   0.08
+  ],
+  "bounding_box_extent": [
+   0.3487,
+   0.3487,
+   0.1599
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    9.327206712895077,
+    6.669951179558585,
+    0.15641868934179542
+   ],
+   "orientation_quat": [
+    0.9999999082994676,
+    -2.5510859918995833e-20,
+    0.0004166239594429592,
+    9.912382551610568e-05
+   ],
+   "surface_normal": [
+    -0.0008332478424766406,
+    0.00019824763285267375,
+    0.9999996331978873
+   ]
+  },
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_19",
+  "species_class": "acropora_cervicornis",
+  "health_status": "DEAD",
+  "health_score": 0.04,
+  "position_world": [
+   7.99379732888058,
+   7.583884767398151,
+   0.125
+  ],
+  "bounding_box_extent": [
+   0.02,
+   0.02,
+   0.25
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_05",
+  "species_class": "acropora_cervicornis",
+  "health_status": "BLEACHED",
+  "health_score": 0.386,
+  "position_world": [
+   2.0809,
+   8.2686,
+   0.1462
+  ],
+  "bounding_box_extent": [
+   0.3592,
+   0.3592,
+   0.2923
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_01",
+  "species_class": "porites_astreoides",
+  "health_status": "LIVE",
+  "health_score": 0.794,
+  "position_world": [
+   0.6487,
+   7.8194,
+   0.1088
+  ],
+  "bounding_box_extent": [
+   0.224,
+   0.224,
+   0.2176
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_08",
+  "species_class": "orbicella_faveolata",
+  "health_status": "BLEACHED",
+  "health_score": 0.245,
+  "position_world": [
+   1.6185,
+   6.5356,
+   0.1417
+  ],
+  "bounding_box_extent": [
+   0.3556,
+   0.3556,
+   0.2835
+  ],
+  "optimal_graft_pose_world": null,
+  "sampled_or_restored": false
+ },
+ {
+  "cluster_id": "cluster_10",
+  "species_class": "porites_astreoides",
+  "health_status": "RESTORED",
+  "health_score": 0.006,
+  "position_world": [
+   3.9531,
+   9.4749,
+   0.0771
+  ],
+  "bounding_box_extent": [
+   0.2983,
+   0.2983,
+   0.1543
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    3.952453745510041,
+    9.473998913058065,
+    0.15076483451567785
+   ],
+   "orientation_quat": [
+    0.9999966269216614,
+    -8.866975096223899e-20,
+    0.0014480869263525503,
+    -0.0021561979392677117
+   ],
+   "surface_normal": [
+    -0.0028961640836838126,
+    -0.004312381332486419,
+    0.9999865077094008
+   ]
+  },
+  "sampled_or_restored": true
+ },
+ {
+  "cluster_id": "cluster_14",
+  "species_class": "orbicella_faveolata",
+  "health_status": "RESTORED",
+  "health_score": 0.043,
+  "position_world": [
+   8.5054,
+   8.9064,
+   0.122
+  ],
+  "bounding_box_extent": [
+   0.3309,
+   0.3309,
+   0.244
+  ],
+  "optimal_graft_pose_world": {
+   "position": [
+    8.50535936403954,
+    8.904759074569961,
+    0.24047112797008996
+   ],
+   "orientation_quat": [
+    0.9999886242124397,
+    3.987466492066657e-21,
+    -6.512026969478689e-05,
+    -0.004769403009018078
+   ],
+   "surface_normal": [
+    0.0001302390578008659,
+    -0.009538697506605439,
+    0.9999544971085761
+   ]
+  },
+  "sampled_or_restored": true
+ }
+]

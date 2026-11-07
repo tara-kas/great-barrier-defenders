@@ -1,0 +1,40 @@
+{
+ "final_state": "MISSION_COMPLETE",
+ "steps": 69,
+ "sim_time_s": 379.1,
+ "restored": [
+  "cluster_03",
+  "cluster_06",
+  "cluster_07",
+  "cluster_10",
+  "cluster_11",
+  "cluster_14"
+ ],
+ "unrestorable": {
+  "cluster_19": "no upward, reachable, unobstructed patch large enough"
+ },
+ "memory": {
+  "donor_rejections": {},
+  "recipient_rejections": {
+   "cluster_19": [
+    "no upward, reachable, unobstructed patch large enough"
+   ]
+  },
+  "recipient_attempts": {
+   "cluster_14": 1,
+   "cluster_07": 1,
+   "cluster_06": 1,
+   "cluster_03": 1,
+   "cluster_10": 1,
+   "cluster_11": 1,
+   "cluster_19": 1
+  },
+  "harvest_counts": {
+   "cluster_02": 2,
+   "cluster_12": 2,
+   "cluster_00": 2,
+   "cluster_01": 2
+  },
+  "dislodge_events": 1
+ }
+}
