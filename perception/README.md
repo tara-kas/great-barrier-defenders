@@ -39,6 +39,8 @@ log.record("SURVEY_SEABED", "survey_frame", result.evidence())
 
 Config in `.env`: `GEMMA_BASE_URL` (e.g. `https://<ws>--reef-gemma-serve.modal.run/v1` or `http://localhost:8000/v1`), `GEMMA_API_KEY`, `GEMMA_MODEL` (default `gemma-4-31b-it`).
 
+For a mission, don't call this directly: `mission/runner.py` wraps it for the FSM.
+
 ## Test and check
 
 ```bash

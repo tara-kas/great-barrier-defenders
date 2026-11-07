@@ -21,6 +21,8 @@ python3 dashboard/server.py \
   --frame /path/to/latest-frame.jpg
 ```
 
+`mission/runner.py` writes these files during a run. Add `--synthetic-frame` when the frames are mock renders, so they are labelled as synthetic.
+
 The registry file can be a JSON array from `SemanticSeabedRegistry.dump()`, or an object with `entries` and optional `detections`. The log file is one `DecisionLogEntry` object per line, with `timestamp`, `state`, `action`, `evidence`, and `outcome`. The frame can be PNG or JPEG. Every poll rereads the registry and log and checks the frame's modification time, including changes made after the server starts. If a source is temporarily unavailable or malformed while being written, the dashboard shows a source error and retries. Writing registry and frame files with an atomic rename avoids partial reads.
 
 Detection coordinates are optional because the frozen registry contract has no image-space bounding boxes. When available, use normalized fractions in `[left, top, width, height]` format:

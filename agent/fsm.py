@@ -14,6 +14,8 @@ Pluggable dependencies (all optional except robot and registry):
   adapter's step). Defaults to time.sleep.
 - `perceiver(frame, pose) -> [SemanticMapEntry]`: hull-camera detector from
   the perception branch. Without one, survey uses the pre-populated registry.
+  It raises `PerceptionFailure` when a frame could not be processed, and may
+  expose `last_evidence` to have its reasoning logged with each survey frame.
 - `fragment_held() -> bool`: gripper force/camera check for dislodgement.
 - `placement_verifier(pose) -> {"stable": bool, ...}`: post-placement push test.
 """
@@ -56,6 +58,10 @@ class MissionState(str, Enum):
 TERMINAL = {MissionState.MISSION_COMPLETE, MissionState.ABORTED}
 
 
+class PerceptionFailure(RuntimeError):
+    """A survey frame could not be processed, as opposed to showing no coral."""
+
+
 @dataclass
 class MissionSummary:
     final_state: str
@@ -64,6 +70,7 @@ class MissionSummary:
     restored: list[str]
     unrestorable: dict[str, str]
     memory: dict[str, Any]
+    unverified_placements: list[str] = dataclasses.field(default_factory=list)
 
 
 def lawnmower(bounds: tuple[float, float, float, float], swath: float, z: float) -> list[tuple[float, float, float]]:
@@ -111,6 +118,9 @@ class MissionFSM:
         self.unrestorable: dict[str, str] = {}
         self._started = False
         self._survey_queue: Optional[list[tuple[float, float, float]]] = None
+        self._perception_failures = 0
+        self._failed_waypoints: list[tuple[float, float, float]] = []
+        self._unverified: list[str] = []
         self._handlers: dict[MissionState, Callable[[], MissionState]] = {
             MissionState.SURVEY_SEABED: self._survey,
             MissionState.COMPUTE_RESTORATION_PLAN: self._plan,
@@ -171,6 +181,7 @@ class MissionFSM:
             restored=restored,
             unrestorable=unrestorable,
             memory=self.memory.to_dict(),
+            unverified_placements=sorted(self._unverified),
         )
 
     def _go(self, next_state: MissionState, action: str, evidence: dict, outcome: str = "ok") -> MissionState:
@@ -209,6 +220,7 @@ class MissionFSM:
                 {
                     "n_entries": len(entries),
                     "counts_by_status": dict(Counter(e.health_status for e in entries)),
+                    "failed_waypoints": self._failed_waypoints,
                 },
             )
         wp = self._survey_queue.pop(0)
@@ -217,11 +229,15 @@ class MissionFSM:
             return self._go(MissionState.SURVEY_SEABED, "survey_waypoint_skipped", {"navigation": nav_ev}, status)
         frame = self.robot.get_hull_rgbd()
         pose = self.robot.get_pose()
-        detections = self.perceiver(frame, pose)
-        new, updated, kept = [], [], []
+        try:
+            detections = self.perceiver(frame, pose)
+        except PerceptionFailure as err:
+            return self._perception_failed(wp, nav_ev, err)
+        self._perception_failures = 0
+        new, updated, kept, merged = [], [], [], []
         for d in detections:
             result = self._merge_detection(d)
-            {"new": new, "updated": updated, "kept": kept}[result].append(d.cluster_id)
+            {"new": new, "updated": updated, "kept": kept, "merged": merged}[result].append(d.cluster_id)
         depth = np.asarray(frame.depth, dtype=float)
         valid = np.isfinite(depth) & (depth > 0)
         return self._go(
@@ -240,12 +256,38 @@ class MissionFSM:
                 "new": new,
                 "updated": updated,
                 "kept_restored_or_sampled": kept,
+                "merged_by_perceiver": merged,
+                "perception": getattr(self.perceiver, "last_evidence", None),
             },
         )
+
+    def _perception_failed(self, wp, nav_ev: dict, err: PerceptionFailure) -> MissionState:
+        """A failed frame is not an empty seabed: never let it pass as a clean survey."""
+        self._perception_failures += 1
+        self._failed_waypoints.append(wp)
+        limit = self.config.max_perception_failures
+        evidence = {
+            "waypoint": wp,
+            "navigation": nav_ev,
+            "error": str(err),
+            "consecutive_failures": self._perception_failures,
+            "failure_limit": limit,
+            "perception": getattr(self.perceiver, "last_evidence", None),
+        }
+        if self._perception_failures >= limit:
+            return self._go(
+                MissionState.ABORTED,
+                "abort",
+                evidence,
+                f"perception unavailable: {self._perception_failures} consecutive frames failed",
+            )
+        return self._go(MissionState.SURVEY_SEABED, "survey_waypoint_failed", evidence, str(err))
 
     def _merge_detection(self, d: SemanticMapEntry) -> str:
         """Upsert a detection without undoing mission progress."""
         existing = self.registry.get(d.cluster_id)
+        if existing is d:
+            return "merged"  # the perceiver already wrote this exact entry
         if existing is None:
             self.registry.upsert(d)
             return "new"
@@ -437,6 +479,8 @@ class MissionFSM:
             verdict = self.placement_verifier(placed_pose)
             ev["placement_verification"] = verdict
             if not verdict.get("stable", False):
+                if attempt >= self.config.max_attempts_per_recipient:
+                    self.memory.reject_recipient(target.cluster_id, f"failed the push test {attempt} times")
                 return self._go(
                     MissionState.COMPUTE_RESTORATION_PLAN,
                     "placement_unstable",
@@ -445,6 +489,7 @@ class MissionFSM:
                 )
         else:
             ev["placement_verification"] = "unverified (no placement_verifier injected)"
+            self._unverified.append(target.cluster_id)
         self.registry.upsert(
             dataclasses.replace(
                 target,
@@ -453,7 +498,8 @@ class MissionFSM:
                 optimal_graft_pose_world=chosen.to_graft_pose(),
             )
         )
-        return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "transplant_fragment", ev)
+        outcome = "ok" if self.placement_verifier is not None else "placed, unverified"
+        return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "transplant_fragment", ev, outcome)
 
     # ----------------------------------------------------------------- helpers
 

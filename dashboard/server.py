@@ -31,7 +31,7 @@ def read_decisions(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def make_handler(registry: Path, decisions: Path, frame: Path, mode: str):
+def make_handler(registry: Path, decisions: Path, frame: Path, mode: str, synthetic_frame: bool = False):
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -67,7 +67,7 @@ def make_handler(registry: Path, decisions: Path, frame: Path, mode: str):
                     "registry_updated": registry.stat().st_mtime,
                     "decisions_updated": decisions.stat().st_mtime,
                     "frame_updated": frame.stat().st_mtime,
-                    "frame_synthetic": frame == ROOT / "assets/reef-camera-synthetic.png",
+                    "frame_synthetic": synthetic_frame or frame == ROOT / "assets/reef-camera-synthetic.png",
                 }
                 body = json.dumps(payload).encode("utf-8")
                 status = 200
@@ -90,10 +90,11 @@ def main() -> None:
     parser.add_argument("--log", type=Path, default=ROOT / "demo/decisions.jsonl")
     parser.add_argument("--frame", type=Path, default=ROOT / "assets/reef-camera-synthetic.png")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--synthetic-frame", action="store_true", help="label the frame as synthetic (mock renders)")
     args = parser.parse_args()
     registry, decisions, frame = (path.expanduser().resolve() for path in (args.registry, args.log, args.frame))
     mode = "synthetic demo" if registry == ROOT / "demo/registry.json" and decisions == ROOT / "demo/decisions.jsonl" else "file source"
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(registry, decisions, frame, mode))
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(registry, decisions, frame, mode, args.synthetic_frame))
     print(f"Mission Control: http://127.0.0.1:{args.port}  [{mode}]", flush=True)
     print(f"Registry: {registry}\nDecision log: {decisions}\nFrame: {frame}", flush=True)
     try:

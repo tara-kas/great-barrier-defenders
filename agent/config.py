@@ -72,6 +72,7 @@ class FSMConfig:
     max_attempts_per_recipient: int = 3
     max_harvests_per_donor: Optional[int] = None  # None = donors reusable (narrative decision, see README)
     reobserve_attempts: int = 1  # extra wrist captures before giving up on a cluster
+    max_perception_failures: int = 3  # consecutive failed survey frames before aborting
 
     def to_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
