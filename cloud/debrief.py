@@ -41,8 +41,9 @@ TRANSPLANT_FRAGMENT until no restorable clusters remain.
 Design intent:
 - Pairing: for each DEAD recipient j, choose the LIVE donor i of the same species \
 minimising J(i,j) = w1*|x_rov - x_i| + w2*|x_i - x_j| - w3*H_i, where H_i is donor \
-health. The weights are tunable and live in agent/pairing.py. A low J does not by \
-itself make a choice good: judge whether the outcome serves restoration.
+health. The weights are tunable and live in agent/config.py, with the other limits. \
+A low J does not by itself make a choice good: judge whether the outcome serves \
+restoration.
 - Graft point (agent/graft_point.py): the surface must face upward, with the \
 normal's dot product with +Z above the threshold recorded in the log.
 - Any limit or tolerance recorded in an entry's evidence is meant to be honoured. \
