@@ -35,7 +35,7 @@ function coords(entry, b) {
   const p = Array.isArray(entry.position_world) ? entry.position_world : [0,0,0];
   return { x: 8 + 84 * ((Number(p[0]) - b.minX) / (b.maxX - b.minX || 1)), y: 9 + 82 * ((Number(p[1]) - b.minY) / (b.maxY - b.minY || 1)) };
 }
-function renderMap() {
+function renderMap(focusSelection = false) {
   const points = $('map-points'); points.replaceChildren();
   const b = bounds();
   $('map-scale-label').textContent = `${number((b.maxX - b.minX) * 37 / (Math.max(1, $('map-stage').clientWidth) * .84), 1)} m`;
@@ -49,9 +49,10 @@ function renderMap() {
     pin.style.left = `${pos.x}%`; pin.style.top = `${pos.y}%`;
     pin.title = `${entry.cluster_id} · ${statusNames[entry.health_status] || entry.health_status}`;
     pin.setAttribute('aria-label', pin.title);
-    pin.addEventListener('click', () => { state.selectedCluster = entry.cluster_id; renderMap(); });
+    pin.addEventListener('click', () => { state.selectedCluster = entry.cluster_id; renderMap(true); renderScene(); });
     points.append(pin);
   }
+  if (focusSelection) points.querySelector('.map-pin.selected')?.focus({ preventScroll: true });
   const entry = state.registry.find((item) => item.cluster_id === state.selectedCluster);
   const detail = $('cluster-detail');
   if (entry) {
@@ -122,15 +123,19 @@ function renderScene() {
   $('scene-depth').textContent = depths.length ? `DEPTH ${number(Math.abs(depths.reduce((a,c)=>a+c,0)/depths.length),1)} M` : 'DEPTH — M';
 }
 
-function renderDecisions() {
-  const list = $('decision-list'); list.replaceChildren();
+function renderDecisions(focusSelection = false) {
+  const list = $('decision-list');
+  const previousScroll = list.scrollTop;
+  list.replaceChildren();
   const ordered = [...state.decisions].map((entry,index)=>({...entry,_index:index})).reverse();
   for (const entry of ordered) {
     const button=document.createElement('button'); button.type='button'; button.className='decision-item';
     if (state.selectedDecision===entry._index) button.classList.add('selected');
     button.innerHTML=`<span class="decision-top"><span>${safe(timeOf(entry.timestamp))}</span><span>${safe(titleCase(entry.state))}</span></span><span class="decision-title">${safe(entry.action || 'Decision recorded')}</span><span class="decision-sub">${safe(entry.outcome || 'Evidence recorded')}</span>`;
-    button.addEventListener('click',()=>{state.selectedDecision=entry._index;renderDecisions();}); list.append(button);
+    button.addEventListener('click',()=>{state.selectedDecision=entry._index;renderDecisions(true);}); list.append(button);
   }
+  list.scrollTop = previousScroll;
+  if (focusSelection) list.querySelector('.decision-item.selected')?.focus({ preventScroll: true });
   const entry=state.decisions[state.selectedDecision];
   const inspector=$('decision-inspector');
   if (!entry) {inspector.innerHTML='<div class="inspector-kicker">EVIDENCE / OUTCOME</div><p>Select a decision to inspect the sensor evidence behind it.</p>';return;}
@@ -159,6 +164,11 @@ async function refresh() {
     const response=await fetch('/api/state',{cache:'no-store'});
     const payload=await response.json();
     if (!response.ok) throw new Error(payload.error || `Source error ${response.status}`);
+    if (state.lastPayload && ['registry_updated','decisions_updated','frame_updated','mode','frame_synthetic'].every((key) => state.lastPayload[key] === payload[key])) {
+      $('sync-label').textContent='SYNCED · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      $('sync-label').classList.remove('problem'); $('error-banner').hidden=true;
+      return;
+    }
     render(payload);
   } catch(error) {
     $('sync-label').textContent='SOURCE UNAVAILABLE'; $('sync-label').classList.add('problem');

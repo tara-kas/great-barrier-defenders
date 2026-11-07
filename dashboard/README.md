@@ -44,3 +44,12 @@ When using the built-in demo, the two boxes are illustrative and labelled as suc
 - Toggle the simulated acoustic link indicator. This affects only the dashboard display and never sends a vehicle command.
 
 The server binds to `127.0.0.1` only. No API keys or credentials are needed.
+
+## Verify
+
+```sh
+python3 -m unittest discover -s dashboard -p 'test_*.py'
+node --check dashboard/app.js
+```
+
+The server tests cover the frozen registry/log format, file updates, optional detection boxes, and a malformed source. Node is needed only for the JavaScript syntax check, not to run the dashboard.
