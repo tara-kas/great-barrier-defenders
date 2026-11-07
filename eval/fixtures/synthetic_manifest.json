@@ -1,0 +1,253 @@
+{
+  "synthetic": true,
+  "images": {
+    "synthetic_live_acropora_branching.jpg": {
+      "synthetic": true,
+      "intended_health_status": "LIVE",
+      "intended_coral_type": "acropora_branching",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdqVnZ2YW9ma0g1NnUzYm9Qam9pbjJRNBIXalZ2dmFvZmtINTZ1M2JvUGpvaW4yUTQ",
+      "prompt": "A single healthy staghorn Acropora colony with brown-tan pigmented tissue and pale growing tips, on rock. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:11:01+0000",
+      "latency_s": 24.6,
+      "usage": {
+        "initial_input_tokens": 189,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 73
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 73,
+        "total_output_tokens": 1762,
+        "total_thought_tokens": 969,
+        "total_tokens": 2804,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_live_massive_meandering.jpg": {
+      "synthetic": true,
+      "intended_health_status": "LIVE",
+      "intended_coral_type": "massive_meandering",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdyVnZ2YW9qNERkdThrZFVQNHR5N21BdxIXclZ2dmFvajREZHU4a2RVUDR0eTdtQXc",
+      "prompt": "A single healthy brain coral boulder with green-brown living tissue and clear meandering ridges, on rock. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:11:24+0000",
+      "latency_s": 15.4,
+      "usage": {
+        "initial_input_tokens": 186,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 70
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 70,
+        "total_output_tokens": 1395,
+        "total_thought_tokens": 814,
+        "total_tokens": 2279,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_bleached_acropora_table.jpg": {
+      "synthetic": true,
+      "intended_health_status": "BLEACHED",
+      "intended_coral_type": "acropora_table",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_Chd2RnZ2YXRpQUV1QzZrZFVQOTQteXNBNBIXdkZ2dmF0aUFFdUM2a2RVUDk0LXlzQTQ",
+      "prompt": "A single bleached table Acropora: bright white, clean surface, tissue still present but pale, on rock. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:11:39+0000",
+      "latency_s": 15.8,
+      "usage": {
+        "initial_input_tokens": 189,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 73
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 73,
+        "total_output_tokens": 1462,
+        "total_thought_tokens": 802,
+        "total_tokens": 2337,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_bleached_massive_meandering.jpg": {
+      "synthetic": true,
+      "intended_health_status": "BLEACHED",
+      "intended_coral_type": "massive_meandering",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_Chc4R2J2YXFfVEdmN21uc0VQeHREOXVBOBIXOEdidmFxX1RHZjdtbnNFUHh0RDl1QTg",
+      "prompt": "A single bleached brain coral: stark white and smooth, still intact, surrounded by normal reef rock. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:59:27+0000",
+      "latency_s": 15.6,
+      "usage": {
+        "initial_input_tokens": 186,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 70
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 70,
+        "total_output_tokens": 1508,
+        "total_thought_tokens": 802,
+        "total_tokens": 2380,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_dead_branching_other.jpg": {
+      "synthetic": true,
+      "intended_health_status": "DEAD",
+      "intended_coral_type": "branching_other",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdfMmJ2YW9xWEp0X3NrZFVQNWJtZzZRYxIXXzJidmFvcVhKdF9za2RVUDVibWc2UWM",
+      "prompt": "A dead branching coral skeleton: grey-brown, covered in fuzzy algal turf, eroded broken tips. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:59:41+0000",
+      "latency_s": 14.1,
+      "usage": {
+        "initial_input_tokens": 186,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 70
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 70,
+        "total_output_tokens": 1412,
+        "total_thought_tokens": 599,
+        "total_tokens": 2081,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_dead_massive_meandering.jpg": {
+      "synthetic": true,
+      "intended_health_status": "DEAD",
+      "intended_coral_type": "massive_meandering",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdEV2Z2YW82bUx0RzB2ZElQZ3R1RzZROBIXRFdmdmFvNm1MdEcwdmRJUGd0dUc2UTg",
+      "prompt": "A dead brain coral boulder: dull grey skeleton covered in green-brown algal film, partly eroded. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T17:59:56+0000",
+      "latency_s": 14.8,
+      "usage": {
+        "initial_input_tokens": 186,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 70
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 70,
+        "total_output_tokens": 1446,
+        "total_thought_tokens": 825,
+        "total_tokens": 2341,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_scene_mixed_health.jpg": {
+      "synthetic": true,
+      "intended_health_status": "MIXED",
+      "intended_coral_type": "scene",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdIR2Z2YXVYc0l2V00yOG9QdnNDLTZBNBIXSEdmdmF1WHNJdldNMjhvUHZzQy02QTQ",
+      "prompt": "A reef patch with several separate colonies: two healthy brown branching corals, one white bleached brain coral, and one grey algae-covered dead branching skeleton, on rock with sand gaps. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T18:00:10+0000",
+      "latency_s": 14.1,
+      "usage": {
+        "initial_input_tokens": 202,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 86
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 86,
+        "total_output_tokens": 1452,
+        "total_thought_tokens": 647,
+        "total_tokens": 2185,
+        "total_tool_use_tokens": 0
+      }
+    },
+    "synthetic_scene_loose_fragments.jpg": {
+      "synthetic": true,
+      "intended_health_status": "MIXED",
+      "intended_coral_type": "scene",
+      "model": "gemini-nano-banana-2.1",
+      "interaction_id": "v1_ChdLbWZ2YXVqLUthaXB2ZElQZ09xMjJBSRIXS21mdmF1ai1LYWlwdmRJUGdPcTIyQUk",
+      "prompt": "Storm damage: four broken, loose branching coral fragments lying on sand and rubble, two with living brown tissue and two pale white, next to a patch of clean hard rock. Photorealistic underwater photo from a downward-looking ROV camera about 1.5 m above the seabed, natural blue-green colour cast, slight turbidity and suspended particles, even lighting, no fish, no divers, no text or watermark.",
+      "generated_at": "2026-11-07T18:00:25+0000",
+      "latency_s": 15.4,
+      "usage": {
+        "initial_input_tokens": 201,
+        "input_tokens_by_modality": [
+          {
+            "modality": "text",
+            "tokens": 85
+          }
+        ],
+        "output_tokens_by_modality": [
+          {
+            "modality": "image",
+            "tokens": 1120
+          }
+        ],
+        "total_cached_tokens": 0,
+        "total_input_tokens": 85,
+        "total_output_tokens": 1444,
+        "total_thought_tokens": 684,
+        "total_tokens": 2213,
+        "total_tool_use_tokens": 0
+      }
+    }
+  }
+}
