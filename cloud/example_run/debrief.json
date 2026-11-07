@@ -1,0 +1,200 @@
+{
+  "debrief": {
+    "verdict": "issues_found",
+    "summary": "The ROV surveyed 7 coral clusters (4 live, 3 dead) and completed two restoration cycles before terminating the mission. Three significant issues occurred during the dive: in entry 3, the ROV attached a fragment from donor L-03 even though inverse kinematics indicated the target was unreachable; in entry 7, the planner paired dead acropora_palmata recipient D-14 with live acropora_cervicornis donor L-05 instead of same-species candidate L-09; and in entry 13, the mission ended early claiming all restorable clusters were processed while 1 of the 3 dead clusters from the survey still remained.",
+    "suspect_transitions": [
+      {
+        "entry_index": 3,
+        "severity": "high",
+        "issue": "The ROV executed attach_fragment on donor L-03 and transitioned to navigation despite ik_reachable being false.",
+        "citations": [
+          {
+            "path": "action",
+            "value": "attach_fragment"
+          },
+          {
+            "path": "evidence.ik_reachable",
+            "value": "false"
+          },
+          {
+            "path": "outcome",
+            "value": "fragment attached"
+          }
+        ]
+      },
+      {
+        "entry_index": 7,
+        "severity": "high",
+        "issue": "The restoration planner violated the same-species pairing requirement by selecting donor L-05 (acropora_cervicornis) for recipient D-14 (acropora_palmata) simply because it had a lower cost_J than the valid same-species candidate L-09 (acropora_palmata).",
+        "citations": [
+          {
+            "path": "evidence.recipient.cluster_id",
+            "value": "D-14"
+          },
+          {
+            "path": "evidence.recipient.species_class",
+            "value": "acropora_palmata"
+          },
+          {
+            "path": "evidence.candidates.0.cluster_id",
+            "value": "L-05"
+          },
+          {
+            "path": "evidence.candidates.0.species_class",
+            "value": "acropora_cervicornis"
+          },
+          {
+            "path": "evidence.candidates.1.cluster_id",
+            "value": "L-09"
+          },
+          {
+            "path": "evidence.candidates.1.species_class",
+            "value": "acropora_palmata"
+          },
+          {
+            "path": "evidence.chosen_donor",
+            "value": "L-05"
+          }
+        ]
+      },
+      {
+        "entry_index": 13,
+        "severity": "high",
+        "issue": "The mission terminated claiming all restorable clusters were processed even though the initial survey detected 3 dead clusters and 4 live clusters, and remaining_dead_clusters was still 1.",
+        "citations": [
+          {
+            "path": "action",
+            "value": "mission_complete"
+          },
+          {
+            "path": "evidence.remaining_dead_clusters",
+            "value": "1"
+          },
+          {
+            "path": "evidence.restored_total",
+            "value": "2"
+          },
+          {
+            "path": "outcome",
+            "value": "all restorable clusters processed"
+          }
+        ]
+      }
+    ],
+    "suggested_patch": {
+      "target": "agent/pairing.py:species_match_check",
+      "current_value": "False",
+      "proposed_value": "donor.species_class == recipient.species_class",
+      "rationale": "Enforcing a strict same-species filter on candidate donors before evaluating J(i,j) prevents biologically invalid cross-species transplants such as grafting acropora_cervicornis (L-05) onto dead acropora_palmata (D-14).",
+      "addresses_entries": [
+        7
+      ]
+    }
+  },
+  "citation_checks": [
+    {
+      "entry_index": 3,
+      "status": "verified",
+      "citations": [
+        {
+          "path": "action",
+          "value": "attach_fragment",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.ik_reachable",
+          "value": "false",
+          "status": "verified"
+        },
+        {
+          "path": "outcome",
+          "value": "fragment attached",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "entry_index": 7,
+      "status": "verified",
+      "citations": [
+        {
+          "path": "evidence.recipient.cluster_id",
+          "value": "D-14",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.recipient.species_class",
+          "value": "acropora_palmata",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.candidates.0.cluster_id",
+          "value": "L-05",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.candidates.0.species_class",
+          "value": "acropora_cervicornis",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.candidates.1.cluster_id",
+          "value": "L-09",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.candidates.1.species_class",
+          "value": "acropora_palmata",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.chosen_donor",
+          "value": "L-05",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "entry_index": 13,
+      "status": "verified",
+      "citations": [
+        {
+          "path": "action",
+          "value": "mission_complete",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.remaining_dead_clusters",
+          "value": "1",
+          "status": "verified"
+        },
+        {
+          "path": "evidence.restored_total",
+          "value": "2",
+          "status": "verified"
+        },
+        {
+          "path": "outcome",
+          "value": "all restorable clusters processed",
+          "status": "verified"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "model": "gemini-4-argon",
+    "interaction_id": "v1_ChdzVnZ2YXBUdEs1N3FrZFVQcFlTQmtBdxIXc1Z2dmFwVHRLNTdxa2RVUHBZU0JrQXc",
+    "thinking_level": "high",
+    "latency_s": 67.2,
+    "usage": {
+      "total_input_tokens": 3688,
+      "total_output_tokens": 974,
+      "total_thought_tokens": 5919,
+      "total_tokens": 10581
+    },
+    "created_at": "2026-11-07T17:12:20.268452+00:00",
+    "log_path": "cloud/sample_logs/fabricated_subtle.jsonl",
+    "log_sha256": "b1997ef296d545e61dc33b04dce18191087dda7ea25e9062f2dadf4607cef087",
+    "entry_count": 14
+  }
+}
