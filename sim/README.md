@@ -1,65 +1,77 @@
-# sim
+# Offline reef mission on DGX Spark
 
-Isaac Sim world (USD), vehicle, sensors, hydrodynamics force model, perturbation director, streaming config.
+The simulator in [`pelagic/`](pelagic/README.md) now runs the team's actual
+`mission.runner.run_mission` / `MissionFSM` through `ReefRobotAdapter`.
+This demo collects a persistent natural branch cutting from **living reef**,
+checks recipient and donor with UV before harvest, detects an injected grip
+slip, recovers the **same fragment**, places its tissue against a natural
+recipient branch and verifies the securing joint with a measured push.
+Dead colonies are excluded; successful placement means `TREATED`, not recovered.
 
-Owner: TBD (see CLAUDE.md section 10).
+The supported recording workflow is entirely offline on the DGX Spark with
+Isaac Sim 6.0.x. The Mac receives the completed MP4, with synchronized director,
+scout and wrist-camera views. No camera server or livestream is started.
 
-Runs on the Linux/Windows RTX-class GPU host, not on your Mac. See `SETUP.md` at the repo root for how to connect as a viewer.
-
-## Standalone Isaac Sim checkpoint
-
-The `simulation` branch includes the existing PELAGIC reef simulator in
-[`pelagic/`](pelagic/README.md). It runs offline on DGX Spark with Isaac Sim
-6.0.x and records synchronized director, scout and wrist-camera views. It
-includes dense healthy/bleached/dead reef regions, persistent donor cuttings,
-natural-branch contact, current-responsive soft tissue, fish, and wide-area UV
-approval of both recipient and donor before collection. Pickup, transport,
-placement and mechanical verification use white light. The existing Spark
-recording passed 98 tests, eight pre-harvest approvals and 65 geometry audits.
-
-From the repository root:
+## Run from the repository root
 
 ```bash
-cd sim/pelagic
-python3 -m pip install -e '.[optics]'
-python3 -m unittest discover -s tests -v
-# Run on the Spark; ffmpeg is required for an MP4 recording.
-/home/smint/isaacsim/python.sh -u scripts/render_demo.py \
-  --config configs/natural_reef.json --fps 24 --max-frames 4000 \
-  --samples 4 --quality 17 --output outputs/uv-detection-pip
-python3 scripts/validate_demo.py outputs/uv-detection-pip
+# CPU planning needs the team's requirements plus numpy/Pillow.
+python3 sim/pelagic/scripts/plan_team_demo.py \
+  --output sim/pelagic/outputs/team-mission-recovery
+# Review RTX action milestones before the full recording.
+/home/smint/isaacsim/python.sh -u sim/pelagic/scripts/render_team_demo.py \
+  --trace sim/pelagic/outputs/team-mission-recovery/trace.json.gz \
+  --output sim/pelagic/outputs/team-preview --preview-stills --samples 8
+/home/smint/isaacsim/python.sh -u sim/pelagic/scripts/render_team_demo.py \
+  --trace sim/pelagic/outputs/team-mission-recovery/trace.json.gz \
+  --output sim/pelagic/outputs/team-video --fps 24 --samples 4 --quality 17
 ```
 
-This checkpoint uses its own `reefsim` mission controller and analytical
-perception/UV gate. It is not yet connected to `mission.runner`, Gemma,
-`SemanticSeabedRegistry` or the team dashboard. It collects fragments from
-living donor colonies, as requested for this demo, rather than the team's
-base-station racks. Its reef layout is an artistic scene, separate from the
-Moore Reef dataset. A `RobotInterface` adapter, aligned sensor packets and the
-team's required `fragment_held` / `placement_verifier` callbacks remain
-integration work; the existing team contracts below are preserved. Neither
-biological recovery nor genotype classification from camera pixels is claimed.
+The output is `pelagic-team-pip.mp4`. Validate and extract review frames with
+`python3 sim/pelagic/scripts/validate_team_video.py sim/pelagic/outputs/team-video`. The trace contains the actual controller
+trajectory; rendering replays it without changing decisions. Playback is
+accelerated during transit and is labelled accordingly. The injected loss is
+a controlled test, not a claim of an unscripted disturbance.
 
-Source assets and licenses are bundled; generated videos and logs are excluded
-from Git. See [recording evidence](pelagic/docs/VALIDATION.md) and
-[variables and assumptions](pelagic/docs/ASSUMPTIONS.md).
+## What is implemented and assumed
 
-## Connecting to the mission
+| Area | This iteration |
+|---|---|
+| Mission | Team FSM, semantic registry, source-aware pairing, explicit same-ID recovery, placement acceptance |
+| Supply | Living colonies with individual source poses and persistent fragment IDs; legacy rack mode remains compatible |
+| Cuttings | Connected sections partitioned from the actual donor scan; original geometry and UVs preserved, matched exposed cut surfaces |
+| Contact | An original tissue vertex in the live branch band touches an existing recipient triangle; small adhesive saddle, no extension branch |
+| Push test | 0.18 N spring-damper test; displacement, stability and continued contact checked; weak/broken fixtures fail tests |
+| Physics | Reduced submerged weight/drag for loose cuttings and compliant joints; not full fluid or fracture simulation |
+| Reef | Bundled Pocillopora/Acropora scans at bounded levels of detail, tissue/roughness/normal maps, clustered healthy/bleached/dead cover |
+| Motion | Current-driven soft fans/polyps and fish; rigid stony skeletons remain rigid |
+| Perception demo | Explicit pre-mapped synthetic registry and analytical UV gate. No inference call, no image-based species/genet claim |
+| Optional Gemini | Opt-in `VisionLLM` adapter and image-review CLI; requires a credential and cloud access; see below |
+| Biology | Mechanical treatment only; no instant recolouring, symbiont transfer or biological revival simulated |
 
-Call `run_mission` from `mission/runner.py` (see `mission/README.md`). The `RobotInterface` includes `get_uv_frame()`: an HxWx3 uint8 hull view under UV excitation, pixel-aligned with the RGB frame. Colour must follow `BANDS` in `perception/genet.py`, without saturating, because genets are decoded from the share across bands.
+The scenario includes a defined sandy recovery pocket so a fallen fragment is
+not hidden inside display-only coral. The reef is an artistic environment,
+not a reconstruction of Moore Reef. All provenance/licences remain bundled.
 
-It also needs two functions that the interface doesn't cover, and it won't start without them:
+The default recording is labelled **OFFLINE DEMO PERCEPTION / NO MODEL CALL**.
+The [optional Gemini adapter](../docs/simulation-gemini.md) uses an explicitly
+selected low-cost model and never silently substitutes mocked inference. Its
+SDK requests are tested with a mock transport; live-service validation needs
+credentials. Rendered RGB-D integration with the team's visual survey pipeline
+remains future work; the current pre-mapped scenario deliberately skips that
+pipeline rather than pretending synthetic images were inferred by Gemini.
 
-- `fragment_held() -> bool`: is the fragment still in the gripper? This is how a dislodged fragment gets detected.
-- `placement_verifier(pose) -> {"stable": bool, "contact": bool, ...}`: the post-placement current-push test. `contact` says the fragment still touches the colony.
+See [the completed recording evidence](pelagic/docs/TEAM_MISSION_VALIDATION.md).
 
-`attach_fragment` receives a base station rack slot, and `detach_fragment` should leave the fragment touching the colony. Base station geometry should match `data/moore_reef/base_station.json`.
+## Verification
 
-Pass the director as `on_step`, and a sim-stepping function as `wait`.
+```bash
+python3 -m pytest agent/tests perception/tests eval/test_fsm_loop.py \
+  eval/test_living_reef_mission.py eval/test_reef_adapter.py sim/pelagic/tests -q
+```
 
-Suggested layout as this fills in:
-- `scenes/` — USD reef scene, materials, fragment rigid bodies
-- `vehicle/` — AUV URDF/USD, gripper, thruster rig
-- `sensors/` — camera, depth/sonar-style rays, IMU, gripper force
-- `hydrodynamics/` — buoyancy/drag/added-mass/current step callback (Isaac Sim has none of this built in)
-- `director/` — perturbation injection (current surge, dislodged fragment, visibility drop, ...)
+`report.json`, `mission/decisions.jsonl`, `mission/registry.json` and
+`geometry-validation.json` provide controller, identity, push-test and USD
+geometry evidence. Generated videos, traces and logs are excluded from Git.
+The legacy standalone demo and its earlier recordings remain available through
+`scripts/render_demo.py`; they use the original independent controller.

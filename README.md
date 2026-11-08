@@ -51,4 +51,4 @@ See `SETUP.md` for environment setup and connecting to a remote Isaac Sim instan
 
 ## Isaac Sim checkpoint
 
-The `simulation` branch includes the offline DGX Spark simulator, bundled assets, configurations and tests under [`sim/pelagic/`](sim/pelagic/README.md). Start with [`sim/README.md`](sim/README.md) for run commands and the remaining integration work with the team mission stack.
+The `simulation` branch includes the offline DGX Spark simulator, bundled assets, configurations and tests under [`sim/pelagic/`](sim/pelagic/README.md). Start with [`sim/README.md`](sim/README.md) for the connected team mission, natural live-reef harvesting, same-fragment recovery, push testing and offline recording commands. The default recording uses an explicitly labelled pre-mapped perception demo; optional Gemini inference requires separate cloud opt-in.

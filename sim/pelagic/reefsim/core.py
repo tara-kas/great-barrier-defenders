@@ -277,7 +277,18 @@ class ReefSimulation:
         """
         fragments = []
         limit = self.config["donors"]["max_fragments"]
-        for coral in self.corals:
+        natural = bool(self.config.get("render", {}).get("natural_cuttings", False))
+        for coral_index, coral in enumerate(self.corals):
+            scanned = None
+            if natural and coral["donor_capacity"] and len(fragments) < limit:
+                from .scanned_fragment import split_scanned_donor
+                slots = min(coral["donor_capacity"], limit-len(fragments))
+                detail = "hero" if self.config.get("render", {}).get("realistic_tissue", False) else "standard"
+                mesh_seed = int(self.config["seed"]) + coral_index * 813
+                scanned = split_scanned_donor(coral["radius"], coral["height"], mesh_seed,
+                                             slots=slots, detail=detail)
+                coral.update(scanned_partition=True, scanned_partition_slots=slots,
+                             source_mesh_seed=mesh_seed, source_mesh_detail=detail)
             for slot in range(coral["donor_capacity"]):
                 if len(fragments) >= limit:
                     return fragments
@@ -293,12 +304,33 @@ class ReefSimulation:
                     "source_position": position[:], "yaw": angle, "stage": "attached_to_donor",
                     "source_species": coral["species"], "target_id": None,
                     "reserved_by": None})
+                if scanned is not None:
+                    cutting = scanned["fragments"][slot]
+                    position = [coral["position"][k]+cutting["origin"][k] for k in range(3)]
+                    fragments[-1].update(
+                        natural_cutting=True, source_slot=slot,
+                        source_mesh_seed=mesh_seed, source_mesh_detail=detail,
+                        source_origin=list(cutting["origin"]), source_yaw=0., yaw=0.,
+                        height=cutting["height"], radius=cutting["radius"],
+                        grasp_point=list(cutting["grasp_point"]), grasp_z=cutting["grasp_z"],
+                        grasp_radius=cutting["grasp_radius"],
+                        contact_samples=[list(p) for p in cutting["contact_samples"]],
+                        contact_band_local_z=list(cutting["contact_band_local_z"]),
+                        source_triangle_count=cutting["source_triangle_count"],
+                        position=position[:], base_world=position[:], source_position=position[:])
                 if self._contact_mode:
                     fragments[-1].update(genet_id=coral["genet_id"], genotype_known=coral["genotype_known"],
                                          genotype_source=coral["genotype_source"], genet_marker=coral["genet_marker"],
                                          fluorescence_marker=coral["fluorescence_marker"],
                                          attachment_method="same_genet_contact")
         return fragments
+
+    @staticmethod
+    def _fragment_grasp(fragment, base, yaw=0.):
+        """World jaw center for a persistent fragment's actual local grip."""
+        x, y, z = fragment.get("grasp_point", (0., 0., .045))
+        cosine, sine = math.cos(yaw), math.sin(yaw)
+        return [base[0] + cosine*x-sine*y, base[1] + sine*x+cosine*y, base[2]+z]
 
     def _stowed_gripper(self, robot):
         yaw = robot["yaw"]
@@ -337,9 +369,10 @@ class ReefSimulation:
                 robot["gripper_open"] = 0. if robot["carrying"] else 1.
             fragment = self._fragments_by_id.get(robot.get("fragment_id"))
             if fragment is not None and fragment["stage"] == "carried":
-                fragment["position"] = [*robot["gripper_world"][:2], robot["gripper_world"][2] - .045]
-                fragment["base_world"] = fragment["position"][:]
                 fragment["yaw"] = robot["yaw"] + fragment.get("_grasp_yaw_offset", 0.)
+                offset = self._fragment_grasp(fragment, (0., 0., 0.), fragment["yaw"])
+                fragment["position"] = [robot["gripper_world"][k]-offset[k] for k in range(3)]
+                fragment["base_world"] = fragment["position"][:]
 
     def _survey_path(self):
         points = []
@@ -459,7 +492,7 @@ class ReefSimulation:
                               fragment_id=fragment["id"], fragment_index=fragment["index"],
                               state="NAVIGATE_TO_DONOR", manipulation_phase="transit_to_donor")
                 source = fragment["source_position"]
-                worker["target"] = [source[0], source[1], max(.90, source[2] + .045 + .55)]
+                worker["target"] = [source[0], source[1], max(.90, source[2] + fragment.get("grasp_z", .045) + .55)]
                 if self._detection_required:
                     fragment["detection_evidence"] = {}
                     fragment.pop("detection_approved_at", None)
@@ -484,11 +517,11 @@ class ReefSimulation:
             return
 
         fragment = self._fragments_by_id[worker["fragment_id"]]
-        source_grasp = [*fragment["source_position"][:2], fragment["source_position"][2] + .045]
+        source_grasp = self._fragment_grasp(fragment, fragment["source_position"], fragment.get("source_yaw", fragment["yaw"]))
         target_coral = self._truth_by_id[worker["task_id"]]
         observation = self.observations[worker["task_id"]]
         mounting_base = observation.get("planting_point") or target_coral["planting_point"]
-        mounting_grasp = [*mounting_base[:2], mounting_base[2] + .045]
+        mounting_grasp = self._fragment_grasp(fragment, mounting_base, fragment["yaw"])
         if self._detection_required:
             if state in ("NAVIGATE_TO_SCAN_RECIPIENT", "NAVIGATE_TO_DONOR", "SCAN_RECIPIENT", "SCAN_DONOR"):
                 self._update_detection(worker, fragment, dt)
@@ -659,7 +692,7 @@ class ReefSimulation:
             self._clear_scan(worker)
             source = fragment["source_position"]
             worker.update(state="NAVIGATE_TO_PICKUP", manipulation_phase="approved_transit_to_pickup",
-                          target=[source[0], source[1], max(.90, source[2]+.045+.55)], phase_progress=0.)
+                          target=[source[0], source[1], max(.90, source[2]+fragment.get("grasp_z", .045)+.55)], phase_progress=0.)
 
     def _pair_detection_approved(self, worker, fragment):
         """Recheck both recorded scenario receipts and current registry before action."""

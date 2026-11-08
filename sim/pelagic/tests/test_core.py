@@ -1,3 +1,4 @@
+from pathlib import Path
 import json
 import math
 import unittest
@@ -296,7 +297,7 @@ class ReefMissionTests(unittest.TestCase):
                 self.assertEqual(sim.water, original)
 
     def test_json_overlay_and_snapshot_contract(self):
-        sim = ReefSimulation(load_config("configs/reef.json"))
+        sim = ReefSimulation(load_config(Path(__file__).resolve().parents[1] / "configs/reef.json"))
         payload = json.loads(json.dumps(sim.snapshot(), allow_nan=False))
         self.assertTrue({"time", "water", "regions", "corals", "robots", "observations", "metrics", "events"} <= payload.keys())
         with self.assertRaises(ValueError):

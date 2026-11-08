@@ -1,3 +1,4 @@
+from pathlib import Path
 import copy
 import math
 import unittest
@@ -77,7 +78,7 @@ class FaunaTests(unittest.TestCase):
         self.assertEqual(build_fauna(config, ReefSimulation(config).snapshot()), [])
 
     def test_full_cinematic_replay_has_no_teleports_or_coincident_fish(self):
-        simulation = ReefSimulation(load_config("configs/cinematic.json"))
+        simulation = ReefSimulation(load_config(Path(__file__).resolve().parents[1] / "configs/cinematic.json"))
         fish = build_fauna(simulation.config, simulation.snapshot())
         previous = None
         for tick in range(3211):

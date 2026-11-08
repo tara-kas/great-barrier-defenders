@@ -19,6 +19,7 @@ from typing import Any
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdPhysics, UsdShade, Vt
 from .organic import generate_coral, generate_fragment
 from .reef_landscape import build_reef_scenery, build_reef_foundation
+from .reef_quality import plan_reef_quality, generate_quality_coral
 from .fauna import build_fauna, fauna_pose
 from .scanned_coral import generate_scanned_coral
 from .inspection import MODES, beam_exposure, inspection_response, auto_inspection_mode
@@ -50,6 +51,13 @@ def _color(value) -> Gf.Vec3f:
 
 def _mix(a, b, t):
     return tuple(a[i] * (1.0 - t) + b[i] * t for i in range(3))
+
+
+def _wrist_offset(robot, offset):
+    """Rotate a tool-local offset into body coordinates; wrist_yaw is radians."""
+    angle = float(robot.get("wrist_yaw", 0.))
+    c, s = math.cos(angle), math.sin(angle)
+    return Gf.Vec3d(c*offset[0]-s*offset[1], s*offset[0]+c*offset[1], offset[2])
 
 
 class _Mesh:
@@ -578,10 +586,30 @@ class IsaacReefScene:
                 for f in fan_sites)]
         pavement = self._mesh_data("/World/Environment/ReefPavement", build_reef_foundation(self.config, snapshot))
         self._bind(pavement, "rock")
+        scanned_reef = bool(render.get("reef_quality", render.get("realistic_tissue", False)))
+        quality = plan_reef_quality(self.scenery, snapshot, self.config) if scanned_reef else {}
+        self.scenery_quality_stats = {"enabled": scanned_reef, "colonies": len(quality),
+                                      "triangles": sum(s["triangles"] for s in quality.values()),
+                                      "hero_colonies": sum(s["detail"] == "hero" for s in quality.values())}
         for index, colony in enumerate(self.scenery):
             path = "/World/Environment/ReefMosaic/" + _name(colony["id"])
             self._xform(path, colony["position"])
-            if colony["morphology"] == "branching" and colony["health"] != "dead" and index % 3 == 0:
+            if scanned_reef:
+                # Build once: real connected scanned branches at every LOD,
+                # with original texture UVs reserved for worksite close-ups.
+                result = generate_quality_coral(colony, quality[colony["id"]])
+                mesh = self._mesh_data(path + "/Colony", result["mesh"])
+                if result["material"] == "tissue":
+                    self._bind_tissue(mesh, result["health"], result["phenotype"])
+                for key, value in (("source_asset", result["asset"]), ("mesh_detail", result["detail"]),
+                                   ("uv_mode", result["uv_mode"]), ("health", result["health"]),
+                                   ("display_only", True)):
+                    mesh.GetPrim().SetCustomDataByKey("reefsim:" + key, value)
+                self.scanned_colony_count += 1
+                # USD owns its arrays now; do not retain a second full Python
+                # copy of the reef, and never regenerate it during playback.
+                del result
+            elif colony["morphology"] == "branching" and colony["health"] != "dead" and index % 3 == 0:
                 factory = generate_pocillopora_scan if index % 2 == 0 else generate_scanned_coral
                 data = factory(colony["health"], colony["radius"], colony["height"], colony["seed"], preserve_aspect=True)
                 if factory is generate_pocillopora_scan and render.get("realistic_tissue",False):
@@ -705,16 +733,29 @@ class IsaacReefScene:
         colony_seed = int(self.config.get("seed", 26)) + index * 813
         contact_proxy = (coral.get("species") == "pocillopora_damicornis_proxy"
                          or self.config.get("inspection", {}).get("pocillopora_only", False))
-        if contact_proxy:
-            factory = generate_pocillopora if health == "dead" else generate_pocillopora_scan
-            detail_options = {"detail":"hero"} if factory is generate_pocillopora_scan and self.config.get("render",{}).get("realistic_tissue",False) else {}
-            mesh = self._mesh_data(path + "/Colony", factory(health, radius, height, colony_seed, **detail_options), collision=True)
-            if health != "dead":
-                if self.config.get("render", {}).get("realistic_tissue", False):
-                    self._bind_tissue(mesh, health)
-                else:
-                    self._bind(mesh, "pocillopora_surface")
-                self.scanned_colony_count += 1
+        if coral.get("scanned_partition"):
+            from .scanned_fragment import split_scanned_donor
+            data = split_scanned_donor(radius, height, colony_seed, slots=coral["scanned_partition_slots"],detail=coral["source_mesh_detail"])["parent"]
+            mesh = self._mesh_data(path + "/Colony", data, collision=True)
+            self._bind_tissue(mesh, health)
+            self.scanned_colony_count += 1
+        elif contact_proxy:
+            detail_options = {"detail":"hero"} if self.config.get("render",{}).get("realistic_tissue",False) else {}
+            mesh = self._mesh_data(path + "/Colony", generate_pocillopora_scan(health, radius, height, colony_seed, **detail_options), collision=True)
+            if self.config.get("render", {}).get("realistic_tissue", False):
+                self._bind_tissue(mesh, health)
+            else:
+                self._bind(mesh, "pocillopora_surface")
+            self.scanned_colony_count += 1
+        elif self.config.get("render",{}).get("reef_quality"):
+            from .reef_quality import generate_quality_coral
+            specimen = dict(coral, seed=colony_seed)
+            spec = {"asset":"pocillopora_damicornis", "detail":"hero", "material":"tissue",
+                    "uv_mode":"source_atlas", "phenotype":"tan", "health":health}
+            result = generate_quality_coral(specimen,spec)
+            mesh = self._mesh_data(path + "/Colony", result["mesh"],collision=True)
+            self._bind_tissue(mesh,health)
+            self.scanned_colony_count += 1
         elif morphology == "branching" and health == "bleached_alive":
             self._mesh_data(path + "/Colony", generate_scanned_coral(
                 health, radius, height, colony_seed, preserve_aspect=not contact_proxy), collision=True)
@@ -722,7 +763,7 @@ class IsaacReefScene:
         else:
             self._organic_mesh(path + "/Colony", morphology, health, radius, height,
                                colony_seed, collision=True)
-        if morphology == "branching" and health == "healthy" and not contact_proxy:
+        if morphology == "branching" and health == "healthy" and not contact_proxy and not self.config.get("render",{}).get("reef_quality"):
             # A scanned lower crown joins the taller donor branches into a
             # dense colony while retaining their original cutting geometry.
             self._mesh_data(path + "/LowerCrown", generate_scanned_coral(
@@ -759,7 +800,7 @@ class IsaacReefScene:
         self.corals[identifier] = {"root": root, "halo": halo, "verified": marker, "visual_height": visual_height}
         if self._inspection_enabled:
             profile = mission_profile(coral,index,int(self.config.get("seed",26)))
-            profile["scan_asset"] = "pocillopora" if contact_proxy and health != "dead" else None
+            profile["scan_asset"] = "pocillopora" if (contact_proxy or self.config.get("render",{}).get("reef_quality")) else None
             if self.config.get("render",{}).get("realistic_tissue",False) and not (coral.get("genotype_known") and coral.get("genet_id") in ("R","G")):
                 profile["pigment_rgb"] = list(tissue_color(health,colony_seed))
             self.inspection_profiles[identifier] = profile
@@ -780,6 +821,13 @@ class IsaacReefScene:
         if fixture.get("kind") == "natural_branch":
             # The recipient surface is already part of /Colony. Only the
             # prepared basal securing compound is a separate mesh.
+            if fixture.get("natural_fragment_contact_local") is not None:
+                # Small adhesive saddle at the true contact, no extension rod.
+                contact = _v(coral["contact_point"]) - origin
+                support = _Mesh()
+                support.ellipsoid(contact-Gf.Vec3d(0,0,.007),(.008,.007,.005),(.48,.43,.35),8,16)
+                support.author(self.stage,path+"/BasalSecuringCompound",self.materials["rock"])
+                return
             anchor = _v(fixture["support_point"]) - origin
             base = _v(coral["contact_base"]) - origin - Gf.Vec3d(0,0,.003)
             support = _Mesh()
@@ -905,31 +953,41 @@ class IsaacReefScene:
             identifier = fragment["id"]
             path = "/World/Fragments/" + _name(identifier)
             root = self._xform(path, fragment.get("base_world", fragment["position"]), rotation=(0, 0, 0))
-            factory = generate_contact_fragment if fragment.get("attachment_method") == "same_genet_contact" else generate_fragment
-            data = factory(fragment["seed"], fragment.get("height", .14), fragment.get("radius", .025))
+            natural = "source_slot" in fragment
+            if natural:
+                from .scanned_fragment import split_scanned_donor
+                donor = donors[fragment["donor_id"]]
+                data = split_scanned_donor(donor["radius"],donor["height"],fragment["source_mesh_seed"],
+                    slots=donor["scanned_partition_slots"],detail=fragment["source_mesh_detail"])["fragments"][fragment["source_slot"]]["mesh"]
+            else:
+                factory = generate_contact_fragment if fragment.get("attachment_method") == "same_genet_contact" else generate_fragment
+                data = factory(fragment["seed"], fragment.get("height", .14), fragment.get("radius", .025))
             cutting = self._mesh_data(path + "/Cutting", data)
-            self._bind(cutting, "organic" if fragment.get("attachment_method") == "same_genet_contact" else "fragment")
+            if natural:
+                self._bind_tissue(cutting, "healthy")
+            else:
+                self._bind(cutting, "organic" if fragment.get("attachment_method") == "same_genet_contact" else "fragment")
             root.GetPrim().SetCustomDataByKey("reefsim:fragment_id", identifier)
             root.GetPrim().SetCustomDataByKey("reefsim:donor_id", fragment["donor_id"])
             self.fragments[identifier] = {"root": root, "position": root.GetOrderedXformOps()[0],
                                           "rotation": root.GetOrderedXformOps()[1],
                                           "mesh": self.stage.GetPrimAtPath(path + "/Cutting")}
-            # A small living branch links the visible cutting to the donor.
-            # Its cut stump remains on the donor after the tip is detached.
             source = _v(fragment["source_position"])
             donor = donors.get(fragment["donor_id"], {})
-            base = _v(donor.get("position", source))
-            start = Gf.Vec3d(source[0] * .65 + base[0] * .35,
-                            source[1] * .65 + base[1] * .35, source[2] - .14)
-            stem = _Mesh()
-            stem.tube(start, source, .009, data["colors"][0], .006, 12)
-            stem.author(self.stage, "/World/DonorStems/" + _name(identifier), self.materials["organic"])
+            if not natural:
+                base = _v(donor.get("position", source))
+                start = Gf.Vec3d(source[0] * .65 + base[0] * .35,
+                                source[1] * .65 + base[1] * .35, source[2] - .14)
+                stem = _Mesh()
+                stem.tube(start, source, .009, data["colors"][0], .006, 12)
+                stem.author(self.stage, "/World/DonorStems/" + _name(identifier), self.materials["organic"])
             if self._inspection_enabled:
                 profile = self.inspection_profiles[fragment["donor_id"]]
                 self._inspection_material(identifier, profile, "healthy", [path + "/Cutting"],
-                                          list(source + Gf.Vec3d(0, 0, .07)), donor_id=fragment["donor_id"])
-                self._bind(UsdGeom.Mesh.Get(self.stage, "/World/DonorStems/" + _name(identifier)),
-                           "inspect_" + fragment["donor_id"])
+                                          list(source + Gf.Vec3d(0, 0, fragment.get("height",.14)*.5)), donor_id=fragment["donor_id"])
+                if not natural:
+                    self._bind(UsdGeom.Mesh.Get(self.stage, "/World/DonorStems/" + _name(identifier)),
+                               "inspect_" + fragment["donor_id"])
 
     def _make_robot(self, robot, index):
         identifier = str(robot.get("id", f"rov_{index}"))
@@ -982,6 +1040,8 @@ class IsaacReefScene:
         elbow_op = elbow.GetOrderedXformOps()[0]
         gripper = self._xform(path + "/Gripper", (0.22, 0, -0.35))
         gripper_op = gripper.GetOrderedXformOps()[0]
+        wrist_yaw_op = gripper.AddRotateZOp(UsdGeom.XformOp.PrecisionDouble)
+        wrist_yaw_op.Set(0.)
         # Parallel jaws approach the vertical stem sideways. Their palm is
         # behind the cutting, so the crown cannot intersect the wrist.
         self._cube(path + "/Gripper/Palm", (-.075, 0, 0), (.045, .12, .045), "dark")
@@ -1011,7 +1071,7 @@ class IsaacReefScene:
         target.CreateVisibilityAttr(UsdGeom.Tokens.invisible)
         self.robots[identifier] = {"position": position_op, "yaw": yaw_op, "root": root,
                                   "arm1": arm1, "arm2": arm2, "elbow": elbow_op,
-                                  "gripper": gripper_op,
+                                  "gripper": gripper_op, "wrist_yaw": wrist_yaw_op,
                                   "fingers": fingers,
                                   "trail": trail, "target": target, "survey": is_survey}
         if self._inspection_enabled and not is_survey:
@@ -1088,13 +1148,14 @@ class IsaacReefScene:
             return p + forward * local[0] + left * local[1] + Gf.Vec3d(0, 0, local[2])
         state = worker.get("state", "")
         pickup_states = {"APPROACH_FRAGMENT", "CLOSE_GRIPPER", "DETACH_FRAGMENT", "RETRACT_FRAGMENT"}
-        plant_states = {"LOWER_FRAGMENT", "SECURE_FRAGMENT", "OPEN_GRIPPER", "RETRACT_GRIPPER", "VERIFY_ATTACHMENT"}
-        active = state in pickup_states | plant_states
+        recovery_states = {"FRAGMENT_LOST", "RECOVER_FRAGMENT", "RECOVERY_APPROACH", "RECOVERY_GRASP", "RECOVERY_LIFT"}
+        plant_states = {"LOWER_FRAGMENT", "SECURE_FRAGMENT", "OPEN_GRIPPER", "RETRACT_GRIPPER", "VERIFY_ATTACHMENT", "PUSH_TEST", "PUSH_APPROACH"}
+        active = state in pickup_states | plant_states | recovery_states
         fragment = next((f for f in snapshot.get("fragments", []) if f["id"] == worker.get("fragment_id")), None)
         shoulder, elbow, tip = self._arm_pose(worker, snapshot)
         # Actual wrist-mounted camera: its pod and bracket share the gripper
         # transform, and the independent render product moves with the tool.
-        worker_eye = world(tip + Gf.Vec3d(.10, -.18, .08))
+        worker_eye = world(tip + _wrist_offset(worker, (.10, -.18, .08)))
         tool_target = world(tip) + Gf.Vec3d(0, 0, .025)
         UsdGeom.Camera.Get(self.stage,self.CAMERA_PATHS["worker"]).GetFocalLengthAttr().Set(11.)
         if not active and not worker.get("carrying"):
@@ -1110,6 +1171,11 @@ class IsaacReefScene:
             # vehicle and its standoff before either manipulator operation.
             director_eye = target + Gf.Vec3d(2.1,-2.4,1.8)
             focal = 23.
+        elif state in recovery_states and fragment:
+            target = _v(fragment["position"]) + Gf.Vec3d(0,0,fragment.get("height",.08)*.5)
+            director_eye = target + Gf.Vec3d(.48,-.62,.38)
+            focal = 29.
+            self._look_at("worker",worker_eye,target)
         elif active:
             UsdGeom.Camera.Get(self.stage,self.CAMERA_PATHS["worker"]).GetFocalLengthAttr().Set(11.)
             pickup = state in pickup_states
@@ -1152,7 +1218,7 @@ class IsaacReefScene:
                 ps, pe, pj = self._arm_pose(posed, snapshot)
                 arm_points = []
                 for a, b, thickness in ((world(ps), world(pe), .065),
-                                         (world(pe), world(pj - Gf.Vec3d(.10, 0, 0)), .045)):
+                                         (world(pe), world(pj + _wrist_offset(posed, (-.10, 0, 0))), .045)):
                     arm_points += [(a + (b - a) * (i / 12), thickness) for i in range(13)]
                 def cost(angle):
                     eye = anchor + Gf.Vec3d(math.cos(angle) * .85, math.sin(angle) * .85, .30)
@@ -1287,7 +1353,7 @@ class IsaacReefScene:
             jaw = Gf.Vec3d(.34, 0, -.32)
         # Forearm ends at the wrist behind the contact point; jaw stays exactly
         # at the authoritative world-space grasp point from the mission core.
-        tip = jaw + Gf.Vec3d(-.10, 0, 0)
+        tip = jaw + _wrist_offset(robot, (-.10, 0, 0))
         l1, l2 = 0.38, 0.40
         delta = tip - shoulder
         distance = delta.GetLength()
@@ -1309,7 +1375,7 @@ class IsaacReefScene:
         name = "inspect_" + identifier
         self._material(name, (1., 1., 1.), vertex_color=True, roughness=.74, emission=(0., 0., 0.))
         self._surface_maps(name, "coral", "coral", diffuse=False, normal_strength=.5)
-        if profile.get("scan_asset") == "pocillopora" and donor_id is None:
+        if profile.get("scan_asset") == "pocillopora":
             UsdShade.Shader.Get(self.stage, self.materials[name].GetPath().AppendChild("normalTexture")).GetInput("file").Set(
                 Sdf.AssetPath(pocillopora_textures()["normal"]))
         pigment = inspection_response(profile, health, 0., "white")["pigment_rgb"]
@@ -1321,7 +1387,7 @@ class IsaacReefScene:
                                       for channel in pigment)) for c in colors]
             mesh.GetDisplayColorPrimvar().Set(Vt.Vec3fArray(recolored))
             self._bind(mesh, name)
-        if (profile.get("scan_asset") == "pocillopora" and donor_id is None
+        if (profile.get("scan_asset") == "pocillopora"
                 and self.config.get("render", {}).get("realistic_tissue", False)):
             phenotype = "tan" if profile.get("synthetic_genotype") in ("R", "G") else profile["group"]
             self._tissue_texture_inputs(name, health, phenotype)
@@ -1333,7 +1399,7 @@ class IsaacReefScene:
         texture = UsdShade.Shader.Define(self.stage, self.materials[name].GetPath().AppendChild("HostResponse"))
         texture.CreateIdAttr("UsdUVTexture")
         response_map = (pocillopora_textures()["base_color"]
-                        if profile.get("scan_asset") == "pocillopora" and donor_id is None
+                        if profile.get("scan_asset") == "pocillopora"
                         else str(Path(__file__).resolve().parent.parent /
                                  "assets/materials/coral/coral_albedo_detail.png"))
         # The scan's spatial texture preserves recessed calices in the RGB
@@ -1398,7 +1464,7 @@ class IsaacReefScene:
         cx,cy,cz = recipient["position"]
         ch = self.corals[recipient["id"]]["visual_height"]
         worker = next(r for r in state["robots"] if r["role"] == "restoration")
-        worker.update(position=[cx,cy-.85,cz+ch+.72],yaw=math.pi/2,
+        worker.update(position=[cx,cy-.85,cz+ch+.72],yaw=math.pi/2,wrist_yaw=0.,
                       gripper_world=[cx,cy-.37,cz+ch+.32],gripper_open=1.,state="INSPECTION_CASE",carrying=False)
         self._last_soft_time = -1.
         self._inspection_mode, self._inspection_target = "white", recipient["id"]
@@ -1439,7 +1505,7 @@ class IsaacReefScene:
             return _v(worker["position"]) + Gf.Vec3d(math.cos(yaw)*local[0] - math.sin(yaw)*local[1],
                 math.sin(yaw)*local[0] + math.cos(yaw)*local[1], local[2])
         _, _, jaw = self._arm_pose(worker, snapshot)
-        origin = world(jaw + self._inspection_beam["offset"])
+        origin = world(jaw + _wrist_offset(worker, self._inspection_beam["offset"]))
         pickup = worker.get("state") in {"NAVIGATE_TO_DONOR", "NAVIGATE_TO_PICKUP", "SCAN_DONOR", "APPROACH_FRAGMENT", "CLOSE_GRIPPER", "DETACH_FRAGMENT", "RETRACT_FRAGMENT"}
         scan_view = worker.get("state") in {"NAVIGATE_TO_SCAN_RECIPIENT", "SCAN_RECIPIENT", "NAVIGATE_TO_DONOR", "SCAN_DONOR"} and worker.get("scan_target_world")
         target_id = self._inspection_target or (worker.get("scan_target_id") if scan_view else None) or (worker.get("donor_id") if pickup else worker.get("task_id"))
@@ -1451,13 +1517,20 @@ class IsaacReefScene:
         contact_view = worker.get("state") in {"LOWER_FRAGMENT", "SECURE_FRAGMENT", "OPEN_GRIPPER", "RETRACT_GRIPPER", "VERIFY_ATTACHMENT"} and recipient.get("contact_point")
         if contact_view:
             destination = _v(recipient["contact_point"])
+        if worker.get("state") in {"FRAGMENT_LOST","RECOVER_FRAGMENT","RECOVERY_APPROACH","RECOVERY_GRASP","RECOVERY_LIFT"}:
+            fragment=next((f for f in snapshot.get("fragments",[]) if f["id"]==worker.get("fragment_id")),None)
+            if fragment:
+                destination=_v(fragment["position"])+Gf.Vec3d(0,0,fragment.get("height",.08)*.5)
         direction = (destination - origin).GetNormalized()
         if scan_view and not self._inspection_target:
             pose = scan_light_pose(worker)
             assert (origin-_v(pose["light_position"])).GetLength()<2e-5,"Detection source differs from rendered wrist light"
             assert Gf.Dot(direction,_v(pose["light_direction"]))>1.-1e-7,"Detection direction differs from rendered wrist light"
-        local_direction = Gf.Vec3d(math.cos(yaw)*direction[0] + math.sin(yaw)*direction[1],
-                                  -math.sin(yaw)*direction[0] + math.cos(yaw)*direction[1], direction[2])
+        # The beam is parented to the rotating gripper. Aim its local gimbal
+        # through the inverse combined body+wrist heading, not body yaw alone.
+        tool_yaw = yaw + float(worker.get("wrist_yaw", 0.))
+        local_direction = Gf.Vec3d(math.cos(tool_yaw)*direction[0] + math.sin(tool_yaw)*direction[1],
+                                  -math.sin(tool_yaw)*direction[0] + math.cos(tool_yaw)*direction[1], direction[2])
         self._inspection_beam["orient"].Set(Gf.Rotation(Gf.Vec3d(0, 0, -1), local_direction).GetQuat())
         light_matrix = UsdGeom.Xformable(self._inspection_beam["light"]).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
         rendered_origin = light_matrix.Transform(Gf.Vec3d(0))
@@ -1565,7 +1638,7 @@ class IsaacReefScene:
         x, y, z = coral["position"]
         height = self.corals[target_id]["visual_height"]
         worker = next(r for r in state["robots"] if r["role"] == "restoration")
-        worker.update(position=[x, y - .85, z + height + .72], yaw=math.pi/2,
+        worker.update(position=[x, y - .85, z + height + .72], yaw=math.pi/2, wrist_yaw=0.,
                       gripper_world=[x, y - .37, z + height + .32],
                       gripper_open=1., state="INSPECTION_CASE", carrying=False)
         self._inspection_mode, self._inspection_target, self._inspection_strength = mode, target_id, 1.
@@ -1600,11 +1673,12 @@ class IsaacReefScene:
             data["yaw"].Set(math.degrees(float(robot.get("yaw", 0.0))))
             shoulder, elbow, tip = self._arm_pose(robot, snapshot)
             self._set_cylinder(data["arm1"], shoulder, elbow)
-            self._set_cylinder(data["arm2"], elbow, tip + Gf.Vec3d(-.10, 0, 0))
+            self._set_cylinder(data["arm2"], elbow, tip + _wrist_offset(robot, (-.10, 0, 0)))
             data["elbow"].Set(_v(elbow))
             data["gripper"].Set(_v(tip))
+            data["wrist_yaw"].Set(math.degrees(float(robot.get("wrist_yaw", 0.))))
             opening = max(0., min(1., float(robot.get("gripper_open", 1.))))
-            separation = .018 + .038 * opening
+            separation = (float(robot.get("grasp_radius", .012)) + .006) + .038 * opening
             for index, side in enumerate((-1, 1)):
                 data["fingers"][index].Set(Gf.Vec3d(0, side * separation, 0))
             trail = robot.get("trail", [])[-180:]

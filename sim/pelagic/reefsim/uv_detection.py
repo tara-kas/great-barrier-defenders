@@ -59,7 +59,7 @@ def scan_light_pose(worker, target_world=None):
     if jaw is None:
         offset = _rotate((.34, 0., -.32), worker["yaw"])
         jaw = [worker["position"][i]+offset[i] for i in range(3)]
-    offset = _rotate(WRIST_LIGHT_OFFSET, worker["yaw"])
+    offset = _rotate(WRIST_LIGHT_OFFSET, worker["yaw"]+worker.get("wrist_yaw",0.))
     origin = [jaw[i]+offset[i] for i in range(3)]
     delta = [target[i]-origin[i] for i in range(3)]
     length = math.hypot(*delta)

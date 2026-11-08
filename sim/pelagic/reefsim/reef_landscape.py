@@ -13,8 +13,9 @@ import random
 def build_reef_scenery(config, snapshot):
     """Return a dense mosaic of clustered low colonies with contrasting zone cover.
 
-    Record fields match the scene's ``generate_coral`` input, with a local
-    position at the seabed. Use ``detail='low'`` when authoring these meshes.
+    Record fields match ``generate_quality_coral`` input, with a local
+    position at the seabed. The quality planner chooses real scanned growth
+    forms and budgets original-UV detail around robot operating sites.
     """
     rng = random.Random(int(snapshot.get("seed", config.get("seed", 26))) + 9031)
     world = snapshot.get("world", config.get("world", {}))
@@ -62,6 +63,12 @@ def build_reef_scenery(config, snapshot):
                 height = rng.uniform(.07, .19) if morphology == "branching" else scale * .38
                 if policy == "avoid":
                     height *= .70
+            # The old low discs left almost all of a real scan's horizontal
+            # envelope empty when preserving natural skeletal proportions.
+            # Leave enough vertical room for a complete compact colony; this
+            # restores interlocking patch cover without widening any mission
+            # clearance radius or adding disconnected filler geometry.
+            height = max(height, scale * (.88 if health == "dead" else 1.06))
             # Main colonies have space for vehicle approach, opening jaws and
             # donor cutting. No decorative specimen can mask the operation.
             if any(math.hypot(x - c["position"][0], y - c["position"][1]) <
@@ -96,8 +103,15 @@ def build_reef_scenery(config, snapshot):
         morphology = ("branching", "plating", "boulder")[index % 3]
         result.append({"id": f"scenery-{len(result):03d}", "position": [x, y, _foundation_height(x, y, config, snapshot) - .012],
                        "morphology": morphology, "health": "healthy", "radius": scale,
-                       "height": rng.uniform(.25, .48) if morphology == "branching" else scale * .7,
+                       "height": max(rng.uniform(.25, .48) if morphology == "branching" else scale * .7,
+                                     scale * 1.06),
                        "seed": 99000 + index * 43, "region_id": "living-extension", "display_only": True})
+    # Scenario-defined sandy recovery pocket, shared by the deterministic
+    # perturbation demo. Retain surrounding clustered reef rather than hiding
+    # a fallen fragment below non-collidable decorative branches.
+    clearings=config.get("render",{}).get("recovery_clearings",[])
+    if clearings:
+        result=[c for c in result if not any(math.hypot(c["position"][0]-p["center"][0],c["position"][1]-p["center"][1]) < c["radius"]+p["radius"] for p in clearings)]
     return result
 
 

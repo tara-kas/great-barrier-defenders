@@ -82,13 +82,17 @@ def _skip_reason(
 ) -> Optional[str]:
     if recipient.genet_id is None:
         return "no confident UV genet match"
-    rack = station.rack_for(recipient.genet_id)
-    if rack is None or rack.fragments_available <= 0:
+    sources = [r for r in station.sources_for(recipient.genet_id) if r.fragments_available > 0]
+    if not sources:
         return f"genet {recipient.genet_id} not in stock"
-    if rack.slot in exclude_racks:
-        return f"rack {rack.slot} rejected earlier this mission"
-    if rack.health_score < min_donor_health:
-        return f"rack {rack.slot} health_score {rack.health_score:.2f} < min {min_donor_health:.2f}"
+    sources = [r for r in sources if r.species_class == recipient.species_class]
+    if not sources:
+        return "same-genet donor species does not match recipient"
+    eligible = [r for r in sources if r.slot not in exclude_racks]
+    if not eligible:
+        return "rack sources rejected earlier this mission"
+    if not any(r.health_score >= min_donor_health for r in eligible):
+        return f"rack health_score below min {min_donor_health:.2f}"
     return None
 
 
@@ -112,10 +116,13 @@ def plan_pairs(
         if reason:
             skipped.append(Skipped(r.cluster_id, reason))
             continue
-        rack = station.rack_for(r.genet_id)
-        terms = cost(rov_position, station.position, rack, r, weights)
-        pairings.append(Pairing(rack.slot, rack.genet_id, r.cluster_id, r.species_class, terms))
-    pairings.sort(key=lambda p: (p.cost.J, p.recipient_id))
+        for rack in station.sources_for(r.genet_id):
+            if (rack.fragments_available <= 0 or rack.slot in exclude_racks
+                    or rack.health_score < min_donor_health or rack.species_class != r.species_class):
+                continue
+            terms = cost(rov_position, station.position_for(rack), rack, r, weights)
+            pairings.append(Pairing(rack.slot, rack.genet_id, r.cluster_id, r.species_class, terms))
+    pairings.sort(key=lambda p: (p.cost.J, p.recipient_id, p.donor_id))
     dead = tuple(sorted(e.cluster_id for e in entries if e.health_status == "DEAD"))
     return RestorationPlan(tuple(pairings), tuple(skipped), dead)
 
@@ -126,6 +133,7 @@ def best_recipient_for_carried(
     entries: Iterable[SemanticMapEntry],
     *,
     exclude: Iterable[str] = (),
+    species_class: Optional[str] = None,
 ) -> Optional[tuple[SemanticMapEntry, float]]:
     """Carry-aware replan: a fragment is already in the gripper, so only the
     carry distance matters, and it can only go to its own genet."""
@@ -134,6 +142,7 @@ def best_recipient_for_carried(
         (e, distance(rov_position, e.position_world))
         for e in entries
         if is_open_recipient(e) and e.genet_id == genet_id and e.cluster_id not in exclude
+        and (species_class is None or e.species_class == species_class)
     ]
     if not options:
         return None
@@ -145,7 +154,7 @@ def species_only_mismatches(entries: Iterable[SemanticMapEntry], station: BaseSt
 
     Takes the first rack of the right species, as a matcher without genet data must.
     """
-    racks = sorted((station.rack_for(g) for g in station.stock()), key=lambda r: r.slot)
+    racks = sorted((r for g in station.stock() for r in station.sources_for(g)), key=lambda r: r.slot)
     wrong = []
     for e in entries:
         if not is_open_recipient(e) or e.genet_id is None:

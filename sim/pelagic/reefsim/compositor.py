@@ -45,6 +45,19 @@ def phase_name(state):
     worker = next((robot for robot in state.get("robots", [])
                    if robot.get("role") == "restoration"), {})
     phase = worker.get("state", "WAIT_FOR_MAP")
+    if state.get("team_mission"):
+        special = {
+            "FRAGMENT_LOST": ("04 / GRIP LOSS", "Grip-slip perturbation detected; track the dropped fragment"),
+            "RECOVER_FRAGMENT": ("04 / REPLAN", "Team controller returns to the same fragment on the seabed"),
+            "RECOVERY_APPROACH": ("04 / RECOVER", "Align open jaws with the original dropped fragment"),
+            "RECOVERY_GRASP": ("04 / REGRASP", "Close jaws on the same persistent fragment"),
+            "RECOVERY_LIFT": ("04 / RESUME", "Fragment recovered; resume the selected recipient mission"),
+            "ORIENT_FRAGMENT": ("05 / ALIGN", "Rotate the natural cutting to expose a living tissue contact surface"),
+            "PUSH_APPROACH": ("07 / PUSH TEST", "Approach the secured fragment for a measured mechanical test"),
+            "PUSH_TEST": ("07 / PUSH TEST", "Apply 0.18 N; measure displacement and continued tissue contact"),
+            "COMPLETE": ("CONTACT VERIFIED", "Same fragment recovered and secured; biological recovery remains pending"),
+        }
+        if phase in special: return special[phase]
     if state.get("detection_required") and phase in {"WAIT_FOR_MAP", "PLAN", "NAVIGATE_TO_DONOR"}:
         return {
             "WAIT_FOR_MAP": ("01 / SURVEY", "Map provisional candidates; UV detection precedes treatment"),
@@ -98,11 +111,13 @@ def inspection_caption(inspection, worker_state):
         return f"UV DETECTION / {target}", subtitle
     if mode == "blue":
         return "BLUE EXCITATION / 450 nm", "ILLUSTRATIVE FLUORESCENCE RESPONSE"
+    if worker_state in {"PUSH_TEST","PUSH_APPROACH"}:
+        return "WHITE / FORCE TEST", "0.18 N PUSH / CONTACT TOLERANCE 1.5 mm"
     if worker_state == "VERIFY_ATTACHMENT":
         return "WHITE / MECHANICAL CHECK", "SECURED CONTACT / RECOVERY PENDING"
     manipulation = {"NAVIGATE_TO_PICKUP", "APPROACH_FRAGMENT", "CLOSE_GRIPPER", "DETACH_FRAGMENT", "RETRACT_FRAGMENT",
                     "NAVIGATE_TO_SITE", "LOWER_FRAGMENT", "SECURE_FRAGMENT", "OPEN_GRIPPER",
-                    "RETRACT_GRIPPER"}
+                    "RETRACT_GRIPPER", "FRAGMENT_LOST", "RECOVER_FRAGMENT", "RECOVERY_APPROACH", "RECOVERY_GRASP", "RECOVERY_LIFT", "ORIENT_FRAGMENT"}
     return ("WHITE / MANIPULATION" if worker_state in manipulation else "WHITE / REEF SURVEY",
             "KNOWN LINEAGE IS SCENARIO METADATA")
 
@@ -205,6 +220,9 @@ def compose_frame(main, scout, worker, state, playback_speed=1.0, *, keyframe=Fa
         draw.line((x - 22, 813, x - 22, 867), fill=(36, 66, 68), width=1)
         draw.text((x, 806), number, font=FONTS["number"], fill=INK)
         draw.text((x, 849), label, font=FONTS["tiny"], fill=MUTED)
+    if state.get("team_mission"):
+        draw.rectangle((216,20,1235,49),fill=BG)
+        draw.text((218,30),"TEAM MISSION FSM  /  OFFLINE DEMO PERCEPTION  /  NO MODEL CALL",font=FONTS["small"],fill=MUTED)
     review = "MILESTONE KEYFRAME REVIEW" if keyframe else "VARIABLE-SPEED REPLAY · MANIPULATION EMPHASIZED"
     draw.text((24, 877), f"RECORDED ROBOT CAMERAS  ·  {review}  ·  ATTACHMENT ≠ BIOLOGICAL RECOVERY",
               font=FONTS["tiny"], fill=(96, 133, 134))

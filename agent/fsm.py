@@ -19,6 +19,19 @@ Pluggable dependencies (all optional except robot and registry):
 - `fragment_held() -> bool`: gripper force/camera check for dislodgement.
 - `placement_verifier(pose) -> {"stable": bool, "contact": bool, ...}`: post-placement
   push test. Symbiont transfer needs the fragment to stay touching the colony.
+
+Optional robot capabilities leave the frozen RobotInterface ABC unchanged:
+`prepare_pair(recipient, source)`, `inspect_donor(source, recipient)`, and
+`inspect_recipient(recipient)` return evidence dictionaries with an `allowed`
+flag. They run before harvesting or releasing. `held_fragment_id()` and
+`recover_lost_fragment(fragment_id, recipient_id)` preserve the identity of a
+dropped object; recovery returns `{recovered, fragment_id, ...}` and still
+requires the independent fragment monitor. `contact_candidate(entry)` returns
+`(GraftCandidate | None, evidence)` for measured natural contact surfaces.
+`navigation_pose(entry_or_source, purpose=...)` supplies body stand-off poses;
+`get_sim_time()` and `on_fsm_transition(state_name)` synchronize recording.
+`can_return_fragment(source)` may refuse an unvalidated return fixture; the FSM
+then stops and retains the fragment rather than releasing it at a living donor.
 """
 
 from __future__ import annotations
@@ -51,6 +64,7 @@ class MissionState(str, Enum):
     COMPUTE_RESTORATION_PLAN = "COMPUTE_RESTORATION_PLAN"
     NAVIGATE_TO_DONOR = "NAVIGATE_TO_DONOR"
     HARVEST_FRAGMENT = "HARVEST_FRAGMENT"
+    RECOVER_FRAGMENT = "RECOVER_FRAGMENT"
     NAVIGATE_TO_RECIPIENT = "NAVIGATE_TO_RECIPIENT"
     TRANSPLANT_FRAGMENT = "TRANSPLANT_FRAGMENT"
     RETURN_VISIT = "RETURN_VISIT"
@@ -127,6 +141,9 @@ class MissionFSM:
         self.sim_time = 0.0
         self.genet_id: Optional[str] = None  # genet of the current pairing
         self.recipient_id: Optional[str] = None
+        self.donor_id: Optional[str] = None
+        self.fragment_id: Optional[str] = None
+        self._lost_genet: Optional[str] = None
         self.carrying: Optional[str] = None  # genet of the fragment in the gripper
         self.returning = False  # carrying a fragment back to the station (no recipient left)
         self.skipped: dict[str, str] = {}
@@ -140,6 +157,7 @@ class MissionFSM:
             MissionState.COMPUTE_RESTORATION_PLAN: self._plan,
             MissionState.NAVIGATE_TO_DONOR: self._navigate_to_donor,
             MissionState.HARVEST_FRAGMENT: self._harvest,
+            MissionState.RECOVER_FRAGMENT: self._recover_fragment,
             MissionState.NAVIGATE_TO_RECIPIENT: self._navigate_to_recipient,
             MissionState.TRANSPLANT_FRAGMENT: self._transplant,
         }
@@ -199,14 +217,21 @@ class MissionFSM:
         )
 
     def _go(self, next_state: MissionState, action: str, evidence: dict, outcome: str = "ok") -> MissionState:
+        clock = getattr(self.robot, "get_sim_time", None)
+        if callable(clock):
+            self.sim_time = float(clock())
         evidence = {
             **evidence,
             "next_state": next_state.value,
             "rov_pose": pose_summary(self.robot.get_pose()),
             "sim_time_s": round(self.sim_time, 3),
             "carrying": self.carrying,
+            "fragment_id": self.fragment_id,
         }
         self.log.record(self.state.value, action, to_jsonable(evidence), outcome)
+        transition = getattr(self.robot, "on_fsm_transition", None)
+        if callable(transition):
+            transition(next_state.value)
         return next_state
 
     # ------------------------------------------------------------------ states
@@ -316,10 +341,24 @@ class MissionFSM:
         entries = self.registry.all()
 
         if self.carrying is not None:
+            source = self.station.rack_for(self.carrying, self.donor_id)
             found = best_recipient_for_carried(
-                self.carrying, rov, entries, exclude=self.memory.excluded_recipients()
+                self.carrying, rov, entries, exclude=self.memory.excluded_recipients(),
+                species_class=source.species_class if source else None,
             )
             if found is None:
+                can_return = getattr(self.robot, "can_return_fragment", None)
+                if callable(can_return) and not can_return(source):
+                    self.robot.set_cmd_vel((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+                    self.robot.lock_base()
+                    self.returning = False
+                    return self._go(
+                        MissionState.ABORTED,
+                        "abort_no_return_fixture",
+                        {"genet_id": self.carrying, "donor_id": self.donor_id,
+                         "fragment_retained": True, "memory": self.memory.to_dict()},
+                        "no validated return fixture; retaining fragment safely",
+                    )
                 self.returning = True
                 return self._go(
                     MissionState.NAVIGATE_TO_RECIPIENT,
@@ -332,6 +371,10 @@ class MissionFSM:
                 )
             recipient, carry_dist = found
             self.recipient_id = recipient.cluster_id
+            inspection = self._inspect("prepare_pair", recipient, source)
+            if inspection is not None and not inspection.get("allowed", False):
+                self.memory.reject_recipient(recipient.cluster_id, "recipient inspection rejected")
+                return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_pair", {"inspection": inspection})
             return self._go(
                 MissionState.NAVIGATE_TO_RECIPIENT,
                 "select_recipient_for_carried",
@@ -339,6 +382,7 @@ class MissionFSM:
                     "genet_id": self.carrying,
                     "recipient": entry_summary(recipient),
                     "carry_distance_m": carry_dist,
+                    "inspection": inspection,
                     "memory": self.memory.to_dict(),
                 },
             )
@@ -372,6 +416,12 @@ class MissionFSM:
                 {**plan_ev, "treated": summary.treated, "skipped_final": summary.skipped},
             )
         self.genet_id, self.recipient_id = best.genet_id, best.recipient_id
+        self.donor_id = best.donor_id
+        source = self.station.rack_for(best.genet_id, best.donor_id)
+        inspection = self._inspect("prepare_pair", self.registry.get(best.recipient_id), source)
+        if inspection is not None and not inspection.get("allowed", False):
+            self.memory.reject_recipient(best.recipient_id, "recipient inspection rejected")
+            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_pair", {"inspection": inspection})
         return self._go(
             MissionState.NAVIGATE_TO_DONOR,
             "select_pair",
@@ -380,13 +430,14 @@ class MissionFSM:
                 "chosen": best.cost,
                 "genet_id": best.genet_id,
                 "other_pairings": [p.cost for p in plan.pairings[1:6]],
-                "rack": self.station.rack_for(best.genet_id),
+                "rack": source,
+                "inspection": inspection,
                 "recipient": entry_summary(self.registry.get(best.recipient_id)),
             },
         )
 
     def _navigate_to_donor(self) -> MissionState:
-        rack = self.station.rack_for(self.genet_id)
+        rack = self.station.rack_for(self.genet_id, self.donor_id)
         if rack is None or rack.fragments_available <= 0:
             return self._go(
                 MissionState.COMPUTE_RESTORATION_PLAN,
@@ -401,8 +452,14 @@ class MissionFSM:
         return self._go(MissionState.HARVEST_FRAGMENT, "arrive_donor", {"rack": rack, "navigation": nav_ev})
 
     def _harvest(self) -> MissionState:
-        rack = self.station.rack_for(self.genet_id)
-        target = Pose(self.station.position)
+        rack = self.station.rack_for(self.genet_id, self.donor_id)
+        if rack is None or rack.fragments_available <= 0:
+            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "replan_target_changed", {"donor_id": self.donor_id})
+        inspection = self._inspect("inspect_donor", rack, self.registry.get(self.recipient_id))
+        if inspection is not None and not inspection.get("allowed", False):
+            self.memory.reject_donor(rack.slot, "donor inspection rejected")
+            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_harvest", {"inspection": inspection})
+        target = Pose(self.station.position_for(rack))
         ik_results = []
         self.robot.lock_base()
         try:
@@ -414,16 +471,39 @@ class MissionFSM:
                     break
         finally:
             self.robot.unlock_base()
-        ev = {"rack": rack, "ik_results": ik_results}
+        ev = {"rack": rack, "ik_results": ik_results, "inspection": inspection}
         if not ik_results[-1]["reachable"]:
             self.memory.reject_donor(rack.slot, "IK unreachable at the rack")
             return self._go(
                 MissionState.COMPUTE_RESTORATION_PLAN, "abstain_harvest", ev, "rejected: IK unreachable at the rack"
             )
-        self.station.take(rack.genet_id)
+        if self.fragment_held is not None and not self.fragment_held():
+            self.memory.reject_donor(rack.slot, "grasp did not secure fragment")
+            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_harvest", ev, "grasp failed")
+        identity = getattr(self.robot, "held_fragment_id", None)
+        self.fragment_id = identity() if callable(identity) else (rack.fragment_ids[0] if rack.fragment_ids else None)
+        if rack.fragment_ids and self.fragment_id not in rack.fragment_ids:
+            return self._go(MissionState.ABORTED, "abort", ev, "grasped fragment identity does not match donor inventory")
+        self.station.take(rack.genet_id, rack.slot, self.fragment_id)
         self.memory.note_harvest(rack.slot)
         self.carrying = rack.genet_id
         return self._go(MissionState.NAVIGATE_TO_RECIPIENT, "harvest_fragment", {**ev, "stock": self.station.stock()})
+
+    def _recover_fragment(self) -> MissionState:
+        """Reacquire the tracked object; inventory must not be decremented again."""
+        recover = getattr(self.robot, "recover_lost_fragment", None)
+        if not callable(recover) or self.fragment_id is None:
+            return self._go(MissionState.ABORTED, "recovery_failed", {}, "persistent fragment identity unavailable")
+        result = recover(self.fragment_id, self.recipient_id)
+        held = self.fragment_held is not None and bool(self.fragment_held())
+        identity = getattr(self.robot, "held_fragment_id", None)
+        actual_id = identity() if callable(identity) else result.get("fragment_id")
+        same = result.get("fragment_id") == self.fragment_id and actual_id == self.fragment_id
+        ev = {"recovery": result, "fragment_held": held, "same_fragment": same, "stock": self.station.stock()}
+        if not (result.get("recovered", False) and held and same):
+            return self._go(MissionState.ABORTED, "recovery_failed", ev, "same dropped fragment could not be secured")
+        self.carrying, self._lost_genet = self._lost_genet, None
+        return self._go(MissionState.NAVIGATE_TO_RECIPIENT, "recover_fragment", ev)
 
     def _navigate_to_recipient(self) -> MissionState:
         if self.returning:
@@ -442,13 +522,15 @@ class MissionFSM:
         if status == "dislodged":
             self.memory.dislodge_events += 1
             lost = self.carrying
+            self._lost_genet = lost
             self.carrying = None
             self.returning = False
+            can_recover = callable(getattr(self.robot, "recover_lost_fragment", None))
             return self._go(
-                MissionState.COMPUTE_RESTORATION_PLAN,
+                MissionState.RECOVER_FRAGMENT if can_recover else MissionState.COMPUTE_RESTORATION_PLAN,
                 "fragment_dislodged",
                 {"lost_genet": lost, "recipient_id": self.recipient_id, "navigation": nav_ev},
-                "fragment lost mid-carry; re-planning to re-acquire",
+                "recover the same dropped fragment" if can_recover else "recovery unavailable; re-plan for replacement supply",
             )
         if status != "arrived":
             if target is not None:
@@ -468,10 +550,12 @@ class MissionFSM:
         if self.returning:
             self.robot.lock_base()
             try:
-                self.robot.detach_fragment(Pose(self.station.position))
+                source = self.station.rack_for(self.carrying, self.donor_id)
+                self.robot.detach_fragment(Pose(self.station.position_for(source)))
             finally:
                 self.robot.unlock_base()
-            self.station.put_back(self.carrying)
+            self.station.put_back(self.carrying, self.donor_id, self.fragment_id)
+            self.fragment_id = None
             genet_id, self.carrying, self.returning = self.carrying, None, False
             return self._go(
                 MissionState.COMPUTE_RESTORATION_PLAN,
@@ -480,9 +564,14 @@ class MissionFSM:
             )
 
         target = self.registry.get(self.recipient_id)
+        inspection = self._inspect("inspect_recipient", target)
+        if inspection is not None and not inspection.get("allowed", False):
+            self.memory.reject_recipient(target.cluster_id, "pre-placement inspection rejected")
+            return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_transplant", {"inspection": inspection})
         attempt = self.memory.note_recipient_attempt(target.cluster_id)
         chosen, ev = self._manipulate(target, self.config.graft, self.robot.detach_fragment)
-        ev.update(recipient=entry_summary(target), attempt=attempt, fragment_genet=self.carrying)
+        ev.update(recipient=entry_summary(target), attempt=attempt, fragment_genet=self.carrying,
+                  fragment_id=self.fragment_id, inspection=inspection)
         if chosen is None:
             self.memory.reject_recipient(target.cluster_id, ev["failure"])
             return self._go(MissionState.COMPUTE_RESTORATION_PLAN, "abstain_transplant", ev, f"rejected: {ev['failure']}")
@@ -545,11 +634,28 @@ class MissionFSM:
 
     # ----------------------------------------------------------------- helpers
 
+    def _inspect(self, name: str, *args) -> Optional[dict]:
+        """Optional simulator/robot capability; evidence is never invented by the FSM."""
+        hook = getattr(self.robot, name, None)
+        if not callable(hook):
+            return None
+        result = hook(*args)
+        if not isinstance(result, dict):
+            raise TypeError(f"{name} must return an evidence dict containing allowed")
+        return result
+
     def _station_pose(self) -> Pose:
-        x, y, z = self.station.position
+        source = self.station.rack_for(self.genet_id, self.donor_id)
+        navigator = getattr(self.robot, "navigation_pose", None)
+        if source is not None and callable(navigator):
+            return navigator(source, purpose="donor")
+        x, y, z = self.station.position_for(source) if source else self.station.position
         return Pose((x, y, z + self.config.wrist_standoff))
 
     def _standoff(self, entry: SemanticMapEntry) -> Pose:
+        navigator = getattr(self.robot, "navigation_pose", None)
+        if callable(navigator):
+            return navigator(entry, purpose="recipient")
         x, y, _ = entry.position_world
         return Pose((float(x), float(y), bbox_top(entry) + self.config.wrist_standoff))
 
@@ -604,6 +710,21 @@ class MissionFSM:
         ik_results: list[dict] = []
         self.robot.lock_base()
         try:
+            contact_selector = getattr(self.robot, "contact_candidate", None)
+            if callable(contact_selector):
+                candidate, ev = contact_selector(entry)
+                ev = dict(ev)
+                if candidate is None:
+                    ev.setdefault("failure", "no safe natural branch contact candidate")
+                    return None, ev
+                target = Pose(candidate.position, candidate.orientation_quat)
+                reachable = bool(self.robot.solve_ik(target))
+                ev.update(ik_results=[{"candidate": 0, "reachable": reachable}], chosen=dataclasses.asdict(candidate))
+                if not reachable:
+                    ev["failure"] = "IK unreachable at natural branch contact"
+                    return None, ev
+                act(target)
+                return candidate, ev
             result = None
             for _ in range(1 + cfg.reobserve_attempts):
                 frame = self.robot.get_wrist_rgbd()
