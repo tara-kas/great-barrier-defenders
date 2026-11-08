@@ -1,0 +1,41 @@
+{
+  "recordedAtUtc": "2026-11-08T14:22:32.245378+00:00",
+  "hostname": "spark-501b",
+  "architecture": "aarch64",
+  "kernel": "7.0.0-1024-nvidia",
+  "containerId": "e69c9d1e0d47fecc308a87affaa32fcdca7f0de0bbf1c202cfdac55500f3da6f",
+  "imageId": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+  "startedAt": "2026-11-08T14:20:06.123386716Z",
+  "running": true,
+  "networkMode": "none",
+  "memoryLimitBytes": 51539607552,
+  "nanoCpusLimit": 8000000000,
+  "entrypoint": [
+    "vllm"
+  ],
+  "command": [
+    "serve",
+    "google/gemma-4-E4B-it",
+    "--revision",
+    "4ecc2ba63bcac23ba4a767fc87025b1450f84c9c",
+    "--served-model-name",
+    "gemma-4-E4B-it",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8012",
+    "--max-model-len",
+    "4096",
+    "--gpu-memory-utilization",
+    "0.30",
+    "--max-num-seqs",
+    "1",
+    "--enforce-eager",
+    "--limit-mm-per-prompt",
+    "{\"image\":1,\"audio\":0,\"video\":0}"
+  ],
+  "gpu": "NVIDIA GB10, 580.178.04, 15.64, 26",
+  "networkInterfaces": "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo:   31489     470    0    0    0     0          0         0    31489     470    0    0    0     0       0          0",
+  "networkRoutes": "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT",
+  "containerProcesses": "PID                 COMMAND             RSS\n2240603             vllm                2482552\n2242401             python              11780\n2242402             VLLM::EngineCor     3217720"
+}

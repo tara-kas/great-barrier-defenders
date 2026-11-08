@@ -20,7 +20,8 @@ let activationRequested=false,activationWasRunning=false,activationStarted=0,rea
 let readinessTrace='',modelUnavailable=false,evidenceHold=false,architectureCheckedAt=0,startCheckInflight=false;
 let architecture=null,architectureError='',baseInflight=null,baseAttempted=new Set(),lastPerception=null,lastPlanning=null,lastReview=null,reviewInflight=false,baseError='',packetCount=0,transportState='Local recorder only';
 let assistEpisodeId=crypto.randomUUID(),assistScene=lab.scene,assistLastTime=0,assistCount=0,assistIssues=new Set(),assistInflight=null,assistHolding=false,assistIssue=null,lastAssist=null,assistLastDrop=0,assistCurrentActive=false,assistCurrentSince=null,assistCurrentHandled=false;
-const names={inspect_fragment:'Inspect fragment recovery',idle:'Ready to begin',survey:'Survey & pairing',inspect_recipient:'Inspect recipient',inspect_donor:'Inspect donor',approval:'Harvest approval',approach:'Approach donor',grasp:'Close gripper',cut:'Cut donor branch',retract:'Retract cutting',transport:'Transfer fragment',align:'Align contact',secure:'Secure fragment',release:'Release gripper',verify:'Verify placement',recover_drop:'Recover dropped fragment',recover_placement:'Correct placement',regrasp:'Regrasp fragment',recovery:'Assess setback',complete:'Mission complete',aborted:'Safe abort'};
+let assistRetry=null,assistContext=null;
+const names={inspect_fragment:'Inspect fragment',idle:'Ready to begin',survey:'Survey & pairing',inspect_recipient:'Inspect recipient',inspect_donor:'Inspect donor',approval:'Harvest approval',approach:'Approach donor',grasp:'Close gripper',cut:'Cut donor branch',retract:'Retract cutting',transport:'Transfer fragment',align:'Align contact',secure:'Secure fragment',release:'Release gripper',verify:'Verify placement',recover_drop:'Recover dropped fragment',recover_placement:'Correct placement',regrasp:'Regrasp fragment',recovery:'Assess setback',complete:'Mission complete',aborted:'Safe abort'};
 const label = text => String(text??'').replaceAll('_',' ');
 const publicText=text=>String(text??'');
 const autonomyReady=()=>!startCheckInflight&&(snapshot.controller==='base_station'&&!activationRequested&&stackReady());
@@ -229,12 +230,13 @@ async function requestBasePipeline(force=false){
  const timer=setTimeout(()=>controller.abort(),45000);
  try{
   if(operation==='perception'){
-   const {imageFocus,...image}=scene.captureObservation({targetPosition:request?.targetPosition,includeProjection:request?.targetKind==='fragment'}),id=request?`${request.id}-${generation}-${Math.round(image.time*1000)}`:`perception-${generation}-${targetId}-${Math.round(image.time*1000)}`;
+   const {imageFocus,...image}=scene.captureObservation({targetPosition:request?.targetPosition,includeProjection:!!request?.targetPosition}),id=request?`${request.id}-${generation}-${Math.round(image.time*1000)}`:`perception-${generation}-${targetId}-${Math.round(image.time*1000)}`;
    const observation={...(imageFocus?{imageFocus}:{}),phase:snapshot.phase,frameTime:image.time,perceptionRequest:request,captureRequestId:request?.id||id,cameraTargetId:targetId,targetKind:request?.targetKind||'colony',targetPosition:request?.targetPosition,targetId:snapshot.targetId,donorId:snapshot.donorId,water:{current:snapshot.water.current,currentVector:snapshot.water.currentVector,visibility:snapshot.water.visibility},robot:{position:snapshot.robot.position,gripper:snapshot.robot.gripper,yaw:snapshot.robot.yaw},sonar:{range:snapshot.sonar?.range,contacts:(snapshot.sonar?.contacts||[]).slice(0,24)}};
-   const packet=await baseRequest('/api/lab/perception',{id,observation,image},controller);if(token!==generation||request&&lab.snapshot().perceptionRequest?.id!==request.id)return;
+   const advisoryContext=takeAssistanceContext(targetId,observation.targetKind,image.time,observation.captureRequestId);
+   const packet=await baseRequest('/api/lab/perception',{id,observation,image,...(advisoryContext?{advisoryContext,episodeId:assistEpisodeId}:{})},controller);if(token!==generation||request&&lab.snapshot().perceptionRequest?.id!==request.id)return;
    if(packet.source!=='gemma'||(packet.requestId??packet.id)!==id)throw new Error('Gemma packet source or identity mismatch');
    lab.command({action:'ingest_perception',packet});lastPerception=packet;snapshot=lab.snapshot();rememberObservations();transportState='Gemma observation received via HTTP';logActivity('response',`Gemma ${packet.model} responded in ${packet.clientLatencyMs}ms: ${packet.summary||'Structured visual observations received.'}${packet.uncertainty?' Uncertainty: '+String(packet.uncertainty).slice(0,700):''} ${packet.targetKind==='fragment'?`Fragment visible: ${packet.fragmentVisible}; gripper: ${packet.gripperState}.`:(packet.observations||[]).map(o=>`${o.id}: ${label(o.appearance||o.health)} (${Math.round(o.confidence*100)}% provider score; viability from registry only)`).join('; ')} Frame T+ ${clock(packet.frameTime)}.`);
-   const expected=request?.expectedHealth||(snapshot.phase==='inspect_recipient'?'bleached_alive':'healthy'),accepted=request?.targetKind==='fragment'?(packet.fragmentVisible===true&&packet.gripperState===(snapshot.robot.holding?'holding':'empty')):lab._externalHealth(targetId,expected).ready;
+   const expected=request?.expectedHealth||(snapshot.phase==='inspect_recipient'?'bleached_alive':'healthy'),accepted=request?.targetKind==='fragment'?lab._fragmentEvidenceReady():lab._externalHealth(targetId,expected).ready;
    if(!accepted){evidenceHold=true;modelUnavailable=false;requestAssistance({kind:'perception_uncertainty',key:`capture-${request?.id||targetId}`,reason:`Fresh Gemma ${request?.targetKind||'colony'} observation is uncertain or incompatible: ${packet.uncertainty||packet.summary||'visual gate did not pass'}`});}
 
   }else{
@@ -248,12 +250,47 @@ async function requestBasePipeline(force=false){
  finally{clearTimeout(timer);if(baseInflight===controller)baseInflight=null;if(token===generation)renderUI(true);}
 }
 
-function cancelAssistance(){assistInflight?.abort();assistInflight=null;assistHolding=false;assistIssue=null;if(lab.assistanceHold)lab.command({action:'set_assistance_hold',active:false});}
+function cancelAssistance(){assistContext=null;assistRetry=null;assistInflight?.abort();assistInflight=null;assistHolding=false;assistIssue=null;if(lab.assistanceHold)lab.command({action:'set_assistance_hold',active:false});}
 function resetAssistanceEpisode(){cancelAssistance();assistEpisodeId=crypto.randomUUID();assistScene=lab.scene;assistLastTime=0;assistCount=0;assistIssues.clear();assistLastDrop=0;assistCurrentActive=false;assistCurrentSince=null;assistCurrentHandled=false;lastAssist=null;}
-function syncAssistanceEpisode(s){if(assistScene!==lab.scene||s.time<assistLastTime-1e-9)resetAssistanceEpisode();assistLastTime=s.time;if(['complete','aborted'].includes(s.phase)){assistInflight?.abort();assistInflight=null;assistHolding=false;}}
+function syncAssistanceEpisode(s){
+ if(assistScene!==lab.scene||s.time<assistLastTime-1e-9)resetAssistanceEpisode();assistLastTime=s.time;
+ if(assistContext){const c=assistContext.packet,b=assistContext.mission;if(c.episodeId!==assistEpisodeId||s.time>c.expiresAt||performance.now()>=assistContext.wallExpiresAt||s.donorId!==b.donorId||s.targetId!==b.targetId||s.fragmentId!==b.fragmentId)assistContext=null;}
+ if(['complete','aborted'].includes(s.phase)){assistContext=null;assistRetry=null;assistInflight?.abort();assistInflight=null;assistHolding=false;}
+}
+function assistanceTarget(s){
+ const request=s.perceptionRequest;
+ if(request?.targetId)return{cameraTargetId:request.targetId,targetKind:request.targetKind||'colony',captureRequestId:request.id};
+ return{};
+}
+function stageAssistanceContext(result,payload,started){
+ assistContext=null;
+ const c=result.advisoryContext;if(c===undefined)return;
+ const expected=['source','requestId','episodeId','targetId','targetKind','previousCaptureRequestId','issuedAt','expiresAt','guidance','observations','checks','advisoryOnly','controlAuthority'];
+ const bounded=(value,max)=>typeof value==='string'&&value.trim().length>0&&value.length<=max;
+ if(!c||typeof c!=='object'||Object.keys(c).length!==expected.length||expected.some(key=>!Object.hasOwn(c,key))||c.source!=='argon_assist'||c.requestId!==payload.id||c.episodeId!==payload.episodeId||c.targetId!==payload.observation.cameraTargetId||c.targetKind!==payload.observation.targetKind||!['colony','fragment'].includes(c.targetKind)||!bounded(c.targetId,160)||c.previousCaptureRequestId!==payload.observation.captureRequestId||!bounded(c.previousCaptureRequestId,160)||c.advisoryOnly!==true||c.controlAuthority!==false||!Number.isFinite(c.issuedAt)||c.issuedAt!==payload.observation.time||!Number.isFinite(c.expiresAt)||c.expiresAt<=c.issuedAt||c.expiresAt>c.issuedAt+60||!bounded(c.guidance,1200)||!Array.isArray(c.observations)||c.observations.length>3||c.observations.some(value=>!bounded(value,240))||!Array.isArray(c.checks)||c.checks.length<1||c.checks.length>4||c.checks.some(value=>!bounded(value,200)))throw Error('Invalid or mismatched Argon advisory context');
+ if(result.action==='rescan')assistContext={packet:c,wallExpiresAt:started+60000,mission:{donorId:payload.observation.donorId,targetId:payload.observation.targetId,fragmentId:payload.observation.fragmentId}};
+}
+function takeAssistanceContext(targetId,targetKind,imageTime,captureRequestId){
+ const staged=assistContext;if(!staged)return null;
+ const c=staged.packet,b=staged.mission,s=lab.snapshot();
+ if(c.episodeId!==assistEpisodeId||performance.now()>=staged.wallExpiresAt||imageTime>c.expiresAt||['complete','aborted'].includes(lab.phase)||s.donorId!==b.donorId||s.targetId!==b.targetId||s.fragmentId!==b.fragmentId){assistContext=null;return null;}
+ if(c.targetId!==targetId||c.targetKind!==targetKind||!Number.isFinite(imageTime)||imageTime<=c.issuedAt||captureRequestId===c.previousCaptureRequestId)return null;
+ assistContext=null;return c;
+}
+function assistanceContextText(result){
+ const c=result?.advisoryContext;if(!c)return'';
+ return` Next-frame guidance: ${c.guidance} Reported context: ${c.observations.join('; ')||'none'}. Visual checks: ${c.checks.join('; ')}. Untrusted advice only; the new image must independently support every observation.`;
+}
+function scheduleAssistanceRetry(){
+ const s=lab.snapshot(),delay=2**assistCount;
+ if(assistCount>=3||!assistIssue||!s.assistanceHold||s.time+delay>=s.assistanceHold.since+90)return false;
+ assistRetry={episode:assistEpisodeId,generation,dueAt:s.time+delay};
+ logActivity('hold',`Argon recheck scheduled in ${delay}s within the existing episode budget and hold deadline. Robot remains held.`);
+ return true;
+}
 function renderAssistance(s){
  $('assist-count').textContent=`${assistCount} / 3 ATTEMPTS`;
- $('argon-assistance').textContent=assistInflight?'Argon is reviewing this issue. The robot holds position; physics and safety continue.':assistHolding&&baseError?baseError:lastAssist?`${lastAssist.action.toUpperCase()} · ${lastAssist.reason} Source: ${lastAssist.model}; ${lastAssist.clientLatencyMs??lastAssist.latencyMs}ms. Advisory only; no visual gate bypass.`:assistHolding?baseError:'Uncertain perception, drops, excessive current or service failures can request bounded Argon help while the robot holds. Only rescan, hold or abort; no proceed command.';
+ $('argon-assistance').textContent=assistInflight?'Argon is reviewing this issue. The robot holds position; physics and safety continue.':assistHolding&&baseError?baseError:lastAssist?`${lastAssist.action.toUpperCase()} · ${lastAssist.reason} Source: ${lastAssist.model}; ${lastAssist.clientLatencyMs??lastAssist.latencyMs}ms.${assistanceContextText(lastAssist)} Advisory only; no visual gate bypass.`:assistHolding?baseError:'Uncertain perception, drops, excessive current or service failures can request bounded Argon help while the robot holds. Only rescan, hold or abort; no proceed command.';
  $('retry-assist').hidden=!assistHolding||!!assistInflight||assistCount>=3||['complete','aborted'].includes(s.phase);$('abort-assist').hidden=!assistHolding||['complete','aborted'].includes(s.phase);
  if(assistHolding){$('retry-gemini').hidden=true;}
 }
@@ -265,6 +302,8 @@ function maybeRequestAssistance(){
  const newDrop=snapshot.metrics.drops>assistLastDrop;
  if(assistInflight||assistHolding){
   if(newDrop){assistLastDrop=snapshot.metrics.drops;assistCurrentHandled=current;const update='The same incident now includes a dropped fragment; fresh recovery inspection is required.';if(assistIssue)assistIssue.reason=`${assistIssue.reason} ${update}`.slice(-1200);logActivity('hold',`${update} Existing assistance request/hold retained; no duplicate request.`);}
+  if(assistRetry&&(assistRetry.episode!==assistEpisodeId||assistRetry.generation!==generation))assistRetry=null;
+  if(assistRetry&&!assistInflight&&snapshot.time>=assistRetry.dueAt){assistRetry=null;requestAssistance(assistIssue,{retry:true});}
   return true;
  }
  if(newDrop){assistLastDrop=snapshot.metrics.drops;assistCurrentHandled=current;requestAssistance({kind:'fragment_drop',key:`drop-${assistLastDrop}`,reason:'The tracked fragment was dropped, possibly during the current disturbance. Review current recovery conditions; require fresh fragment and gripper inspection before any recovery motion.'});return true;}
@@ -274,33 +313,37 @@ function maybeRequestAssistance(){
  }
  return false;
 }
-function assistanceObservation(){const s=snapshot,f=s.fragments.find(f=>f.id===s.robot.holding)||s.fragments.find(f=>f.donorId===s.donorId&&['dropped','unsecured','available'].includes(f.state));return{phase:s.phase,time:s.time,held:!!s.assistanceHold,restorationMode:s.restorationMode,robot:{position:s.robot.position,velocity:s.robot.velocity,holding:s.robot.holding},water:{current:s.water.current,currentVector:s.water.currentVector,visibility:s.water.visibility},metrics:s.metrics,grip:s.grip,fragment:f?{id:f.id,state:f.state,position:f.position,detachedAtStart:f.detachedAtStart}:null,registryGroundTruth:s.registryGroundTruth,onboardPerception:{observations:(s.intelligence?.onboard?.observations||[]).filter(o=>[s.donorId,s.targetId].includes(o.id)).slice(-4)},route:{mode:s.route?.mode,alternatives:(s.route?.alternatives||[]).map(r=>({id:r.id,points:r.points.slice(0,12)}))},assistanceAttemptsRemaining:3-assistCount};}
+function assistanceObservation(){const s=snapshot,fragmentId=s.robot.holding||s.fragmentId||(s.perceptionRequest?.targetKind==='fragment'?s.perceptionRequest.targetId:null)||s.pendingDecision?.observation?.fragment?.id,f=s.fragments.find(f=>f.id===fragmentId);return{...assistanceTarget(s),targetId:s.targetId,donorId:s.donorId,fragmentId:s.fragmentId,phase:s.phase,time:s.time,held:!!s.assistanceHold,restorationMode:s.restorationMode,robot:{position:s.robot.position,velocity:s.robot.velocity,holding:s.robot.holding},water:{current:s.water.current,currentVector:s.water.currentVector,visibility:s.water.visibility},metrics:s.metrics,grip:s.grip,fragment:f?{id:f.id,state:f.state,position:f.position,detachedAtStart:f.detachedAtStart}:null,registryGroundTruth:s.registryGroundTruth,onboardPerception:{observations:(s.intelligence?.onboard?.observations||[]).filter(o=>[s.donorId,s.targetId].includes(o.id)).slice(-4)},route:{mode:s.route?.mode,alternatives:(s.route?.alternatives||[]).map(r=>({id:r.id,points:r.points.slice(0,12)}))},assistanceAttemptsRemaining:3-assistCount};}
 async function requestAssistance(issue,{retry=false}={}){
+ snapshot=lab.snapshot();
  if(snapshot.controller!=='base_station'||snapshot.pilot?.mode==='manual'||['idle','complete','aborted'].includes(snapshot.phase)||assistInflight)return;
+ if(snapshot.assistanceHold&&snapshot.time>=snapshot.assistanceHold.since+90)return;
  if(!retry&&assistIssues.has(issue.key))return;assistIssues.add(issue.key);assistIssue={kind:String(issue.kind).slice(0,64),key:issue.key,reason:String(issue.reason).slice(0,1200)};
+ assistRetry=null;assistContext=null;
  baseInflight?.abort();baseInflight=null;baseAttempted.clear();const token=++generation,episode=assistEpisodeId;
  evidenceHold=true;modelUnavailable=false;assistHolding=true;baseError='Requesting Argon assistance. Robot held; fresh Gemma evidence remains required.';
  if(!command({action:'set_assistance_hold',active:true,reason:assistIssue.reason})){assistHolding=false;return;}
  if(assistCount>=3){baseError='Argon assistance budget exhausted (3 attempts). Robot held; request a fresh rescan or abort.';logActivity('hold',baseError);renderUI(true);return;}
- const id=`assist-${episode}-${++assistCount}`,controller=new AbortController();assistInflight=controller;const started=performance.now(),timer=setTimeout(()=>controller.abort(),60000);
+ const id=`assist-${episode}-${++assistCount}`,controller=new AbortController();assistInflight=controller;const started=performance.now(),remainingHoldMs=Math.max(1,(snapshot.assistanceHold.since+90-snapshot.time)*1000),timer=setTimeout(()=>controller.abort(),Math.min(60000,remainingHoldMs));
  const perception=lastPerception?Object.fromEntries(['source','model','provider','requestId','frameTime','targetId','targetKind','summary','uncertainty','observations','fragmentVisible','gripperState'].filter(k=>lastPerception[k]!==undefined).map(k=>[k,lastPerception[k]])):undefined;
  const payload={id,episodeId:episode,issue:{kind:assistIssue.kind,reason:assistIssue.reason},observation:assistanceObservation(),...(perception?{perception}:{})};
  logActivity('request',`Sending ${assistIssue.kind} at T+ ${clock(snapshot.time)} to Argon assistance (${assistCount}/3). Robot held; permitted suggestions: rescan / hold / abort. Awaiting actual response.`);renderUI(true);
  try{
   if(new TextEncoder().encode(JSON.stringify(payload)).length>30*1024)throw Error('Assistance context exceeds bounded request size');
   const response=await fetch('/api/lab/assist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal}),result=await response.json();
-  if(token!==generation||episode!==assistEpisodeId||['complete','aborted'].includes(lab.phase))return;
-  if(!response.ok)throw Error(result.error||'Assistance service unavailable');
+  if(token!==generation||episode!==assistEpisodeId||assistInflight!==controller||['complete','aborted'].includes(lab.phase))return;
+  if(!response.ok){const error=Error(result.error||'Assistance service unavailable');error.retryable=typeof result.retryable==='boolean'?result.retryable:response.status===429||response.status>=500;throw error;}
   if(result.source!=='argon_assist'||result.requestId!==id||result.episodeId!==episode||result.advisoryOnly!==true||result.controlAuthority!==false||!['rescan','hold','abort'].includes(result.action)||typeof result.reason!=='string'||typeof result.model!=='string')throw Error('Invalid or unauthorized assistance response');
-  result.clientLatencyMs=Math.round(performance.now()-started);lastAssist=result;packetCount++;logActivity('response',`Argon assistance ${result.model} (${result.clientLatencyMs}ms): ${result.action.toUpperCase()} — ${result.reason}. Advisory only; fresh Gemma gates remain authoritative.`);
+  stageAssistanceContext(result,payload,started);
+  result.clientLatencyMs=Math.round(performance.now()-started);lastAssist=result;packetCount++;logActivity('response',`Argon assistance ${result.model} (${result.clientLatencyMs}ms): ${result.action.toUpperCase()} — ${result.reason}.${assistanceContextText(result)} Advisory only; fresh Gemma gates remain authoritative.`);
   if(result.action==='abort'){baseError='Argon recommended a safe abort.';command({action:'abort',reason:`Argon assistance recommended abort: ${result.reason}`});assistHolding=false;}
   else if(result.action==='rescan'){
-   if(!snapshot.targetId||!snapshot.donorId){baseError='Argon requested a rescan, but no target is assigned. The robot remains held.';return;}
+   if(!snapshot.targetId||!snapshot.donorId){assistContext=null;baseError='Argon requested a rescan, but no target is assigned. The robot remains held.';return;}
    assistLastDrop=snapshot.metrics.drops;command({action:'set_assistance_hold',active:false});assistHolding=false;const reason=`Argon assistance requested fresh evidence: ${result.reason}`;
    if(command({action:'request_rescan',reason})){baseError='';evidenceHold=false;transportState='Argon requested a fresh physical rescan; no handling approval granted.';}
-   else{assistHolding=true;baseError='Requested rescan could not start; robot remains held.';command({action:'set_assistance_hold',active:true,reason:baseError});}
-  }else baseError=`Argon requested HOLD: ${result.reason} Retry assistance or request a fresh rescan explicitly.`;
- }catch(error){if(token===generation&&episode===assistEpisodeId){baseError=`Argon assistance unavailable: ${error.name==='AbortError'?'request timed out':error.message}. Robot remains held; retry explicitly or request fresh evidence.`;logActivity('error',baseError);}}
+   else{assistContext=null;assistHolding=true;baseError='Requested rescan could not start; robot remains held.';command({action:'set_assistance_hold',active:true,reason:baseError});}
+  }else{baseError=`Argon requested HOLD: ${result.reason} Robot remains held.`;scheduleAssistanceRetry();}
+ }catch(error){if(token===generation&&episode===assistEpisodeId&&assistInflight===controller&&!['complete','aborted'].includes(lab.phase)){baseError=`Argon assistance unavailable: ${error.name==='AbortError'?'request timed out':error.message}. Robot remains held.`;logActivity('error',baseError);if(error.retryable||error.name==='AbortError'||error instanceof TypeError)scheduleAssistanceRetry();}}
  finally{clearTimeout(timer);if(assistInflight===controller)assistInflight=null;if(token===generation)renderUI(true);}
 }
 $('retry-assist').onclick=()=>{if(assistIssue)requestAssistance(assistIssue,{retry:true});};

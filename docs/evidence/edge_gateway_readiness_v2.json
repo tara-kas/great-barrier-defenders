@@ -1,0 +1,64 @@
+{
+  "recordedAtUtc": "2026-11-08T14:34:25.481568+00:00",
+  "scope": "Private loopback gateway after source refresh and approved server-side Argon configuration; readiness is not proof of completed mission or successful Argon request",
+  "architecture": {
+    "ok": true,
+    "components": {
+      "gemma": {
+        "configured": true,
+        "status": "unverified",
+        "model": "gemma-4-E4B-it",
+        "deployment": "robot",
+        "provider": "vllm_openai_compatible",
+        "role": "robot_perception",
+        "readiness": "ready",
+        "ready": true,
+        "readinessCheck": null,
+        "readinessAgeSeconds": null
+      },
+      "argon": {
+        "configured": true,
+        "status": "unverified",
+        "model": "gemini-4-argon",
+        "deployment": "cloud",
+        "provider": "google_interactions",
+        "role": "uncertainty_assistance_and_between_mission_review"
+      },
+      "cuopt": {
+        "configured": true,
+        "status": "unverified",
+        "model": "nvidia_cuopt",
+        "deployment": "robot",
+        "provider": "custom_cuopt_gateway",
+        "role": "route_cost_optimization",
+        "readiness": "ready",
+        "ready": true,
+        "readinessCheck": null,
+        "readinessAgeSeconds": null
+      }
+    },
+    "localSafety": {
+      "source": "scripted_local",
+      "networkRequired": false
+    },
+    "transport": "http_telemetry_batches_and_gate_packets",
+    "telemetry": {
+      "receivedFrames": 0,
+      "retainedFrames": 0,
+      "maxFrames": 300,
+      "lastReceivedAgeSeconds": null,
+      "lastFrameTime": null,
+      "streamId": null,
+      "storage": "volatile_memory",
+      "billedModelCalls": 0
+    },
+    "note": "Readiness verifies configured service identity/solver availability, not mission inference or measured hardware residency.",
+    "pipelineReady": true,
+    "status": "not_started",
+    "runtime": {
+      "platform": "local_edge",
+      "perceptionResidency": "local_gpu",
+      "readinessCheck": "loopback model health and native solver warmup"
+    }
+  }
+}

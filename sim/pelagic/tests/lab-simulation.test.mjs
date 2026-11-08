@@ -165,7 +165,10 @@ test('a current wave cannot detach a cutting before its authorized cut',()=>{
 test('seeded dense habitat changes and remains shared with physical proxies',()=>{
  const a=new ReefLab({seed:42}),b=new ReefLab({seed:43});assert.notDeepEqual(a.habitat[0].position,b.habitat[0].position);assert.deepEqual(a.habitat,new ReefLab({seed:42}).habitat);
 });
-const externalPerception=(sim,id,health,overrides={})=>({requestId:sim.perceptionRequest.id,captureRequestId:sim.perceptionRequest.id,targetId:id,targetKind:sim.perceptionRequest.targetKind,frameTime:sim.time,source:'gemma',provider:'test_fixture_transport',model:'gemma-fixture-not-live',observations:sim.perceptionRequest.targetKind==='fragment'?[]:[{id,health,confidence:.92}],fragmentVisible:sim.perceptionRequest.targetKind==='fragment'?true:null,gripperState:sim.perceptionRequest.targetKind==='fragment'?(sim.robot.holding?'holding':'empty'):null,...overrides});
+const externalPerception=(sim,id,health,overrides={})=>{
+ const fragment=sim.perceptionRequest.targetKind==='fragment',visual=sim.scene.restorationMode==='loose_fragment'?{visualContract:'appearance/v1',targetVisible:true,objectKind:fragment?'coral_fragment':'coral_colony',appearance:fragment||health==='healthy'?'pigmented':health==='bleached_alive'?'pale_or_bleached':'unknown',confidence:.92,viabilityKnown:false}:{};
+ return {requestId:sim.perceptionRequest.id,captureRequestId:sim.perceptionRequest.id,targetId:id,targetKind:sim.perceptionRequest.targetKind,frameTime:sim.time,source:'gemma',provider:'test_fixture_transport',model:'gemma-fixture-not-live',...visual,observations:fragment?[]:[{id,health:Object.keys(visual).length?'unknown':health,confidence:.92,...visual}],fragmentVisible:fragment?true:null,gripperState:fragment?(sim.robot.holding?'holding':'empty'):null,...overrides};
+};
 const externalPlan=(sim,overrides={})=>({requestId:sim.pendingDecision.id,frameTime:sim.pendingDecision.observation.time,source:'argon',provider:'test_fixture_transport',model:'argon-fixture-not-live',decision:sim.pendingDecision.allowedActions[0],reason:'Offline fixture chooses a bounded local alternative.',routeMode:'direct',optimizer:sim.requireFullStack?{source:'cuopt',configured:true,status:'solved',solverStatus:'SUCCESS',requestId:sim.pendingDecision.id,routeMode:'direct',objectiveCost:10,costs:{direct:10,clearance:15},model:'cuopt-fixture-not-live',solverVersion:'fixture',solveTimeMs:1}:{source:'not_configured'},...overrides});
 function runBaseFixture(sim,onStep=null){sim.command({action:'run'});let maxBytes=0;while(sim.running&&sim.time<600){sim.step(.2);if(onStep)onStep(sim);const p=sim.snapshot().perception;if(sim.perceptionRequest?.ready&&!sim.externalRequestIds.has(`perception:${sim.perceptionRequest.id}`)){sim.command({action:'ingest_perception',packet:externalPerception(sim,p.targetId,p.stage==='inspect_donor'?'healthy':'bleached_alive')});}if(sim.pendingDecision){maxBytes=Math.max(maxBytes,JSON.stringify(sim.pendingDecision.observation).length);const packet=externalPlan(sim);sim.command({action:'ingest_plan',packet});sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});}}return {state:sim.snapshot(),maxBytes};}
 test('base-station architecture waits for model perception and keeps physics/reflexes running',()=>{
@@ -277,6 +280,37 @@ test('loose full-stack fixture inspects actual pickup fragment and preserves its
  const {state}=runBaseFixture(sim,s=>{if(s.phase==='inspect_fragment'&&s._fragment().state==='available'){sawPickupView=true;assert.equal(s.robot.holding,null);}if(!injected&&s.phase==='transport'){injected=true;s.command({action:'inject_fault',kind:'current_surge'});}});
  assert(sawPickupView);assert.equal(state.completed,true);assert.equal(state.metrics.placed,1);assert.equal(state.metrics.drops,1);assert.equal(state.metrics.recoveries,1);assert.equal(state.metrics.damage,0);assert.equal(state.metrics.rejectedCuts,0);assert.equal(state.metrics.collisions,0);assert.deepEqual(state.colonies,colonies);const id=state.grip.lastLoss.fragmentId;assert(initial.some(f=>f.id===id&&f.detachedAtStart));assert.equal(state.fragments.find(f=>f.id===id).state,'placed');assert.equal(state.fragments.length,initial.length);
 });
+function readyForInspectionPlan(mode='loose_fragment'){
+ const sim=new ReefLab({restorationMode:mode,controller:'base_station',missionGoal:1}),captures=[];sim.command({action:'run'});
+ while(sim.running&&!sim.pendingDecision&&sim.time<180){
+  sim.step(.2);const request=sim.perceptionRequest;
+  if(request?.ready&&!sim.externalRequestIds.has(`perception:${request.id}`)){captures.push(request.targetId);sim.command({action:'ingest_perception',packet:externalPerception(sim,request.targetId,request.expectedHealth)});}
+ }
+ assert(sim.pendingDecision,sim.status);return {sim,captures};
+}
+function applyInspectionPlan(sim){const packet=externalPlan(sim);sim.command({action:'ingest_plan',packet});sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});}
+test('loose pickup inspects recipient and exact detached stock without imaging the unhandled source colony',()=>{
+ const {sim,captures}=readyForInspectionPlan();assert.deepEqual(captures,[sim.targetId,sim.fragmentId]);assert.equal(sim.intelligence.onboard.observations.some(o=>o.id===sim.donorId),false);
+ assert.equal(sim._compatible(sim._donor(),sim._recipient()),true);applyInspectionPlan(sim);assert.equal(sim.phase,'approach');assert.equal(sim.robot.holding,null);
+ const rescanning=readyForInspectionPlan().sim;rescanning._requestRescan('Recheck handled objects','inspect');assert.equal(rescanning.phase,'inspect_recipient');assert.deepEqual(rescanning.rescanContext.queue,['inspect_fragment']);
+ const initial=readyForInspectionPlan().sim;initial.pendingDecision=null;initial._setPhase('inspect_fragment');initial.command({action:'request_rescan'});assert.equal(initial.rescanContext.kind,'inspect');assert.equal(initial.phase,'inspect_recipient');assert.deepEqual(initial.rescanContext.queue,['inspect_fragment']);
+});
+test('loose local guard rejects missing or invalid handled-object evidence and stock provenance',()=>{
+ const mutations=[
+  s=>{s.intelligence.onboard.lastPacket=null;},s=>{s.intelligence.onboard.lastPacket.targetId='wrong-fragment';},
+  s=>{s.intelligence.onboard.lastPacket.confidence=.69;},s=>{s.intelligence.onboard.lastPacket.appearance='unknown';},
+  s=>{s.intelligence.onboard.lastPacket.objectKind='coral_colony';},s=>{s.intelligence.onboard.lastPacket.gripperState='unknown';},
+  s=>{s.intelligence.onboard.lastPacket.frameTime=s.time-121;},s=>{s._fragment().state='attached';},
+  s=>{s._fragment().source='unknown';},s=>{s._fragment().detachedAtStart=false;},s=>{s._fragment().donorId='other-source';},
+  s=>{s._donor().health='dead';},s=>{s._donor().genet='unknown-source';},
+  s=>{s.intelligence.onboard.observations.find(o=>o.id===s.targetId).appearance='unknown';}
+ ];
+ for(const mutate of mutations){const {sim}=readyForInspectionPlan();mutate(sim);try{applyInspectionPlan(sim);}catch(error){assert(error instanceof Error);}assert.equal(sim.robot.holding,null);assert.notEqual(sim.phase,'approach');assert.equal(sim.metrics.placed,0);}
+});
+test('attached cutting still requires a fresh source-colony image before handling',()=>{
+ const {sim,captures}=readyForInspectionPlan('donor_cut');assert.deepEqual(captures,[sim.targetId,sim.donorId]);
+ sim.intelligence.onboard.observations=sim.intelligence.onboard.observations.filter(o=>o.id!==sim.donorId);assert.throws(()=>applyInspectionPlan(sim),/Fresh Gemma/);assert.equal(sim.robot.holding,null);assert.equal(sim.metrics.placed,0);
+});
 test('local planner provenance is preserved and held to the same matching solver and action gates',()=>{
  const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});while(!sim.pendingDecision&&sim.running){sim.step(.2);const request=sim.perceptionRequest;if(request?.ready&&!sim.externalRequestIds.has(`perception:${request.id}`))sim.command({action:'ingest_perception',packet:externalPerception(sim,request.targetId,request.expectedHealth)});}
  const packet=externalPlan(sim,{source:'local_planner',provider:'inspectable_policy',model:'reef-local-policy-v1'});assert.equal(sim.pendingDecision.observation.decisionKind,'inspect');assert.equal(sim.pendingDecision.observation.robot.holding,null);sim.command({action:'ingest_plan',packet});assert.equal(sim.intelligence.baseStation.plan.source,'local_planner');sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});assert.equal(sim.decision.planning.source,'local_planner');assert.equal(sim.decision.planning.optimizer.solverStatus,'SUCCESS');
@@ -284,7 +318,7 @@ test('local planner provenance is preserved and held to the same matching solver
 
 test('fragment camera exposure waits for a settled vehicle and resets on motion',()=>{
  const sim=new ReefLab({restorationMode:'loose_fragment',missionGoal:1});sim.command({action:'run'});until(sim,s=>s.phase==='inspect_fragment');assert.equal(sim.phase,'inspect_fragment');
- sim.robot.position=[...sim.robot.target];sim.robot.velocity=[.3,0,0];sim._recordInspection(2);assert.equal(sim.perceptionRequest.ready,false);assert.equal(sim.perceptionRequest.exposureSeconds,0);
+ sim.robot.position=sim._fragment().position.map((v,i)=>v+(i===2?1:0));sim.robot.target=[...sim.robot.position];sim.robot.velocity=[.3,0,0];sim._recordInspection(2);assert.equal(sim.perceptionRequest.ready,false);assert.equal(sim.perceptionRequest.exposureSeconds,0);
  sim.robot.velocity=[0,0,0];sim._recordInspection(1.2);assert.equal(sim.perceptionRequest.ready,true);
  sim.robot.velocity=[.3,0,0];sim._recordInspection(.1);assert.equal(sim.perceptionRequest.ready,false);assert.equal(sim.perceptionRequest.exposureSeconds,0);
 });
@@ -301,7 +335,7 @@ test('assistance hold is bounded, manual override clears it and explicit abort i
 });
 
 test('a new fragment capture invalidates an otherwise recent pre-drop pickup image',()=>{
- const sim=new ReefLab({restorationMode:'loose_fragment'});sim.fragmentId=sim.fragments[0].id;sim.fragmentCaptureId='old-pickup';sim.intelligence.onboard.lastPacket={captureRequestId:'old-pickup',targetKind:'fragment',targetId:sim.fragmentId,fragmentVisible:true,gripperState:'empty',frameTime:0};assert(sim._fragmentEvidenceReady());
+ const sim=new ReefLab({restorationMode:'loose_fragment'});sim.fragmentId=sim.fragments[0].id;sim.fragmentCaptureId='old-pickup';sim.intelligence.onboard.lastPacket={captureRequestId:'old-pickup',targetKind:'fragment',targetId:sim.fragmentId,fragmentVisible:true,gripperState:'empty',frameTime:0,visualContract:'appearance/v1',targetVisible:true,objectKind:'coral_fragment',appearance:'pigmented',viabilityKnown:false,confidence:.9};assert(sim._fragmentEvidenceReady());
  sim._setPhase('inspect_fragment','Reacquiring dropped fragment');assert.notEqual(sim.perceptionRequest.id,'old-pickup');assert.equal(sim._fragmentEvidenceReady(),false);
  sim.intelligence.onboard.lastPacket.captureRequestId=sim.perceptionRequest.id;assert(sim._fragmentEvidenceReady());sim.robot.holding=sim.fragmentId;assert.equal(sim._fragmentEvidenceReady(),false);
 });

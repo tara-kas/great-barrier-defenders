@@ -15,6 +15,8 @@ class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
+class GatewayContractError extends Error {}
+
 async function boundedBytes(stream, limit) {
   if (!stream) throw new ApiError(400, 'Request body is required');
   const reader = stream.getReader();
@@ -36,6 +38,26 @@ async function boundedBytes(stream, limit) {
 }
 
 async function boundedText(stream, limit) { return new TextDecoder('utf-8', {fatal: true}).decode(await boundedBytes(stream, limit)); }
+
+const ARGON_ERROR_CODES = new Set(['argon_timeout', 'argon_http_error', 'argon_transport_error', 'argon_invalid_json', 'argon_invalid_response']);
+
+async function architectureFailure(response) {
+  // Gate on status before parsing: proxies can return an HTML/plain-text 502.
+  // Provider messages, URLs, headers and unexpected JSON fields never escape.
+  const status = response.status >= 400 && response.status <= 599 ? response.status : 502;
+  const result = {ok:false, error:'Architecture service refused the request; local safety remains active',
+    code:'upstream_http_error', retryable:status === 408 || status === 429 || status >= 500};
+  try {
+    const payload = JSON.parse(await boundedText(response.body, MAX_RESPONSE));
+    if (ARGON_ERROR_CODES.has(payload?.code) && typeof payload?.retryable === 'boolean') {
+      result.code = payload.code;
+      result.retryable = payload.retryable;
+      if (Number.isSafeInteger(payload.elapsedMs) && payload.elapsedMs >= 0) result.elapsedMs = payload.elapsedMs;
+      if (Number.isInteger(payload.providerStatus) && payload.providerStatus >= 400 && payload.providerStatus <= 599) result.providerStatus = payload.providerStatus;
+    }
+  } catch { /* Preserve the upstream status even if its body is absent or malformed. */ }
+  return json(result, status);
+}
 
 function jpegDimensions(raw) {
   const invalid = message => { throw new ApiError(400, message); };
@@ -153,7 +175,7 @@ export function createWorker({transport = (...args) => fetch(...args), now = () 
       const timer = setTimeout(() => controller.abort(), 30000);
       try {
         const base = new URL(env.LAB_ARCHITECTURE_BASE_URL);
-        if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new Error('Invalid configured gateway');
+        if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new GatewayContractError('Invalid configured gateway');
         const headers = {'content-type':'application/json'};
         if (env.LAB_ARCHITECTURE_TOKEN) headers.authorization = `Bearer ${env.LAB_ARCHITECTURE_TOKEN}`;
         let body;
@@ -165,22 +187,23 @@ export function createWorker({transport = (...args) => fetch(...args), now = () 
         // Workers supports manual/follow redirects, not the browser's error mode.
         // Reject redirects explicitly so a service token never follows a new host.
         const response = await transport(base.href.replace(/\/$/, '') + url.pathname, {method:request.method,headers,body,signal:controller.signal,redirect:'manual'});
-        if (response.status >= 300 && response.status < 400) throw new Error('Gateway redirect rejected');
+        if (response.status >= 300 && response.status < 400) throw new GatewayContractError('Gateway redirect rejected');
+        if (!response.ok) return await architectureFailure(response);
         const payload = JSON.parse(await boundedText(response.body, MAX_RESPONSE));
-        if (!response.ok) return json({ok:false,error:'Architecture service refused the request; local safety remains active'},[400,403,415,429,502,503].includes(response.status)?response.status:502);
         const valid = health ? Boolean(payload?.components)
           : url.pathname.endsWith('/warmup') ? payload?.ok === true && ['warming','ready','started'].includes(payload?.status)
           : url.pathname.endsWith('/telemetry') ? Number.isInteger(payload?.acceptedFrames) && payload.acceptedFrames>=1 && payload.acceptedFrames<=5
           : url.pathname.endsWith('/assist') ? payload?.source === 'argon_assist' && payload?.advisoryOnly === true && payload?.controlAuthority === false && ['rescan','hold','abort'].includes(payload?.action)
           : url.pathname.endsWith('/review') ? payload?.source === 'argon_review' && payload?.reviewOnly === true
           : payload?.source === (url.pathname.endsWith('/perception') ? 'gemma' : 'local_planner');
-        if (!payload || typeof payload !== 'object' || !valid) throw new Error('Invalid gateway response');
+        if (!payload || typeof payload !== 'object' || !valid) throw new GatewayContractError('Invalid gateway response');
         return json(payload, response.status === 202 ? 202 : 200);
       } catch (error) {
         // Only fixed diagnostic classes; never log request bodies or credentials.
-        const failure = error?.name === 'AbortError' ? 'timeout' : /illegal invocation|incorrect.*this/i.test(error?.message || '') ? 'fetch_binding' : error instanceof SyntaxError ? 'invalid_json' : 'transport_or_contract';
+        const failure = error?.name === 'AbortError' ? 'timeout' : /illegal invocation|incorrect.*this/i.test(error?.message || '') ? 'fetch_binding' : error instanceof SyntaxError ? 'invalid_json' : error instanceof GatewayContractError || error instanceof ApiError ? 'invalid_response' : 'transport_or_contract';
         console.error('Architecture gateway failure', failure);
-        return json({ok:false,error:'Architecture gateway failed; no synthetic model replacement used',failure},502);
+        return json({ok:false,error:'Architecture gateway failed; no synthetic model replacement used',failure,
+          code:`gateway_${failure}`,retryable:failure === 'timeout' || failure === 'transport_or_contract'},502);
       }
       finally { clearTimeout(timer); }
     }

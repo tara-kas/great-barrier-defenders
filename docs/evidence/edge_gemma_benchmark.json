@@ -1,0 +1,2212 @@
+{
+  "schema": "reef-edge-benchmark/v1",
+  "recordedAtUtc": "2026-11-08T14:22:32.513046+00:00",
+  "deployment": {
+    "recordedAtUtc": "2026-11-08T14:22:32.245378+00:00",
+    "hostname": "spark-501b",
+    "architecture": "aarch64",
+    "kernel": "7.0.0-1024-nvidia",
+    "containerId": "e69c9d1e0d47fecc308a87affaa32fcdca7f0de0bbf1c202cfdac55500f3da6f",
+    "imageId": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+    "startedAt": "2026-11-08T14:20:06.123386716Z",
+    "running": true,
+    "networkMode": "none",
+    "memoryLimitBytes": 51539607552,
+    "nanoCpusLimit": 8000000000,
+    "entrypoint": [
+      "vllm"
+    ],
+    "command": [
+      "serve",
+      "google/gemma-4-E4B-it",
+      "--revision",
+      "4ecc2ba63bcac23ba4a767fc87025b1450f84c9c",
+      "--served-model-name",
+      "gemma-4-E4B-it",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8012",
+      "--max-model-len",
+      "4096",
+      "--gpu-memory-utilization",
+      "0.30",
+      "--max-num-seqs",
+      "1",
+      "--enforce-eager",
+      "--limit-mm-per-prompt",
+      "{\"image\":1,\"audio\":0,\"video\":0}"
+    ],
+    "gpu": "NVIDIA GB10, 580.178.04, 15.64, 26",
+    "networkInterfaces": "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo:   31489     470    0    0    0     0          0         0    31489     470    0    0    0     0       0          0",
+    "networkRoutes": "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT",
+    "containerProcesses": "PID                 COMMAND             RSS\n2240603             vllm                2482552\n2242401             python              11780\n2242402             VLLM::EngineCor     3217720"
+  },
+  "machine": "aarch64",
+  "runtimeVersions": {
+    "vllm": "0.21.0+2325b6f0.nvinternal.26.5.post1.53039255",
+    "torch": "2.12.0a0+5aff3928d8.nv26.5.50603568",
+    "transformers": "5.6.0"
+  },
+  "image": {
+    "name": "edge_input_isaac.png",
+    "sha256": "d38e0e9a23ae0e61f33e45f5a49ca815178421259aa4cf8935a990d4bcde74d7",
+    "bytes": 503169,
+    "source": "existing Isaac rendered robot camera; image inference only, no actuation"
+  },
+  "model": "gemma-4-E4B-it",
+  "endpoint": "http://127.0.0.1:8012/v1",
+  "requestSettings": {
+    "prompt": "Describe visible evidence in this actual rendered underwater robot-camera image. Inspect the central coral, any detached fragment and gripper. If not clearly visible, report unknown. Appearance does not establish viability, species or genotype. Do not invent hidden evidence. Return exactly the requested JSON schema, with brief visualEvidence and uncertainty.",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "targetVisible": {
+          "type": "boolean"
+        },
+        "objectKind": {
+          "type": "string",
+          "enum": [
+            "coral_colony",
+            "coral_fragment",
+            "other",
+            "unknown"
+          ]
+        },
+        "appearance": {
+          "type": "string",
+          "enum": [
+            "pigmented",
+            "pale_or_bleached",
+            "bare_skeleton_or_algae",
+            "unknown"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "visualEvidence": {
+          "type": "string"
+        },
+        "uncertainty": {
+          "type": "string"
+        },
+        "fragmentVisible": {
+          "type": "boolean"
+        },
+        "gripperState": {
+          "type": "string",
+          "enum": [
+            "empty",
+            "holding",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "targetVisible",
+        "objectKind",
+        "appearance",
+        "confidence",
+        "visualEvidence",
+        "uncertainty",
+        "fragmentVisible",
+        "gripperState"
+      ],
+      "additionalProperties": false
+    },
+    "maxTokens": 256
+  },
+  "samples": [
+    {
+      "index": 0,
+      "startedMonotonicSeconds": 771822.706709752,
+      "latencySeconds": 7.793215087032877,
+      "response": {
+        "id": "chatcmpl-897f4690dbe98a9f",
+        "object": "chat.completion",
+        "created": 1794147754,
+        "prompt_routed_experts": null,
+        "model": "gemma-4-E4B-it",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"targetVisible\": true, \"objectKind\": \"coral_fragment\", \"appearance\": \"pale_or_bleached\", \"confidence\": 0.9, \"visualEvidence\": \"A small, light-colored, detached fragment is visible near the center-right of the image.\", \"uncertainty\": \"Low\", \"fragmentVisible\": true, \"gripperState\": \"unknown\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.21.0+2325b6f0.dev-6fff7f51",
+        "usage": {
+          "prompt_tokens": 346,
+          "total_tokens": 427,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null
+      },
+      "parsed": {
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pale_or_bleached",
+        "confidence": 0.9,
+        "visualEvidence": "A small, light-colored, detached fragment is visible near the center-right of the image.",
+        "uncertainty": "Low",
+        "fragmentVisible": true,
+        "gripperState": "unknown"
+      }
+    },
+    {
+      "index": 1,
+      "startedMonotonicSeconds": 771830.547311265,
+      "latencySeconds": 5.105862391996197,
+      "response": {
+        "id": "chatcmpl-a8cdcbbb87ac4c5d",
+        "object": "chat.completion",
+        "created": 1794147762,
+        "prompt_routed_experts": null,
+        "model": "gemma-4-E4B-it",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"targetVisible\": true, \"objectKind\": \"coral_fragment\", \"appearance\": \"pale_or_bleached\", \"confidence\": 0.9, \"visualEvidence\": \"A small, light-colored, detached fragment is visible near the center-right of the image.\", \"uncertainty\": \"Low\", \"fragmentVisible\": true, \"gripperState\": \"unknown\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.21.0+2325b6f0.dev-6fff7f51",
+        "usage": {
+          "prompt_tokens": 346,
+          "total_tokens": 427,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null
+      },
+      "parsed": {
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pale_or_bleached",
+        "confidence": 0.9,
+        "visualEvidence": "A small, light-colored, detached fragment is visible near the center-right of the image.",
+        "uncertainty": "Low",
+        "fragmentVisible": true,
+        "gripperState": "unknown"
+      }
+    },
+    {
+      "index": 2,
+      "startedMonotonicSeconds": 771835.65465378,
+      "latencySeconds": 5.150285916985013,
+      "response": {
+        "id": "chatcmpl-ac7f218b18448495",
+        "object": "chat.completion",
+        "created": 1794147767,
+        "prompt_routed_experts": null,
+        "model": "gemma-4-E4B-it",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"targetVisible\": true, \"objectKind\": \"coral_fragment\", \"appearance\": \"pale_or_bleached\", \"confidence\": 0.9, \"visualEvidence\": \"A small, light-colored, detached fragment is visible near the center-right of the image.\", \"uncertainty\": \"Low\", \"fragmentVisible\": true, \"gripperState\": \"unknown\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.21.0+2325b6f0.dev-6fff7f51",
+        "usage": {
+          "prompt_tokens": 346,
+          "total_tokens": 427,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null
+      },
+      "parsed": {
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pale_or_bleached",
+        "confidence": 0.9,
+        "visualEvidence": "A small, light-colored, detached fragment is visible near the center-right of the image.",
+        "uncertainty": "Low",
+        "fragmentVisible": true,
+        "gripperState": "unknown"
+      }
+    },
+    {
+      "index": 3,
+      "startedMonotonicSeconds": 771840.806416461,
+      "latencySeconds": 5.052055191015825,
+      "response": {
+        "id": "chatcmpl-939bc66d4606eae4",
+        "object": "chat.completion",
+        "created": 1794147772,
+        "prompt_routed_experts": null,
+        "model": "gemma-4-E4B-it",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"targetVisible\": true, \"objectKind\": \"coral_fragment\", \"appearance\": \"pale_or_bleached\", \"confidence\": 0.9, \"visualEvidence\": \"A small, light-colored, detached fragment is visible near the center-right of the image.\", \"uncertainty\": \"Low\", \"fragmentVisible\": true, \"gripperState\": \"unknown\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.21.0+2325b6f0.dev-6fff7f51",
+        "usage": {
+          "prompt_tokens": 346,
+          "total_tokens": 427,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null
+      },
+      "parsed": {
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pale_or_bleached",
+        "confidence": 0.9,
+        "visualEvidence": "A small, light-colored, detached fragment is visible near the center-right of the image.",
+        "uncertainty": "Low",
+        "fragmentVisible": true,
+        "gripperState": "unknown"
+      }
+    },
+    {
+      "index": 4,
+      "startedMonotonicSeconds": 771845.861140205,
+      "latencySeconds": 5.172118277056143,
+      "response": {
+        "id": "chatcmpl-972fbe22b6526210",
+        "object": "chat.completion",
+        "created": 1794147777,
+        "prompt_routed_experts": null,
+        "model": "gemma-4-E4B-it",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"targetVisible\": true, \"objectKind\": \"coral_fragment\", \"appearance\": \"pale_or_bleached\", \"confidence\": 0.9, \"visualEvidence\": \"A small, light-colored, detached fragment is visible near the center-right of the image.\", \"uncertainty\": \"Low\", \"fragmentVisible\": true, \"gripperState\": \"unknown\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.21.0+2325b6f0.dev-6fff7f51",
+        "usage": {
+          "prompt_tokens": 346,
+          "total_tokens": 427,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null
+      },
+      "parsed": {
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pale_or_bleached",
+        "confidence": 0.9,
+        "visualEvidence": "A small, light-colored, detached fragment is visible near the center-right of the image.",
+        "uncertainty": "Low",
+        "fragmentVisible": true,
+        "gripperState": "unknown"
+      }
+    }
+  ],
+  "resourceSamples": [
+    {
+      "monotonicSeconds": 771820.706611839,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73616456,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6623281152,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 16.37, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771820.932899869,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73584836,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6623227904,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 14.94, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771821.158196239,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73609500,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6622650368,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 0, 16.35, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771821.384282382,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73605388,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6622576640,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 0, 16.41, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771821.608208387,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73614160,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6622572544,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 0, 15.08, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771821.833499796,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73616380,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6621978624,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 0, 15.74, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771822.0592257,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73583344,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6622109696,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 16.44, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771822.294646729,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73618752,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6621982720,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 15.67, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771822.517672944,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73586992,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6621855744,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 15.66, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771822.742455875,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73544468,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6634532864,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 16.07, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771822.973974115,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73494600,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6718849024,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 15.74, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771823.197976231,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73311008,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6835720192,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 15.68, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771823.420986111,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 73238808,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6826541056,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 25, 16.48, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771823.642942266,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72517736,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6858608640,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 18.11, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771823.867757276,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72450340,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6880653312,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 18.24, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771824.092261279,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72432012,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6884028416,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 20.09, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771824.314343577,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72417104,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898487296,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 26, 19.31, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771824.539200219,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72765708,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6891593728,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 22.42, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771824.768542785,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72746624,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6892081152,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 19.71, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771824.99725548,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72711976,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6892711936,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 19.42, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771825.220137008,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72709352,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6893363200,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 19.01, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771825.442528969,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72652584,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6909894656,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 18.85, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771825.681866226,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72667140,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6899171328,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 19.35, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771825.923418853,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72670508,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6899048448,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 5, 22.81, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771826.165159287,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72641604,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898872320,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 26.16, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771826.405384525,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72659768,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898651136,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 29.44, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771826.646380913,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72654252,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898683904,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.24, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771826.887337318,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72635468,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898978816,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.33, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771827.128901128,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72617468,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898683904,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.25, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771827.371564184,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72611700,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897483776,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.33, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771827.612899931,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72574496,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897958912,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.30, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771827.853625311,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72625520,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897729536,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.23, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771828.096154255,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72619116,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897946624,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.30, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771828.338446479,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72637880,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897905664,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.40, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771828.583281128,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72643816,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898200576,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.33, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771828.827172932,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72660020,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898487296,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.42, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771829.070112627,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72646880,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898589696,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.45, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771829.311697669,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72652080,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898081792,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.31, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771829.550898958,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72645756,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898032640,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.39, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771829.790777045,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72591464,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6898208768,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.50, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771830.030909915,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72598088,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897807360,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.57, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771830.273079275,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72602592,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6897844224,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.96, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771830.517898068,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72580320,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6899826688,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.19, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771830.758736792,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72579916,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924816384,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.75, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771831.000056507,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72595736,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924308480,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.87, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771831.238199351,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72595396,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923689984,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.91, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771831.482357761,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72590976,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923890688,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 30.80, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771831.719326976,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72602836,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923649024,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.55, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771831.955835361,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72561452,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923939840,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.50, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771832.197091588,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72569636,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924337152,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.41, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771832.433573172,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72564940,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924279808,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.52, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771832.669509782,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72547508,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924333056,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.49, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771832.915853306,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72557620,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924054528,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.44, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771833.15807305,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72554660,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923702272,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.62, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771833.398181536,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72557644,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923522048,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.55, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771833.640487199,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72535704,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923104256,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.52, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771833.881474643,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72567320,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923472896,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.62, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771834.119799934,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72552680,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923431936,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.46, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771834.363024363,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72573412,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923706368,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.49, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771834.604944475,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72566920,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923567104,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.47, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771834.84593011,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72573304,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923268096,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.38, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771835.0890099,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72564788,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923046912,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.51, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771835.33160609,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72571596,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923444224,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.55, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771835.576050532,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72586808,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923358208,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.45, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771835.818648402,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72604780,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923042816,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.71, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771836.062868972,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72603576,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923612160,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.71, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771836.305437211,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72598032,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923902976,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.60, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771836.547363195,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72601312,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923636736,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.70, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771836.786742515,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72593376,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923452416,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.56, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771837.029279905,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72596184,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923460608,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.46, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771837.272598446,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72669900,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923800576,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.52, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771837.517431398,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72608716,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923776000,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.51, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771837.763736233,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72612588,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923448320,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.38, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771838.007434068,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72613112,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6922928128,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.50, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771838.249576036,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72598428,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6922555392,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.57, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771838.488933739,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72591300,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6922420224,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.50, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771838.736102653,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72592860,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6922784768,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.57, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771838.978159964,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72815652,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923182080,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.57, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771839.224698271,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72788128,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923423744,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.47, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771839.472033936,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72762916,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923513856,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.57, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771839.712933923,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72687968,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923341824,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.52, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771839.955642929,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72746120,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923018240,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.41, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771840.198643998,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72721784,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923112448,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.54, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771840.434362191,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72697420,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923292672,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.59, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771840.673622151,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72679088,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923337728,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.51, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771840.913875355,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72653864,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923878400,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.81, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771841.156168362,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72654144,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923747328,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 93, 31.80, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771841.399874005,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72637252,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923321344,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 93, 31.66, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771841.641528837,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72635764,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923436032,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 93, 31.88, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771841.884461874,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72634544,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923796480,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 93, 31.73, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771842.127538367,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72680952,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923816960,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.46, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771842.372825701,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72679904,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923505664,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.48, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771842.615273203,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72612548,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923423744,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.36, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771842.860607913,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72608968,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923694080,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.42, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771843.103105319,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72599140,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923436032,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.51, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771843.353344671,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72820832,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924234752,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.65, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771843.594925135,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72807160,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924804096,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.53, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771843.842377983,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72765220,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924431360,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.60, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771844.084430846,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72795748,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924017664,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.67, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771844.328446984,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72781652,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923890688,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.56, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771844.571526692,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72773860,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923722752,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.60, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771844.816233931,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72787672,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923460608,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.59, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771845.068649069,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72783384,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923493376,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.45, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771845.313239605,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72745732,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923456512,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.61, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771845.554175735,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72689152,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923751424,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.64, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771845.798608543,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72668216,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923509760,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.55, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771846.043693061,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72658604,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923948032,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.85, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771846.287031408,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72817572,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923792384,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.91, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771846.532071511,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72790400,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923833344,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.75, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771846.777991306,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72761312,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923485184,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.92, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771847.021702165,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72725372,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923444224,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.71, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771847.265181007,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72712544,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924050432,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.64, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771847.51077938,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72688212,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923808768,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.76, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771847.75293749,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72648272,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923784192,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.74, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771847.99605499,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72633388,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923280384,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.65, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771848.241407475,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72629576,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923681792,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.80, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771848.484844334,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72580244,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923554816,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.85, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771848.727917338,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72594188,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923776000,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.73, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771848.96934785,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72580024,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923927552,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.89, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771849.210605195,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72603808,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924267520,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.89, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771849.452681129,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72625136,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924021760,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.71, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771849.696918129,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72613268,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923948032,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.83, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771849.942060423,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72593976,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923776000,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.77, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771850.189809525,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72621124,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6923808768,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.67, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771850.433493071,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72598344,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924046336,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.78, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771850.67468784,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72573484,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924050432,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.81, [N/A], [N/A]"
+    },
+    {
+      "monotonicSeconds": 771850.916924782,
+      "hostMemory": {
+        "MemTotalKiB": 127598484,
+        "MemAvailableKiB": 72577584,
+        "SwapTotalKiB": 16777212,
+        "SwapFreeKiB": 16276392
+      },
+      "containerMemoryBytes": {
+        "memory.current": 6924025856,
+        "memory.peak": 19754033152
+      },
+      "gpuCsv": "NVIDIA GB10, 94, 31.72, [N/A], [N/A]"
+    }
+  ],
+  "resourceErrors": [],
+  "servedModels": {
+    "object": "list",
+    "data": [
+      {
+        "id": "gemma-4-E4B-it",
+        "object": "model",
+        "created": 1794147752,
+        "owned_by": "vllm",
+        "root": "google/gemma-4-E4B-it",
+        "parent": null,
+        "max_model_len": 4096,
+        "permission": [
+          {
+            "id": "modelperm-a3d0d9e94f6fa72f",
+            "object": "model_permission",
+            "created": 1794147752,
+            "allow_create_engine": false,
+            "allow_sampling": true,
+            "allow_logprobs": true,
+            "allow_search_indices": false,
+            "allow_view": true,
+            "allow_fine_tuning": false,
+            "organization": "*",
+            "group": null,
+            "is_blocking": false
+          }
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "completed": 5,
+    "requested": 5,
+    "latencyMinSeconds": 5.052055191015825,
+    "latencyMedianSeconds": 5.150285916985013,
+    "latencyMaxSeconds": 7.793215087032877
+  }
+}

@@ -20,7 +20,8 @@ def main():
     args = parser.parse_args()
     server = make_server(args.host, args.port, team_feed=TeamFeed(args.team_run_dir))
     print(f"Reef Rescue AUV lab: http://{args.host}:{server.server_port}/lab/", flush=True)
-    print("Local browser demo · Gemma perception / base-station Argon + optional cuOpt adapters · local safety remains independent", flush=True)
+    print("Gemma perception / local policy + native cuOpt / bounded Argon assistance; browser safety remains authoritative", flush=True)
+    print("Configure service endpoints, then select Robot + base to check model identity and run a native solver readiness probe.", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

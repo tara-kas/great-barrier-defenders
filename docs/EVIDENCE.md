@@ -23,7 +23,7 @@ The [readable result summary](../sim/pelagic/docs/evidence/live_stack_completed_
 
 The event sequence contains uncertain source perception, Argon-assisted rescan, a camera-dropout hold and return to the same mission, fresh fragment perception, route approval, collection and mechanical verification. No additional live drop-recovery result is implied.
 
-Browser request/response messages record Gemma latencies of **3075, 2877, 3201, 2824 and 2687 ms**. Argon assistance records **22700 ms**. The route response records **198 ms** cuOpt solve time. These scopes differ: browser inference round-trip and native solve duration are not interchangeable. The sample is too small to establish a service-level guarantee.
+Browser request/response messages record Gemma latencies of **3075, 2877, 3201, 2824 and 2687 ms**. Argon assistance records **22700 ms**. The route response records **198 ms** cuOpt solve time. These scopes differ: browser inference round-trip and native solve duration are not interchangeable.
 
 ## Additional evidence
 
@@ -34,6 +34,14 @@ The [saved uncertainty-abort episode](evidence/live-model-uncertainty-abort.json
 - [Earlier safe abort](../sim/pelagic/docs/evidence/live_stack_safe_abort.json) — historical architecture using Argon in normal planning; inspect its source before generalizing.
 - [UV uncertainty](../sim/pelagic/docs/evidence/gemma_uv_uncertainty.json) — appearance uncertainty evidence.
 - [Scenario matrix](SCENARIOS.md) — deterministic regression coverage, including fault handling and same-ID recovery. Provider doubles do not add live model samples.
+
+## Readiness follow-up: local Gemma and autonomous retries
+
+[Edge deployment](EDGE_DEPLOYMENT.md) preserves five actual Gemma E4B image responses from a Spark GB10 with Docker networking disabled. The input image, pinned weight revision, runtime identity, 127 resource samples and raw responses are linked there. Observed request latency was 5.052–7.793 seconds (median 5.150). This is evidence of local image inference, not a disconnected completed mission or calibrated perception accuracy.
+
+The [readiness run index](evidence/readiness-run-index.json) preserves follow-up episodes, hashes, source revisions and outcomes. The pre-fix attempt was operator-aborted. The automatic-retry attempt used real Gemma and Argon: one RESCAN response, two subsequent failed assistance attempts, then an autonomous abort after the active 90-second hold deadline. These records have zero collisions and zero placements. A further shared-optics trial ended when Argon recommended abort after unresolved classification and exhausted rescan attempts.
+
+The runtime now retries transient assistance failures within the existing episode budget, respects permanent-error classifications and binds assistance to the selected fragment. Camera preview and inference share one optic; colony rescans widen context within bounded optics. The latest Spark run used this corrected inspection sequence, completed collection and recorded a current-induced drop, then safely aborted following an assistance timeout. The hosted follow-up passed both visual gates and safely aborted after a planning-service error. Both raw episodes are included in the seven-run index.
 
 ## Submission materials
 
@@ -66,4 +74,8 @@ The complete simulator unittest suite also passed: **179 tests**, plus **7 pytes
 
 The submission verifier passed on the saved raw episode and linked documentation. A temporary altered copy confirmed that it rejects changed raw bytes and missing local targets. `git diff --check` also passed. Current browser/gateway test commands are listed in [SETUP](../SETUP.md) and their scenario coverage in [SCENARIOS](SCENARIOS.md).
 
-Remaining acceptance work is listed in [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
+Deployment checks are tracked in [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
+
+## Final readiness regression checks
+
+The updated simulator passed **190 unittest tests**, **7 current-dynamics/gripper pytest checks**, and **5 edge-gateway checks**. The final browser suite passed **150 tests**, including 20 assistance checks covering the fresh-image advisory handoff and the intermediate-recipient rescan sequence. The final advisory-context gateway/feed checks passed **63 tests**, including target/episode binding, expiry, new capture requirements and prompt boundaries; the cross-language pipeline test also passed.

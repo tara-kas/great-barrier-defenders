@@ -17,13 +17,17 @@ The browser captures the rendered robot tool camera, sends the image through the
 
 Gemma's active served ID is `gemma-4-E4B-it` with weights `google/gemma-4-E4B-it`. Its `appearance/v1` output describes visible appearance, object kind and fragment/gripper state. It does not establish health, genetic compatibility or ecological suitability.
 
-Normal decisions use `reef-local-policy-v1` plus cuOpt. Gemini `gemini-4-argon` receives structured observations for a held issue and may return only `rescan`, `hold` or `abort`. Assistance has a 25-second request timeout and a three-attempt per-episode budget; the gateway's in-memory accounting retains up to 64 episodes. This is process-local accounting, not a durable distributed quota. The assistance operation does not include the JPEG. Optional post-mission review consumes episode/activity data and generates recommendations; it does not automatically patch or deploy code.
+Loose-stock handling requires recipient and actual-fragment visual evidence plus independent source/recipient registry eligibility. It does not require visual classification of the unhandled parent colony. The separate attached-stock path retains its donor-colony inspection.
 
-Failures remain explicit. Remote services cannot bypass local clearance, current, grip, fragment identity or mechanical attachment verification. External coordinates are not executed as arbitrary actuator commands.
+Normal decisions use `reef-local-policy-v1` plus cuOpt. Gemini `gemini-4-argon` receives structured observations for a held issue and may return only `rescan`, `hold` or `abort`. Assistance has a 25-second socket timeout and a three-attempt per-episode budget. Transient failures and HOLD advice schedule automatic rechecks after two then four simulation seconds, without extending the active 90-second hold deadline; the gateway's in-memory accounting retains up to 64 episodes. This is process-local accounting, not a durable distributed quota. The assistance operation does not include the JPEG. Optional post-mission review consumes episode/activity data and generates recommendations; it does not automatically patch or deploy code.
+
+The tool-camera preview and inference capture share the same optic. Colony acquisition fits the rendered specimen and seabed context; rescans widen that view within bounded optics. Geometric focus points identify the tracked specimen centre (or fragment position), while mechanical contact coordinates remain unchanged. These points are tracking inputs, not image detections.
+
+Failures remain explicit. Sanitized provider errors retain a fixed category, retryability, elapsed time and optional numeric HTTP status; provider text and credentials are never copied into diagnostics. Remote services cannot bypass local clearance, current, grip, fragment identity or mechanical attachment verification. External coordinates are not executed as arbitrary actuator commands.
 
 ## Deployment and simulator boundaries
 
-The measured demonstration uses **remote Modal Gemma and cuOpt**, Google-hosted Argon and local browser safety/physics. Model endpoints and secrets are configured server-side. The deployment declares L4/A10 choices for Gemma and T4 for cuOpt; no measured on-robot compute budget is claimed.
+The measured demonstration uses **remote Modal Gemma and cuOpt**, Google-hosted Argon and local browser safety/physics. Model endpoints and secrets are configured server-side. The hosted deployment declares L4/A10 choices for Gemma and T4 for cuOpt. A separate [Spark GB10 deployment](EDGE_DEPLOYMENT.md) now has measured network-isolated Gemma image inference, pinned weights and resource evidence. Local inference and a complete disconnected mission are separate acceptance checks.
 
 An independent Isaac RTX camera/state feed is exposed by [live_feed.py](../sim/pelagic/reefsim/live_feed.py) and the bridge/push scripts. It is a read-only visualization channel. It is not the browser mission's contact physics or actuator execution engine. See the detailed [Pelagic architecture](../sim/pelagic/docs/ARCHITECTURE.md) and [simulation overview](../sim/README.md).
 
@@ -39,3 +43,7 @@ An independent Isaac RTX camera/state feed is exposed by [live_feed.py](../sim/p
 | [control](../control/README.md) | Reserved package; the working controllers live in the paths above. |
 
 These components are useful development paths, but importing them is not evidence that they ran in the saved browser episode. [EVIDENCE](EVIDENCE.md) identifies the actual run, models and outcome.
+
+## Context-assisted visual reassessment
+
+Argon returns an issue explanation, reported context and specific visual checks. The gateway binds this advisory packet to the episode, target and preceding capture. The browser attaches it to one new matching Gemma image request within its expiry window. Gemma makes a fresh visual assessment using the image; the local policy and controller apply registry, identity, confidence and safety checks. The response records the advisory hash and source request for traceability.

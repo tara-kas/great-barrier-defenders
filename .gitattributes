@@ -1,3 +1,6 @@
 # Preserve submitted media bytes and avoid text whitespace checks.
 *.pdf binary
 *.png binary
+*.gif binary
+*.mp4 binary
+docs/evidence/edge_gemma_server.txt -text -whitespace

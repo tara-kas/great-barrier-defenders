@@ -208,3 +208,44 @@ test('Argon assistance permits only non-authoritative bounded advice',async()=>{
  for(const action of ['rescan','hold','abort'])assert.equal((await call({source:'argon_assist',advisoryOnly:true,controlAuthority:false,action})).status,200);
  for(const payload of [{source:'argon_assist',advisoryOnly:true,controlAuthority:false,action:'proceed'},{source:'argon_assist',advisoryOnly:true,controlAuthority:true,action:'rescan'},{source:'argon_assist',advisoryOnly:false,controlAuthority:false,action:'rescan'}])assert.equal((await call(payload)).status,502);
 });
+
+test('architecture upstream errors preserve status without requiring JSON or leaking bodies',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'SECRET-token'};
+ for(const [status,body,code,retryable] of [
+   [502,'<html>SECRET upstream error</html>','upstream_http_error',true],
+   [503,null,'upstream_http_error',true],
+   [429,'not JSON','upstream_http_error',true],
+   [401,JSON.stringify({error:'SECRET provider key'}),'upstream_http_error',false],
+   [502,JSON.stringify({code:'argon_timeout',retryable:true,elapsedMs:25200,error:'SECRET upstream error',request:'SECRET body'}),'argon_timeout',true],
+   [502,JSON.stringify({code:'argon_http_error',retryable:false,providerStatus:401,elapsedMs:120}),'argon_http_error',false],
+   [502,JSON.stringify({code:'argon_invalid_json',retryable:false}),'argon_invalid_json',false],
+   [502,JSON.stringify({code:'SECRET unknown code',retryable:false}),'upstream_http_error',true],
+   [502,JSON.stringify({code:'argon_timeout',retryable:'SECRET',elapsedMs:'SECRET',providerStatus:'SECRET'}),'upstream_http_error',true],
+   [502,'SECRET'.repeat(50000),'upstream_http_error',true],
+ ]) {
+   const worker=createWorker({transport:async()=>new Response(body,{status})});
+   const result=await worker.fetch(new Request('https://reef.example/api/lab/assist',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env);
+   const payload=await result.json();
+   assert.equal(result.status,status);assert.equal(payload.code,code);assert.equal(payload.retryable,retryable);
+   assert.match(payload.error,/Architecture service refused/);
+   assert.equal(JSON.stringify(payload).includes('SECRET'),false);
+   assert.equal('action' in payload,false);assert.equal('request' in payload,false);
+   if(code==='argon_timeout')assert.equal(payload.elapsedMs,25200);
+   if(code==='argon_http_error')assert.equal(payload.providerStatus,401);
+ }
+});
+
+test('architecture transport and invalid successful JSON have fixed sanitized diagnostics',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'};
+ for(const [transport,code,retryable] of [
+   [async()=>{throw new DOMException('SECRET timeout','AbortError');},'gateway_timeout',true],
+   [async()=>{throw new Error('SECRET network details');},'gateway_transport_or_contract',true],
+   [async()=>new Response('SECRET malformed success'),'gateway_invalid_json',false],
+   [async()=>Response.json({source:'argon_assist',action:'proceed',reason:'SECRET'}),'gateway_invalid_response',false],
+ ]) {
+   const result=await createWorker({transport}).fetch(new Request('https://reef.example/api/lab/assist',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env);
+   const payload=await result.json();
+   assert.equal(result.status,502);assert.equal(payload.code,code);assert.equal(payload.retryable,retryable);
+   assert.equal(JSON.stringify(payload).includes('SECRET'),false);
+ }
+});

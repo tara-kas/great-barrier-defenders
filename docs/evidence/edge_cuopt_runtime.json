@@ -1,0 +1,56 @@
+{
+  "recordedAtUtc": "2026-11-08T14:31:47.309715+00:00",
+  "hostname": "spark-501b",
+  "architecture": "aarch64",
+  "kernel": "7.0.0-1024-nvidia",
+  "containerId": "c8bee1b4efd65b29fbd11cf2f1d34255b29b460a3fc02337655ddfc3282bce73",
+  "imageId": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+  "startedAt": "2026-11-08T14:29:41.321044847Z",
+  "imageRepoDigests": [
+    "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2"
+  ],
+  "running": true,
+  "networkMode": "host",
+  "memoryLimitBytes": 8589934592,
+  "nanoCpusLimit": 4000000000,
+  "entrypoint": [
+    "/opt/edge-cuopt/bin/python"
+  ],
+  "command": [
+    "/edge/edge_cuopt_server.py",
+    "--port",
+    "8013",
+    "--warmup-output",
+    "/evidence/edge_cuopt_warmup.json"
+  ],
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/cuopt_route_adapter.py",
+      "Destination": "/edge/cuopt_route_adapter.py",
+      "RW": false
+    },
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/evidence",
+      "Destination": "/evidence",
+      "RW": true
+    },
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/cuopt-venv",
+      "Destination": "/opt/edge-cuopt",
+      "RW": false
+    },
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/edge_cuopt_server.py",
+      "Destination": "/edge/edge_cuopt_server.py",
+      "RW": false
+    }
+  ],
+  "gpu": "NVIDIA GB10, 580.178.04, 16.88, 23",
+  "networkInterfaces": "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo: 23664582596 2553651    0    0    0     0          0         0 23664582596 2553651    0    0    0     0       0          0\nenP7s7: 86013821830 76438357    0    0    0     0          0    236953 84334569018 74785507    0    0    0     0       0          0\nwlP9s9: 70345041485 55736902    0    0    0     0          0         0 20112049179 28418885    0   18    0     0       0          0\ntailscale0: 3026718   57839    0    0    0     0          0         0 118914803   78815    0    0    0     0       0          0\nbr-749b0c7299d7:       0       0    0    0    0     0          0         0        0       0    0  249    0     0       0          0\ndocker0: 249976404 3337062    0    0    0     0          0         0 25213485345 4627824    0    5    0     0       0          0\nveth0474323: 15373000  209866    0    0    0     0          0         0 7742361358  250159    0    0    0     0       0          0\nvethb11a66d:   13813      92    0    0    0     0          0         0   364859     143    0    0    0     0       0          0",
+  "networkRoutes": "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT                                                       \nenP7s7\t00000000\t0101A8C0\t0003\t0\t0\t100\t00000000\t0\t0\t0                                                                           \ndocker0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0                                                                            \nbr-749b0c7299d7\t000012AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0                                                                    \nenP7s7\t0001A8C0\t00000000\t0001\t0\t0\t100\t00FFFFFF\t0\t0\t0",
+  "containerProcesses": "PID                 COMMAND             RSS\n2273426             python              717516"
+}

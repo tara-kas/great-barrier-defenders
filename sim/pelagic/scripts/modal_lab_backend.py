@@ -217,7 +217,7 @@ def gateway():
                     runtime[name]["checked"] = time.monotonic()
             return result
         except LabError as error:
-            return JSONResponse({"ok": False, "error": str(error)}, status_code=error.status)
+            return JSONResponse(error.payload(), status_code=error.status)
         except (ValueError, TypeError, RecursionError):
             return JSONResponse({"ok": False, "error": "Invalid request"}, status_code=400)
         except Exception:

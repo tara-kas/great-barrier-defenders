@@ -36,12 +36,19 @@ The integrated [Modal backend](sim/pelagic/scripts/modal_lab_backend.py) wires G
 
 Check readiness, obtain an actual valid Gemma response, then run a complete mission and export the episode. These are separate checks. Use [SCENARIOS](docs/SCENARIOS.md) for acceptance cases and preserve all failure outcomes.
 
+## Spark edge deployment
+
+[Edge setup and measurements](docs/EDGE_DEPLOYMENT.md) documents the pinned Gemma model, isolated container, resource limits, image benchmark and loopback service configuration. Use `sim/pelagic/scripts/edge_serve.sh` with explicit image/cache/evidence settings. The network-disabled benchmark runs requests inside the same container; loopback serving is a separate mode for gateway integration.
+
 ## Regression checks
 
-From the repository root:
+From the repository root, install the declared Python dependencies in an isolated environment first:
 
 ```bash
-python3 tools/verify_submission.py
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python tools/verify_submission.py
 cd sim/pelagic
 node --test tests/lab-*.test.mjs
 python3 -m unittest tests.test_lab_server tests.test_live_feed tests.test_live_stream_capture

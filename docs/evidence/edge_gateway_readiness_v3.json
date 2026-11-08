@@ -1,0 +1,99 @@
+{
+  "recordedAtUtc": "2026-11-08T14:42:56.240406+00:00",
+  "scope": "Private gateway v3 readiness and future-date conditional GET checks; not completed mission evidence",
+  "conditionalGetChecks": [
+    {
+      "path": "/lab/",
+      "status": 200,
+      "cacheControl": "no-store",
+      "lastModified": "Sun, 08 Nov 2026 14:41:12 GMT",
+      "sha256": "8435e21f50d8094fce26c1c167dbf4b6b9fe58ce16829dedf247417da45a1e92"
+    },
+    {
+      "path": "/lab/app.mjs",
+      "status": 200,
+      "cacheControl": "no-store",
+      "lastModified": "Sun, 08 Nov 2026 14:34:15 GMT",
+      "sha256": "ce63c44cbbcdac184018f609b0d3bcfc393e6b6fab043e7d4a9d20aa800c39d4"
+    },
+    {
+      "path": "/lab/simulation.mjs",
+      "status": 200,
+      "cacheControl": "no-store",
+      "lastModified": "Sun, 08 Nov 2026 14:33:16 GMT",
+      "sha256": "73374bccd7d0077718689caedf02158f305c389666191c91c25e74cd510f65ca"
+    },
+    {
+      "path": "/lab/style.css",
+      "error": "HTTP Error 404: File not found"
+    },
+    {
+      "path": "/lab/lab.css",
+      "status": 200,
+      "cacheControl": "no-store",
+      "lastModified": "Sun, 08 Nov 2026 14:13:50 GMT",
+      "sha256": "8c06d84528330aee9d67ae4c2dab36003356997439332647f3d8c5182878c40e"
+    }
+  ],
+  "architecture": {
+    "ok": true,
+    "components": {
+      "gemma": {
+        "configured": true,
+        "status": "unverified",
+        "model": "gemma-4-E4B-it",
+        "deployment": "robot",
+        "provider": "vllm_openai_compatible",
+        "role": "robot_perception",
+        "readiness": "ready",
+        "ready": true,
+        "readinessCheck": null,
+        "readinessAgeSeconds": null
+      },
+      "argon": {
+        "configured": true,
+        "status": "unverified",
+        "model": "gemini-4-argon",
+        "deployment": "cloud",
+        "provider": "google_interactions",
+        "role": "uncertainty_assistance_and_between_mission_review"
+      },
+      "cuopt": {
+        "configured": true,
+        "status": "unverified",
+        "model": "nvidia_cuopt",
+        "deployment": "robot",
+        "provider": "custom_cuopt_gateway",
+        "role": "route_cost_optimization",
+        "readiness": "ready",
+        "ready": true,
+        "readinessCheck": null,
+        "readinessAgeSeconds": null
+      }
+    },
+    "localSafety": {
+      "source": "scripted_local",
+      "networkRequired": false
+    },
+    "transport": "http_telemetry_batches_and_gate_packets",
+    "telemetry": {
+      "receivedFrames": 0,
+      "retainedFrames": 0,
+      "maxFrames": 300,
+      "lastReceivedAgeSeconds": null,
+      "lastFrameTime": null,
+      "streamId": null,
+      "storage": "volatile_memory",
+      "billedModelCalls": 0
+    },
+    "note": "Readiness verifies configured service identity/solver availability, not mission inference or measured hardware residency.",
+    "pipelineReady": true,
+    "status": "not_started",
+    "runtime": {
+      "platform": "local_edge",
+      "perceptionResidency": "local_gpu",
+      "readinessCheck": "loopback model health and native solver warmup"
+    }
+  },
+  "probeNote": "The initial /lab/style.css request was a probe path typo (404); the actual stylesheet /lab/lab.css was subsequently checked successfully."
+}

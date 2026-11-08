@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Native GPU corridor optimizer; requires NVIDIA cuOpt 26.10 + cudf + numpy.
 
-Not deployed or GPU-validated in this workspace. No CPU result is labelled cuOpt.
+GPU-validated on DGX Spark; see docs/EDGE_DEPLOYMENT.md and raw edge evidence.
+No CPU result is labelled cuOpt.
 Run on an explicitly provisioned GPU host with CUOPT_API_KEY set, then point
 CUOPT_ADAPTER_URL at its protected /solve endpoint. Local reflexes own collisions.
 """

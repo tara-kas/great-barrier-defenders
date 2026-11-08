@@ -359,13 +359,14 @@ export class ReefScene {
     const visibility=state.water?.visibility??8;this.scene.fog.density=THREE.MathUtils.clamp(.34/visibility,.022,.24);
     const current=Number(state.water?.current)||0;for(const f of this.fans){f.group.rotation.z=Math.sin(t*.65+f.phase)*(.025+current*.12);}
     if(this.particles){const flow=vec(state.water?.currentVector||[current,0,0]),elapsed=Math.max(0,Math.min(1,t-(this.lastWaterTime??t))),positions=this.particles.geometry.attributes.position;for(let i=0;i<positions.count;i++){const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);let vx=flow.x,vy=flow.y,vz=flow.z,best=Infinity;for(const sample of state.water?.currentSamples||[]){const distance=(sample.position[0]-px)**2+(sample.position[1]+pz)**2;if(distance<best){best=distance;vx=sample.vector[0];vy=sample.vector[2];vz=-sample.vector[1];}}let x=px+vx*elapsed,y=py+vy*elapsed,z=pz+vz*elapsed;x=((x+17.5)%35+35)%35-17.5;z=((z+17.5)%35+35)%35-17.5;y=((y%8)+8)%8;positions.setXYZ(i,x,y,z);}positions.needsUpdate=true;this.lastWaterTime=t;}
-    const fragmentInspection=state.perceptionRequest?.targetKind==='fragment',inspectionAim=fragmentInspection?vec(state.perceptionRequest.targetPosition).lerp(gripper.clone().add(new THREE.Vector3(0,.1,0)),.5):null;
+    const fragmentInspection=state.perceptionRequest?.targetKind==='fragment';let inspectionAim=fragmentInspection?vec(state.perceptionRequest.targetPosition).lerp(gripper.clone().add(new THREE.Vector3(0,.1,0)),.5):null;
     // This is the real tool optic used by every view, with an inspection offset
     // and a bounded variable field of view. Fit the actual jaws and target together.
     this.toolCamera.position.copy(gripper).addScaledVector(right,fragmentInspection?.48:.38).addScaledVector(forward,fragmentInspection?-.65:-.46).add(new THREE.Vector3(0,fragmentInspection?.4:.3,0));
     this.toolCamera.lookAt(inspectionAim||gripper.clone().add(new THREE.Vector3(0,.015,0)));this.toolCamera.fov=58;
     if(fragmentInspection)this.fitFragmentOptic(vec(state.perceptionRequest.targetPosition),gripper);
-    this.toolCamera.updateProjectionMatrix();this.camera.fov=this.cameraMode==='wrist'&&fragmentInspection?this.toolCamera.fov:46;this.camera.updateProjectionMatrix();
+    else inspectionAim=this.fitColonyOptic(state);
+    this.toolCamera.updateProjectionMatrix();this.camera.fov=this.cameraMode==='wrist'&&inspectionAim?this.toolCamera.fov:46;this.camera.updateProjectionMatrix();
     const smoothing=1-Math.exp(-Math.min(dt,.1)*5),desired=new THREE.Vector3(),aim=this.target.clone();
     if(this.cameraMode==='pilot'){desired.copy(p).addScaledVector(forward,.7).add(new THREE.Vector3(0,.08,0));aim.copy(desired).addScaledVector(forward,4).add(new THREE.Vector3(0,-.45,0));}
     else if(this.cameraMode==='follow'){aim.copy(p).lerp(gripper,.2);desired.copy(p).addScaledVector(forward,-3.2).addScaledVector(right,2.0).add(new THREE.Vector3(0,1.6,0));}
@@ -381,6 +382,31 @@ export class ReefScene {
     for(const [centre,extent] of [[fragment,new THREE.Vector3(.075,.07,.075)],[gripper.clone().add(new THREE.Vector3(0,.105,0)),new THREE.Vector3(.145,.135,.115)]])
       for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1]){const p=centre.clone().add(new THREE.Vector3(x*extent.x,y*extent.y,z*extent.z)).applyMatrix4(inverse);if(p.z<-.015)tangent=Math.max(tangent,Math.abs(p.y)/-p.z,Math.abs(p.x)/(-p.z*this.toolCamera.aspect));}
     this.toolCamera.fov=THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2*Math.atan(tangent*1.06)),38,100);
+  }
+  fitColonyOptic(state) {
+    if(this.colonyViewSeed!==state.seed||state.time<(this.colonyViewTime??-Infinity)){this.colonyViews=new Map();this.colonyViewSeed=state.seed;}
+    this.colonyViewTime=state.time;this.colonyViews??=new Map();
+    const request=state.perceptionRequest;if(request?.targetKind!=='colony')return null;
+    const colony=state.colonies.find(c=>c.id===request.targetId),entry=this.colonies.get(request.targetId);if(!colony||!entry)return null;
+    let view=this.colonyViews.get(request.targetId);
+    if(!view||view.captureId!==request.id){view={captureId:request.id,revision:Math.min(2,(view?.revision??-1)+1)};this.colonyViews.set(request.targetId,view);}
+    // The handling contact is on an outer branch, not the colony centre. Show
+    // the whole rendered specimen and its seabed junction from the same optic
+    // used in the preview. A rescan widens context; it never edits the pixels.
+    entry.mesh.updateWorldMatrix(true,false);
+    const bounds=new THREE.Box3().setFromObject(entry.mesh),anchor=vec(colony.position);
+    bounds.expandByPoint(anchor);const size=bounds.getSize(new THREE.Vector3()),padding=Math.max(.06,Math.max(size.x,size.z)*.08);
+    bounds.expandByScalar(padding);
+    const aim=bounds.getCenter(new THREE.Vector3());aim.y-=size.y*.06*view.revision;
+    this.toolCamera.lookAt(aim);this.toolCamera.updateMatrixWorld(true);
+    let tangent=0;
+    for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+      const p=new THREE.Vector3(x,y,z).applyMatrix4(this.toolCamera.matrixWorldInverse);
+      if(p.z>=-this.toolCamera.near){tangent=Infinity;continue;}
+      tangent=Math.max(tangent,Math.abs(p.y)/-p.z,Math.abs(p.x)/(-p.z*this.toolCamera.aspect));
+    }
+    this.toolCamera.fov=THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2*Math.atan(tangent*(1.08+.08*view.revision))),46,100);
+    return aim;
   }
   moveSpectator({forward=0,right=0,up=0}={},dt=1/60) {
     if(!this.ready||this.disposed)return;
@@ -451,11 +477,19 @@ export class ReefScene {
   }
   cameraFrame(width=768,height=576,options={}) {
     if(!this.ready||!this.snapshot)throw new Error('Robot camera is not ready');
-    const camera=options.camera==='forward'?this.forwardCamera.clone():this.toolCamera.clone();if(options.camera!=='forward'&&Array.isArray(options.targetPosition)&&this.snapshot.perceptionRequest?.targetKind!=='fragment')camera.lookAt(vec(options.targetPosition));camera.aspect=width/height;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+    const camera=options.camera==='forward'?this.forwardCamera.clone():this.toolCamera.clone();camera.aspect=width/height;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
     // Geometric registration from the known tracker, not an image detection.
     // Keep pixels unchanged; provide only points actually inside this camera view.
     const projectPoint=position=>{if(!Array.isArray(position)||position.length!==3||!position.every(Number.isFinite))return null;const world=vec(position),local=world.clone().applyMatrix4(camera.matrixWorldInverse);if(local.z>=-camera.near)return null;const ndc=world.project(camera);if(![ndc.x,ndc.y,ndc.z].every(Number.isFinite)||Math.abs(ndc.x)>1||Math.abs(ndc.y)>1||Math.abs(ndc.z)>1)return null;return[(ndc.x+1)/2,(1-ndc.y)/2];};
-    const targetImagePoint=projectPoint(options.targetPosition||this.snapshot.perceptionRequest?.targetPosition),gripperImagePoint=projectPoint(this.snapshot.robot?.gripper),projection={...(targetImagePoint?{targetImagePoint}:{}),...(gripperImagePoint?{gripperImagePoint}:{})};
+    let targetPosition=options.targetPosition||this.snapshot.perceptionRequest?.targetPosition;
+    const request=this.snapshot.perceptionRequest,entry=request?.targetKind==='colony'?this.colonies.get(request.targetId):null;
+    if(entry){
+      // Point the visual request at the tracked specimen centre, rather than
+      // its outer handling contact. The controller's contact remains unchanged.
+      entry.mesh.updateWorldMatrix(true,false);const centre=new THREE.Box3().setFromObject(entry.mesh).getCenter(new THREE.Vector3());
+      targetPosition=[centre.x,-centre.z,centre.y];
+    }
+    const targetImagePoint=projectPoint(targetPosition),gripperImagePoint=projectPoint(this.snapshot.robot?.gripper),projection={...(targetImagePoint?{targetImagePoint}:{}),...(gripperImagePoint?{gripperImagePoint}:{})};
     this.cameraBuffers??=new Map();const key=`${width}x${height}`;let buffer=this.cameraBuffers.get(key);
     if(!buffer){const target=new THREE.WebGLRenderTarget(width,height,{depthBuffer:true});target.texture.colorSpace=THREE.SRGBColorSpace;const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');buffer={target,canvas,context,pixels:new Uint8Array(width*height*4),image:context.createImageData(width,height)};this.cameraBuffers.set(key,buffer);}
     const previous=this.renderer.getRenderTarget(),autoShadow=this.renderer.shadowMap.autoUpdate,overlays=[this.routeGroup,this.sonarGroup,this.currentGroup,this.regionGroup,this.selection,this.targetMarker,this.donorMarker].filter(Boolean),visibility=overlays.map(o=>o.visible);

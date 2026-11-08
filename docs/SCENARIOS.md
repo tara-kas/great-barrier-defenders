@@ -13,7 +13,7 @@ Registered identity, biological eligibility and lineage are **scenario inputs**.
 ## Expected sequence
 
 1. Select an eligible registered source/recipient pair; reject dead, unknown-lineage, incompatible or inaccessible stock.
-2. Inspect the recipient and source using the simulated UV exposure gate and fresh white-light robot-camera captures.
+2. Inspect the recipient using the simulated UV exposure gate and a fresh white-light robot-camera capture. In loose-stock mode, the source colony is checked through the registry; the handled fragment receives its own visual inspection.
 3. Send captures to Gemma. Require the appropriate visible object and appearance evidence, with the configured confidence and freshness checks.
 4. If perception is uncertain or another issue occurs, hold the robot and request bounded Argon advice. Only `rescan`, `hold` and `abort` are accepted. A rescan must obtain new evidence.
 5. Inspect the actual loose fragment and gripper. The local policy checks eligibility and evidence; cuOpt evaluates declared route alternatives.
@@ -21,16 +21,16 @@ Registered identity, biological eligibility and lineage are **scenario inputs**.
 7. Traverse under local terrain, habitat, wildlife, current and grip checks. Loss of the fragment starts same-identity recovery with a new camera capture.
 8. Place and mechanically verify attachment before incrementing the placement count. Continue to another eligible task if the configured goal requires it; otherwise finish.
 
-The implementation is in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs), [app.mjs](../sim/pelagic/web/lab/app.mjs) and [lab_server.py](../sim/pelagic/reefsim/lab_server.py). The state machine, numerical safety limits and reproducible seeds are intentional engineering controls. They are not evidence that a model was called.
+The implementation is in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs), [app.mjs](../sim/pelagic/web/lab/app.mjs) and [lab_server.py](../sim/pelagic/reefsim/lab_server.py). The state machine, numerical safety limits and reproducible seeds are intentional engineering controls. Model calls are identified by their request/response receipts.
 
 ## What has actually been recorded
 
 | Record | Observation | Scope |
 | --- | --- | --- |
-| [Completed live-model episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json) | Gemma uncertainty led to an actual Argon `RESCAN`; fresh Gemma captures and a cuOpt/local-policy decision preceded one mechanical placement. Final state: 80.55 simulated seconds, 1 placement, 0 collisions, 0 drops, 0 recoveries. | Real model/solver calls on rendered images and simulated telemetry. Also includes a camera-dropout hold. This record does **not** prove live fragment-drop recovery. |
+| [Completed live-model episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json) | Gemma uncertainty led to an actual Argon `RESCAN`; fresh Gemma captures and a cuOpt/local-policy decision preceded one mechanical placement. Final state: 80.55 simulated seconds, 1 placement, 0 collisions, 0 drops, 0 recoveries. | Real model/solver calls on rendered images and simulated telemetry. Also includes a camera-dropout hold. Its recorded counters are 0 drops and 0 recoveries. |
 | [Earlier fragment visibility hold](../sim/pelagic/docs/evidence/live_fragment_visibility_hold.json) | Uncertain fragment/gripper evidence prevented pickup. | Real inference transport and conservative refusal; not a successful placement. |
 | [Earlier bounded safe abort](../sim/pelagic/docs/evidence/live_stack_safe_abort.json) | Four unknown/zero-confidence Gemma observations led to retries and a safe abort. | Historical live trace from the earlier Argon-planning path; preserve its provenance rather than treating it as the current local-planning implementation. |
-| [UV uncertainty diagnostic](../sim/pelagic/docs/evidence/gemma_uv_uncertainty.json) | Real responses on UV-lit and white-light rendered frames did not establish accepted biological health classification. | Diagnostic evidence; not proof that UV or RGB identifies genotype. |
+| [UV uncertainty diagnostic](../sim/pelagic/docs/evidence/gemma_uv_uncertainty.json) | Real responses on UV-lit and white-light rendered frames did not establish accepted biological health classification. | Appearance diagnostic; genotype is supplied by the registry. |
 
 The originally submitted one-page PDF used an earlier evidence cutoff, 8 November 2026 at 13:09, and reported inspect-only live results. The completed episode above is newer. Keep the dates and individual run identities attached to these claims; use the [evidence index](EVIDENCE.md) to distinguish the current summary and raw live episode.
 
@@ -48,6 +48,8 @@ The tests below exercise the real controller and adapters with declared fixtures
 | Current-induced grip loss | Let the modeled current affect the held fragment, retain the same ID and require a new recovery view. | [Simulation tests][simtests]: `loose full-stack fixture inspects actual pickup fragment and preserves its identity through current-induced loss`; `a new fragment capture invalidates an otherwise recent pre-drop pickup image`. |
 | Fault arrives during Argon assistance | Keep current/grip physics and local safety running while mission progression is held. | [Simulation tests][simtests]: `assistance hold preserves live current and grip-loss physics without advancing the mission`. |
 | Argon unavailable, malformed, repeated or over budget | Do not grant handling authority. Limit attempts and hold or abort. | [Backend tests][backendtests]: `test_argon_assist_is_advisory_real_protocol_and_bounded_per_episode`; `test_invalid_argon_assistance_never_authorizes_proceed_and_consumes_attempt`; [simulation tests][simtests]: `assistance hold is bounded, manual override clears it and explicit abort is terminal`. |
+| Transient assistance failure versus permanent invalid output | Retry transient failures with fresh telemetry inside the original three-attempt and active hold budgets; never retry forbidden advice into motion. | [Assistance tests](../sim/pelagic/tests/lab-assistance.test.mjs): automatic retry, timeout, cancellation, reset, explicit retryability and selected-fragment binding. |
+| Colony rescan and image focus | Use the same physical optic for preview and inference, fit the tracked specimen and bound rescan changes. | [Camera tests](../sim/pelagic/tests/lab-camera.test.mjs): real-mesh coverage, shared pose, unchanged handling contact and fragment projection. |
 | Gemma unavailable or invalid | Report the failure explicitly; never replace it with an empty safe scene or a fabricated model result. | [Backend tests][backendtests]: `test_gemma_outage_or_invalid_estimate_never_looks_like_clear_scene`. |
 | cuOpt failure or inconsistent route evidence | Reject an absent, unsolved or mismatched configured solver result. | [Simulation tests][simtests]: `configured cuOpt cannot be omitted, mismatched, or replaced with an unsolved heuristic`; [backend tests][backendtests]: `test_failed_or_nonfinite_solver_cannot_reach_argon`. |
 | Poor placement | Recheck attachment; an attempted placement is not automatically counted as success. | [Simulation tests][simtests]: `bad placement must be mechanically reverified before success`. |
@@ -71,7 +73,7 @@ The HTTP tests need permission to bind a local ephemeral port. These commands us
 Use **Robot + base** when collecting live-model evidence. Keep readiness, valid provider reply, accepted perception and completed mission as separate milestones. Export the actual episode and activity log together with the continuous capture. A complete drop-recovery claim requires the same recorded run to show the initial fragment ID, drop, fresh post-drop camera evidence, reacquisition and verified placement.
 
 
-Field acceptance remains separate: calibrated sensing and forces, measured on-robot compute/power, reliable local model serving, communication-loss trials, and ecological validation are not established by these simulation records.
+Field acceptance still requires calibrated sensing and forces, a complete robot power budget, disconnected mission trials and ecological validation. [Measured Spark Gemma inference](EDGE_DEPLOYMENT.md) establishes local serving and scoped resource measurements, not those broader outcomes.
 
 [simtests]: ../sim/pelagic/tests/lab-simulation.test.mjs
 [backendtests]: ../sim/pelagic/tests/test_lab_server.py

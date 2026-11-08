@@ -1,0 +1,34 @@
+{
+  "id": "edge-native-warmup",
+  "requestId": "edge-native-warmup",
+  "source": "cuopt",
+  "configured": true,
+  "model": "nvidia-cuopt",
+  "solverVersion": "26.10.0",
+  "solverStatus": "SUCCESS",
+  "status": "solved",
+  "routeMode": "direct",
+  "objectiveCost": 1.6666666269302368,
+  "costs": {
+    "direct": 1.6666666269302368,
+    "clearance": 4.023689270019531
+  },
+  "solveTimeMs": 1750,
+  "costModel": {
+    "name": "current_and_contact_transit_proxy",
+    "units": "weighted_seconds",
+    "nominalSpeedMS": 0.6,
+    "minimumGroundSpeedMS": 0.15,
+    "maximumGroundSpeedMS": 2.0,
+    "hazardRadiusM": 1.2,
+    "hazardPenaltySecondsPerM": 30.0,
+    "calibrated": false,
+    "source": "request synthetic fusion contacts and current vector; engineering proxy"
+  },
+  "inputContacts": 0,
+  "inputCurrentVector": [
+    0,
+    0,
+    0
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "recordedAtUtc": "2026-11-08T14:31:47.878793+00:00",
+  "hostname": "spark-501b",
+  "architecture": "aarch64",
+  "kernel": "7.0.0-1024-nvidia",
+  "containerId": "9a19c6338fcf5e3320cbd9ce0e124fa57408093988e4fadbc55a9ceab492e7e7",
+  "imageId": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+  "startedAt": "2026-11-08T14:23:22.358047947Z",
+  "imageRepoDigests": [
+    "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2"
+  ],
+  "running": true,
+  "networkMode": "bridge",
+  "memoryLimitBytes": 51539607552,
+  "nanoCpusLimit": 8000000000,
+  "entrypoint": [
+    "vllm"
+  ],
+  "command": [
+    "serve",
+    "google/gemma-4-E4B-it",
+    "--revision",
+    "4ecc2ba63bcac23ba4a767fc87025b1450f84c9c",
+    "--served-model-name",
+    "gemma-4-E4B-it",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8012",
+    "--max-model-len",
+    "4096",
+    "--gpu-memory-utilization",
+    "0.30",
+    "--max-num-seqs",
+    "1",
+    "--enforce-eager",
+    "--limit-mm-per-prompt",
+    "{\"image\":1,\"audio\":0,\"video\":0}"
+  ],
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/cache",
+      "Destination": "/root/.cache/huggingface",
+      "RW": false
+    },
+    {
+      "Type": "bind",
+      "Source": "/home/smint/reef-edge-gemma/evidence",
+      "Destination": "/evidence",
+      "RW": true
+    }
+  ],
+  "gpu": "NVIDIA GB10, 580.178.04, 16.30, 15",
+  "networkInterfaces": "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo:   95002    1468    0    0    0     0          0         0    95002    1468    0    0    0     0       0          0\n  eth0:  364859     143    0   17    0     0          0         0    13813      92    0    0    0     0       0          0",
+  "networkRoutes": "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT                                                       \neth0\t00000000\t010011AC\t0003\t0\t0\t0\t00000000\t0\t0\t0                                                                               \neth0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0",
+  "containerProcesses": "PID                 COMMAND             RSS\n2252934             vllm                2366676\n2255123             python              11568\n2255124             VLLM::EngineCor     3235864"
+}

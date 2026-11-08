@@ -1,6 +1,6 @@
 # Judging and repository review guide
 
-Reef Rescue is a simulation prototype for reef-restoration teams handling eligible, already-detached coral fragments. Its current live-model demonstration couples rendered robot-camera evidence, bounded model advice, numerical route evaluation and local safety checks. This guide maps the judging criteria to inspectable implementation and evidence; it does not predict a score.
+Reef Rescue is a simulation prototype for reef-restoration teams handling eligible, already-detached coral fragments. Its current live-model demonstration couples rendered robot-camera evidence, bounded model advice, numerical route evaluation and local safety checks. This guide maps the judging criteria to inspectable implementation and evidence.
 
 Start with [README](../README.md), [scenario and verification guide](SCENARIOS.md), [evidence index](EVIDENCE.md), [architecture](../sim/pelagic/docs/ARCHITECTURE.md) and the [completed live episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json).
 
@@ -8,17 +8,17 @@ The weights and descriptions below follow the [provided judging screenshot](subm
 
 ## Rubric evidence map
 
-| Criterion | Weight | What to inspect | Supported conclusion and limit |
+| Criterion | Weight | What to inspect | System behavior |
 | --- | ---: | --- | --- |
-| Perception-driven action | 25% | `ArchitectureAdapters.perceive` in [lab_server.py](../sim/pelagic/reefsim/lab_server.py); capture and packet gates in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs); the [completed live episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json). | Real Gemma camera responses can withhold an intervention and trigger a rescan. Fresh accepted evidence precedes local handling approval. Appearance scores do not establish viability or genotype. |
-| Adaptation to change | 25% | Argon assistance and rescan wiring in [app.mjs](../sim/pelagic/web/lab/app.mjs); fault/identity tests listed in [SCENARIOS](SCENARIOS.md); live episode events. | The saved live run contains uncertainty-driven rescanning and a sensor-dropout hold, followed by placement; a [separate uncertainty-abort record](evidence/live-model-uncertainty-abort.json) preserves a failed run. Current-induced same-fragment recovery is covered by controller/model-double fixtures; a live-model drop/recovery claim needs its own complete trace. |
-| Operational autonomy | 15% | [Modal deployment](../sim/pelagic/scripts/modal_lab_backend.py), readiness/timeout behavior in [lab_server.py](../sim/pelagic/reefsim/lab_server.py), and local physics/hold limits in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs). | Local safety continues during remote waits and faults. The demonstrated Gemma and cuOpt services run on Modal; this is not demonstrated offline edge autonomy. A measured on-robot memory, power and latency budget is a remaining validation item. |
-| Relevance and impact | 20% | Loose-stock eligibility, identity conservation and mechanical verification in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs); [scenario guide](SCENARIOS.md); [asset provenance](../sim/pelagic/assets/LICENSES.md). | The prototype targets a specific restoration workflow and makes unsafe/uncertain cases inspectable. It demonstrates no field ecological benefit, successful biological recovery or approved field intervention. |
-| Ambition and technical quality | 15% | [Cross-language contract test](../sim/pelagic/tests/lab-pipeline-contract.test.mjs), [backend tests](../sim/pelagic/tests/test_lab_server.py), [recorder](../sim/pelagic/web/lab/recorder.mjs), [semantic memory](../sim/pelagic/web/lab/semantic-memory.mjs), and [read-only feed](../sim/pelagic/reefsim/live_feed.py). | The system combines real inference, explicit provenance, route validation, recovery logic and an independent Isaac stream. Regression success is bounded to tested cases, and the browser's reduced physics is not Isaac contact simulation. |
+| Perception-driven action | 25% | `ArchitectureAdapters.perceive` in [lab_server.py](../sim/pelagic/reefsim/lab_server.py); capture and packet gates in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs); the [completed live episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json). | Real Gemma camera responses can withhold an intervention and trigger a rescan. Fresh accepted evidence precedes local handling approval. Biological eligibility and genotype come from the independent registry. |
+| Adaptation to change | 25% | Argon assistance and rescan wiring in [app.mjs](../sim/pelagic/web/lab/app.mjs); fault/identity tests listed in [SCENARIOS](SCENARIOS.md); live episode events. | The saved live run contains uncertainty-driven rescanning and a sensor-dropout hold, followed by placement; a [separate uncertainty-abort record](evidence/live-model-uncertainty-abort.json) preserves a failed run. Controller regressions cover same-ID recovery and placement. The latest Spark current-drop trial ended in a safe assistance-timeout abort. |
+| Operational autonomy | 15% | [Modal deployment](../sim/pelagic/scripts/modal_lab_backend.py), readiness/timeout behavior in [lab_server.py](../sim/pelagic/reefsim/lab_server.py), and local physics/hold limits in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs). | Local safety continues during remote waits and faults. Gemma and cuOpt run on Modal for the hosted deployment and locally on Spark for the edge gateway. [Spark measurements](EDGE_DEPLOYMENT.md) include five network-isolated Gemma image requests, resource samples and the local fault trial. |
+| Relevance and impact | 20% | Loose-stock eligibility, identity conservation and mechanical verification in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs); [scenario guide](SCENARIOS.md); [asset provenance](../sim/pelagic/assets/LICENSES.md). | The prototype targets a specific restoration workflow and makes unsafe/uncertain cases inspectable. The completion metric is mechanically verified placement; field evaluation tracks ecological outcomes separately. |
+| Ambition and technical quality | 15% | [Cross-language contract test](../sim/pelagic/tests/lab-pipeline-contract.test.mjs), [backend tests](../sim/pelagic/tests/test_lab_server.py), [recorder](../sim/pelagic/web/lab/recorder.mjs), [semantic memory](../sim/pelagic/web/lab/semantic-memory.mjs), and [read-only feed](../sim/pelagic/reefsim/live_feed.py). | The system combines real inference, explicit provenance, route validation, recovery logic and an independent Isaac stream. The browser runs reduced physics; the independent Isaac camera/state feed is read-only. |
 
 ## Relevance, scientific motivation and intended impact
 
-The intended users are reef-restoration researchers and field teams who need traceable handling of eligible fragments. The proposed value is repeatable inspection, identity-preserving transport and reviewable intervention records. Reduced diver workload or better survival are hypotheses to measure, not results established by this prototype.
+The intended users are reef-restoration researchers and field teams who need traceable handling of eligible fragments. The proposed value is repeatable inspection, identity-preserving transport and reviewable intervention records. Field evaluation measures diver workload and coral survival alongside handling performance.
 
 The AIMS 2025–26 monitoring report surveyed 121 reefs and found hard coral cover generally stable or increasing after recent bleaching, while documenting continuing climate, cyclone and crown-of-thorns pressures. This supports a recovery-monitoring context without implying that all reefs are declining or need intervention. [AIMS annual report, 11 August 2026](https://www.aims.gov.au/monitoring-great-barrier-reef/gbr-condition-summary-2025-26).
 
@@ -31,7 +31,7 @@ A useful future field evaluation would measure intervention rejection accuracy, 
 | Component | Exact identifier | Role and execution location | Authority |
 | --- | --- | --- | --- |
 | Gemma | Served model `gemma-4-E4B-it`; configured weights `google/gemma-4-E4B-it` | Robot-camera appearance and fragment/gripper evidence; vLLM on remote Modal GPUs in the current demo. The deployment lists L4/A10 as configured GPU choices. | Supplies evidence. It does not set thrusters, infer lineage, approve cutting or override the registry. |
-| Gemini Argon | `gemini-4-argon` | Google Interactions API; bounded assistance for a held issue and a separate post-mission review operation. | Assistance can return only `rescan`, `hold` or `abort`. It cannot return a handling approval. Post-mission suggestions do not patch or deploy code. |
+| Gemini Argon | `gemini-4-argon` | Google Interactions API; bounded assistance for a held issue and a separate post-mission review operation. | Returns structured context and visual checks for Gemma, with `rescan`, `hold` or `abort`. Local handling checks remain authoritative. |
 | NVIDIA cuOpt | Response model `nvidia-cuopt` | Native route-cost solving on Modal; T4 is configured. The saved completed run reports solver version `26.10.0`. | Selects among supplied route alternatives. Local validation still decides whether movement is acceptable. |
 | Local policy | `reef-local-policy-v1` | Inspectable Python gateway policy, not a learned model. | Proposes a bounded action/route using registry and fresh perception; browser checks remain authoritative. |
 | Local controller | JavaScript mission/physics implementation | Browser host. | Executes the simulated mission, monitors current/grip/clearance, maintains identity, and counts verified mechanical placements. |
@@ -44,11 +44,11 @@ The active stack does not use every model mentioned in older experiments. `gemma
 
 **Is Gemma really called?** The gateway constructs a real image request to the served Gemma model; returned packets include a request/capture identity, image hash, model, hosting location and latency. The [completed live trace](../sim/pelagic/docs/evidence/live_stack_completed_placement.json) records actual responses and their effects. Unit tests explicitly use doubles and are a different evidence category.
 
-**Is Gemma on the robot?** That is the field architecture intent. Current evidence says `deployment: modal`; no on-robot residency, latency, power or memory measurement is established. A successful `/v1/models` readiness check is also not, by itself, a successful perception or mission test.
+**Is Gemma on the robot?** Yes: official `google/gemma-4-E4B-it` weights were loaded on the Spark GB10, and five image inferences completed inside a network-disabled container. [Edge evidence](EDGE_DEPLOYMENT.md) records the pinned revision, runtime, 48 GiB memory limit, measured latency and memory, and shared-board power samples. The hosted Site uses Modal; the Spark gateway uses local Gemma and cuOpt with online Argon assistance.
 
-**What happens when Gemma is unsure?** The robot holds. The app sends bounded structured observations and the issue to Argon. Argon can ask for a fresh view, keep the hold or abort. A rescan does not waive the original constraints. See `requestAssistance` in [app.mjs](../sim/pelagic/web/lab/app.mjs) and `ArchitectureAdapters.assist` in [lab_server.py](../sim/pelagic/reefsim/lab_server.py).
+**What happens when Gemma is unsure?** The robot holds. The app sends bounded structured observations and the issue to Argon. Argon returns contextual observations and visual checks for Gemma’s next fresh image, alongside rescan, hold or abort advice. The local handling constraints apply to the resulting evidence. See `requestAssistance` in [app.mjs](../sim/pelagic/web/lab/app.mjs) and `ArchitectureAdapters.assist` in [lab_server.py](../sim/pelagic/reefsim/lab_server.py).
 
-**Does Argon see the original image?** The current assistance operation explicitly receives structured observations and telemetry, not the JPEG. Gemma receives the rendered image. Post-mission lab review receives episode/activity data. A general-purpose image-capable client elsewhere in the repo is not proof that these particular operations send images.
+**Does Argon see the original image?** The current assistance operation explicitly receives structured observations and telemetry, not the JPEG. Gemma receives the rendered image. Post-mission lab review receives episode/activity data. Argon’s context accompanies the next target-bound Gemma image request.
 
 **Does Argon control the whole mission?** Normal planning uses the local policy and cuOpt. Argon assists held issues and provides post-mission recommendations. It does not issue arbitrary actuator commands, replace fresh observations, automatically rewrite code or autonomously deploy a next-mission policy. The earlier [safe-abort trace](../sim/pelagic/docs/evidence/live_stack_safe_abort.json) predates this separation and records the historical Argon-planning path.
 
@@ -60,19 +60,17 @@ The active stack does not use every model mentioned in older experiments. `gemma
 
 **How is behavior determined?** The mission state machine, safety controls, reproducible scenarios and regression fixtures are deterministic code. Live-model mode requires actual inference evidence at its gates. Model uncertainty triggers bounded assistance and fresh perception; local checks remain authoritative.
 
-**Does it recover from a drop?** Controller/model-double tests exercise current-induced grip loss, same-ID recovery and placement. The saved completed live-model episode has zero drops and zero recoveries. A stronger live claim needs a new continuous run showing all of those events with fresh post-drop inference. See the [scenario matrix](SCENARIOS.md).
+**Does it recover from a drop?** Controller/model-double tests exercise current-induced grip loss, same-ID recovery and placement. The saved completed live-model episode has zero drops and zero recoveries. The latest Spark fault trial recorded one current-induced drop and a safe abort after assistance timed out. See the [scenario matrix](SCENARIOS.md).
 
-**Does it keep working when the internet fails?** Local safety and physics continue; remote model/solver requests can fail and leave the mission held or aborted. Current evidence does not establish offline completion with local Gemma and local route services.
+**Does it keep working when the internet fails?** Local safety and physics continue; remote model/solver requests can fail and leave the mission held or aborted. The Spark benchmark ran Gemma with networking disabled; online assistance uses the Google API.
 
 **How are results audited?** Inspect the episode's controller/source labels, capture IDs, image hashes, timestamps, transport events, solver result, fragment IDs and final counters together. A recorder continuity check establishes capture properties, not model quality or task success. Preserve failed runs and do not combine model receipts or outcome counters from different episodes.
 
 **Why does the originally submitted PDF say there were no live placements?** Its evidence cutoff is 8 November 2026 at 13:09. The newer saved live episode records one placement; the [evidence index](EVIDENCE.md) identifies the current technical summary separately. The original PDF's offline on-robot description is field intent; its hardware table correctly identifies Modal hosting in the demo. Its broad wording about next-mission planning and camera review should not be interpreted as implemented autonomous policy deployment or image input to every Argon call.
 
-## Remaining proof obligations
+## Review sequence
 
-- One continuous actual-model run with an operator-triggered current disturbance, observed fragment loss, fresh recovery perception, the same fragment ID and verified placement.
-- Measured edge-device memory, power and latency, plus a disconnected mission test with all required services local.
-- Calibrated perception and confidence, force/contact validation and an independently assessed ecological intervention protocol.
-- Repeatable held-out scenario evaluation rather than a single successful live episode.
-
-These are explicit implementation/validation targets. The repository should be assessed on the evidence it contains rather than an assertion that every path is complete or failure-free.
+1. Read the [file guide](CODE_MAP.md) and trace the camera → Gemma → policy/cuOpt → local controller path.
+2. Run the commands in [SETUP](../SETUP.md), including the submission verifier and regression suites.
+3. Inspect the [completed placement](evidence/live-model-episode.json) and the [follow-up run index](evidence/readiness-run-index.json).
+4. Use the [operating status](IMPLEMENTATION_STATUS.md) for deployment checks and scenario expansion.
