@@ -54,7 +54,6 @@ def build(root, output):
     live, live_hash = load(root, 'live-model-episode.json')
     edge, edge_hash = load(root, 'edge_gemma_benchmark.json')
     metadata, _ = load(root, 'edge_runtime_metadata.json')
-    readiness, _ = load(root, 'readiness-run-index.json')
     episode = live['episode']
     metrics = episode['metrics']
     if episode['phase'] != 'complete':
@@ -68,8 +67,7 @@ def build(root, output):
     current = max(sample['containerMemoryBytes']['memory.current'] for sample in resource) / GIB
     # nvidia-smi CSV columns are name, temperature, power, memory used, memory total.
     power = [float(sample['gpuCsv'].split(',')[2]) for sample in resource]
-    runs = readiness['runs']
-    cutoff = max(edge['recordedAtUtc'], *(run['exportedAt'] for run in runs))[:16].replace('T', ' ')
+    cutoff = max(edge['recordedAtUtc'], live['exportedAt'])[:16].replace('T', ' ')
 
     styles = {
         'title': ParagraphStyle('title', fontName='Helvetica-Bold', fontSize=28, leading=31, textColor=INK, spaceAfter=6),

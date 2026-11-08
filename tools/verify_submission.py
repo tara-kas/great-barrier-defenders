@@ -19,7 +19,10 @@ FRONT_DOOR = (
     'README.md', 'AGENTS.md', 'CLAUDE.md', 'SETUP.md',
     'docs/README.md', 'docs/ARCHITECTURE.md', 'docs/EVIDENCE.md',
     'docs/IMPLEMENTATION_STATUS.md', 'docs/SCENARIOS.md', 'docs/JUDGING_GUIDE.md',
-    'docs/EDGE_DEPLOYMENT.md',
+    'docs/EDGE_DEPLOYMENT.md', 'docs/CODE_MAP.md', 'LIVE_DEMO.md',
+    'sim/pelagic/README.md', 'sim/pelagic/docs/LIVE_LAB.md',
+    'sim/pelagic/docs/LIVE_LAB_VALIDATION.md', 'sim/pelagic/docs/ARTIFACT_HANDOFF.md',
+    'sim/pelagic/docs/ARCHITECTURE.md', 'sim/pelagic/sites/reef-lab/README.md',
 )
 
 
@@ -30,6 +33,7 @@ def verify(root: Path = ROOT) -> list[str]:
         if not condition:
             errors.append(message)
 
+    summary = None
     try:
         raw = (root / 'docs/evidence/live-model-episode.json').read_bytes()
         episode = json.loads(raw)
@@ -77,40 +81,33 @@ def verify(root: Path = ROOT) -> list[str]:
                 and math.isfinite(value) and value >= minimum)
 
     try:
-        index = json.loads(artifact('readiness-run-index.json').read_text())
-        check(index['schema'] == 'reef-readiness-runs/v1', 'Unexpected readiness index schema')
-        runs = index['runs']
-        if not isinstance(runs, list) or not runs:
-            raise ValueError('Readiness index must contain recorded runs')
+        index = json.loads(artifact('final-evidence-index.json').read_text())
+        check(index['schema'] == 'reef-final-evidence/v1', 'Unexpected final evidence index schema')
+        entries = index['artifacts']
+        if not isinstance(entries, list) or not entries:
+            raise ValueError('Final evidence index must contain artifacts')
         seen = set()
-        for run in runs:
-            name = run['path']
-            check(name not in seen, f'Duplicate readiness run: {name}')
+        for entry in entries:
+            name = entry['path']
+            check(name not in seen, f'Duplicate final artifact: {name}')
             seen.add(name)
             raw = artifact(name).read_bytes()
-            episode = json.loads(raw)
-            check(hashlib.sha256(raw).hexdigest() == run['sha256'], f'Readiness run SHA-256 differs: {name}')
-            check(episode['exportedAt'] == run['exportedAt'], f'Readiness export timestamp differs: {name}')
-            check(episode['episode']['phase'] == run['phase'], f'Readiness phase differs: {name}')
-            check(episode['episode']['metrics'] == run['metrics'], f'Readiness metrics differ: {name}')
-            check(episode['episode']['controller'] == 'base_station', f'Readiness controller is not model-connected: {name}')
-            if 'siteSourceCommit' in run:
-                check(bool(re.fullmatch(r'[0-9a-f]{40}', run['siteSourceCommit'])), f'Invalid recorded Site revision: {name}')
-            else:
-                source = run['sourceManifest']
-                source_raw = artifact(source['path']).read_bytes()
-                check(hashlib.sha256(source_raw).hexdigest() == source['sha256'], f'Runtime source manifest SHA-256 differs: {name}')
-                manifest = json.loads(source_raw)
-                if 'files' in manifest:
-                    hashes = manifest['files']
-                    check(manifest['remoteVerified'] is True and isinstance(hashes, dict) and bool(hashes)
-                          and all(re.fullmatch(r'[0-9a-f]{64}', digest) for digest in hashes.values()),
-                          f'Runtime source snapshot was incomplete or mismatched: {name}')
-                else:
-                    check(manifest['mismatches'] == [] and manifest['fileCount'] == len(manifest['sha256']),
-                          f'Runtime source snapshot was incomplete or mismatched: {name}')
+            check(hashlib.sha256(raw).hexdigest() == entry['sha256'], f'Final artifact SHA-256 differs: {name}')
+            check(entry['kind'] in ('completed_mission', 'image_inference_benchmark',
+                                   'native_solver_readiness', 'supporting_provenance'), f'Unknown artifact kind: {name}')
+            if entry['kind'] == 'completed_mission':
+                record = json.loads(raw)
+                state = record['episode']
+                check(state['controller'] == 'base_station' and state['phase'] == 'complete'
+                      and state['completed'] is True and state['metrics']['placed'] >= state['missionGoal'],
+                      f'Final mission did not complete its placement goal: {name}')
+                check(isinstance(summary, dict) and entry['sourceBuild'] == summary['sourceBuild'], 'Final mission source build differs from summary')
+        expected = {p.name for p in evidence_dir.iterdir() if p.is_file() and p.name != 'final-evidence-index.json'}
+        check(seen == expected, 'Final index does not cover the retained evidence artifacts exactly')
+        check({'live-model-episode.json', 'edge_gemma_benchmark.json', 'edge_cuopt_warmup.json'} <= seen,
+              'Final index is missing a primary result')
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
-        errors.append(f'Cannot validate readiness runs: {exc}')
+        errors.append(f'Cannot validate final evidence index: {exc}')
 
     try:
         benchmark = json.loads(artifact('edge_gemma_benchmark.json').read_text())
@@ -208,4 +205,4 @@ if __name__ == '__main__':
         for failure in failures:
             print(f'FAIL: {failure}', file=sys.stderr)
         sys.exit(1)
-    print('PASS: raw episode integrity, readiness runs, edge inference evidence and documentation targets')
+    print('PASS: raw episode integrity, final artifact index, edge inference evidence and documentation targets')

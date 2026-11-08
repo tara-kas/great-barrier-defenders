@@ -1,0 +1,72 @@
+{
+  "schema": "reef-final-evidence/v1",
+  "selection": "Selected completed mission, successful inference/readiness checks and their supporting provenance.",
+  "artifacts": [
+    {
+      "path": "edge_cuopt_packages.json",
+      "sha256": "c109e9d7262869760f2bb8ab0645af5f6c88e10194a6521537c3ff9233989120",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_cuopt_runtime.json",
+      "sha256": "a8814d1d74fbdbd82eaad47a8281ffe843aa368bb7e7fcf0910905c46581ddfe",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_cuopt_warmup.json",
+      "sha256": "2e40412115988425fcd8b63085732c30fa8b2fbfc3513f505af3e8d4def0c0a4",
+      "kind": "native_solver_readiness"
+    },
+    {
+      "path": "edge_gateway_readiness_v3.json",
+      "sha256": "2101f780112b69cacd446ec72e1f528156ea3b50384f44c9a9a1c8e2bed12b24",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_gateway_source_v3.json",
+      "sha256": "6880d68fe277df2c0c6c1f60418f0fda0671fec3d10a1e3a2e04de6562eb9537",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_gemma_benchmark.json",
+      "sha256": "4516a81d6166dd8e0cae121db04a83cd24cdd659432b9d95198a90c42c19a124",
+      "kind": "image_inference_benchmark"
+    },
+    {
+      "path": "edge_gemma_server.txt",
+      "sha256": "d5fbcfb7685256f20b3f6a90a2b2a6ce2e9e1f69d428d67fe7290ca28b432721",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_image_repo_digests.json",
+      "sha256": "881ea069141b7afb66469503a3101c6542b2633a0b1be6292f7c191b76fee1f3",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_initial_entrypoints.json",
+      "sha256": "9200d6defea831f7f35a2df68051ae28f534c9c2f3a7f0c74b5669c4127620ad",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_input_isaac.png",
+      "sha256": "d38e0e9a23ae0e61f33e45f5a49ca815178421259aa4cf8935a990d4bcde74d7",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_loopback_gemma_runtime.json",
+      "sha256": "6b1f57402dca1af0ff05cc51acf699224f62688dd4fcd1199be5c4791764c14a",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "edge_runtime_metadata.json",
+      "sha256": "5af6b8e6de04f52376ce89b0587d8f185f7a3415ffb3934a70f650da5c08c208",
+      "kind": "supporting_provenance"
+    },
+    {
+      "path": "live-model-episode.json",
+      "sha256": "18ccaa83ff528e0536ea3e738c10f4fee185c0c014fc036e4c802d4f984ce115",
+      "kind": "completed_mission",
+      "sourceBuild": "b5967bb2b6399ab387408812c9344e0e1606c680"
+    }
+  ]
+}

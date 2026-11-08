@@ -50,7 +50,7 @@ The active stack does not use every model mentioned in older experiments. `gemma
 
 **Does Argon see the original image?** The current assistance operation explicitly receives structured observations and telemetry, not the JPEG. Gemma receives the rendered image. Post-mission lab review receives episode/activity data. Argon’s context accompanies the next target-bound Gemma image request.
 
-**Does Argon control the whole mission?** Normal planning uses the local policy and cuOpt. Argon assists held issues and provides post-mission recommendations. It does not issue arbitrary actuator commands, replace fresh observations, automatically rewrite code or autonomously deploy a next-mission policy. The earlier [safe-abort trace](../sim/pelagic/docs/evidence/live_stack_safe_abort.json) predates this separation and records the historical Argon-planning path.
+**Does Argon control the whole mission?** Normal planning uses the local policy and cuOpt. Argon assists held issues and provides post-mission recommendations. It does not issue arbitrary actuator commands, replace fresh observations, automatically rewrite code or autonomously deploy a next-mission policy.
 
 **What does the confidence threshold mean?** The 0.70 cutoff is an engineering demonstration gate applied to an uncalibrated provider score. It is not a measured 70% probability of correct identification. Biological eligibility and lineage remain independent registered inputs. White or pale RGB appearance cannot establish whether coral is alive, dead or genetically compatible.
 

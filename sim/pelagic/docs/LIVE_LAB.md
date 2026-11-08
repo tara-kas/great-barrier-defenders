@@ -3,7 +3,7 @@
 Run the editable browser demonstration from the repository root:
 
 ```sh
-python3 scripts/run_lab.py
+python3 sim/pelagic/scripts/run_lab.py
 ```
 
 Open **http://127.0.0.1:8090/lab/**. Python 3.10+ and a browser with WebGL2 are required. Three.js and reef assets are bundled; rendering needs no npm installation or Isaac runtime. Production missions require the configured model/solver services. The existing Isaac console and recorded demonstrations are unchanged.
@@ -14,7 +14,7 @@ The browser lab owns a separate deterministic simulation. Its selectable cameras
 
 The deployed mission uses Gemma visual appearance, an inspectable local decision policy and NVIDIA cuOpt corridor evaluation. Gemini Argon advises on held mission issues through bounded rescan/hold/abort recommendations and reviews completed or aborted episodes. It does not replace the local planner or authorize live actuator motion. Local execution retains collision avoidance, grip/clearance limits and stale-response checks. See [the architecture guide](ARCHITECTURE.md) for endpoint configuration, provenance and the optional Modal deployment path. Gemma hosted on Modal is remote perception; an onboard claim requires a local runtime and measurements on the intended device.
 
-The [complete backlog](LIVE_DEMO_TODO.md) retains every scene, physics, optics, memory and judging requirement. The [one-minute plan](ONE_MINUTE_DEMO.md) maps visible evidence to the five judging criteria.
+The [file guide](../../../docs/CODE_MAP.md) maps components to source files; the [scenario guide](../../../docs/SCENARIOS.md) describes controls and regression cases.
 
 ## Live robot optics and inspection lights
 
@@ -42,8 +42,6 @@ The **Review completed mission** action sends a bounded completed/aborted episod
 
 **Verification boundary (8 November 2026):** the new visual contract and compact decoder have produced complete real Gemma responses in approximately 2.7–3.2 seconds on actual Isaac camera images. One broad scout view gave an ambiguous fragment classification with unknown gripper; it must not count as correct pickup recognition. The actual Python local policy plus browser engine completed four placements and drop recovery in a cross-language test with explicitly mocked model/solver transports, and asserted that ordinary `/plan` made no Argon calls. That fixture did not verify live issue assistance. A complete successful live-model loose-fragment episode remains a separate acceptance check.
 
-The [saved live safe-abort evidence](evidence/live_stack_safe_abort.json) records an earlier architecture: four unknown/zero-confidence frames, three retries, then safe abort at 100.433 simulated seconds, with real cuOpt and in-mission Argon. It establishes historical connected conservative behavior, not the current local-planner pipeline or successful restoration. Remote Modal perception is not onboard robot hardware.
-
 ## Persistent observation memory and activity evidence
 
 Accepted Gemma visual observations are saved in browser-local semantic memory, bounded to 128 records with a seven-day expiry. Memory is bound to the exact scene fingerprint, including seed, colonies and obstacles. The architecture panel supports inspection, clearing, export and same-scene import. Records retain model/provider/request provenance and are explicitly historical; no image bytes or credentials are stored. Restored records never satisfy live perception, freshness or registry gates. Up to four relevant historical records may accompany mission context, marked `usableForControl: false`; they never authorize local-policy actions. Argon can receive bounded issue context during a hold or finished-episode context through the explicit review action; historical records remain ineligible for control in either case.
@@ -52,7 +50,7 @@ The activity log records actual request starts and awaiting-response states: tar
 
 ## Integrated Mission Control evidence
 
-The **Mission evidence** workspace embeds Aryan Patel's dashboard capabilities in the reef lab: semantic map pins, health filters/counts, colony inspection, selectable decision history, evidence/outcome details, source refresh and camera/detection display. Browser map selection highlights the same colony in the 3D scene. Historical decision selection remains stable as new events arrive; following the latest decision is explicit. Pausing the evidence view does not pause vehicle control or the simulation. The original standalone `dashboard/` remains available. Browser QA verified the recorded source's 24 colonies and 10 decisions, health filters, colony selection, retained decision history and independent view pause. The live team source correctly showed unconfigured status without substituting sample data. The recording remains synthetic pre-mapped/reduced-physics evidence with one treated recipient and one dislodgement; no camera frame was saved.
+The **Mission evidence** workspace embeds Aryan Patel's dashboard capabilities in the reef lab: semantic map pins, health filters/counts, colony inspection, selectable decision history, evidence/outcome details, source refresh and camera/detection display. Browser map selection highlights the same colony in the 3D scene. Historical decision selection remains stable as new events arrive; following the latest decision is explicit. Pausing the evidence view does not pause vehicle control or the simulation. The original standalone `dashboard/` remains available.
 
 Choose the evidence source deliberately:
 
@@ -118,13 +116,12 @@ The local recorder remains independent of networking. **Connect telemetry to bas
 
 The UI counts frames only after a matching server acknowledgement and shows the queue, skipped count and latest acknowledged simulation time. Disconnecting or a network failure leaves local physics and recording running. Reconnection is explicit after an error, and a reset to earlier simulation time starts a new stream identity. The uplink carries bounded telemetry, not camera image bytes, and receiving telemetry does not itself prove that a model has interpreted it.
 
-## What the demonstration establishes
+## Simulation model and checks
 
-Browser results describe this browser model and the tested scenarios. The reduced three-degree-of-freedom translational dynamics and yaw presentation do **not** demonstrate Isaac PhysX parity, full six-degree-of-freedom fluid dynamics, realistic cutter forces or fracture mechanics, adhesive chemistry, contact-force validation, biological fusion, survival, or recovery. The browser simulation is not an ultra-realistic physical model. Coral imagery uses specimen scans with artistic living-tissue materials; it is not a reconstructed surveyed reef. The lab is intended for interactive case presentation and controller/recovery exploration. High-fidelity physical validation must still be performed in the authoritative Isaac environment and, ultimately, against measured hardware/field data. Finite scenario tests do not cover every possible setback.
+The browser runs reduced translational dynamics, yaw presentation, current/grip loads, geometric sonar and mechanical contact checks. Registry facts supply biological eligibility and lineage. The camera renders specimen geometry and surface appearance for Gemma; the independent Isaac feed has its own state and controller. Mechanical attachment is the mission completion metric.
 
-Sonar is simulated geometric range sensing, not a calibrated acoustic propagation model. It cannot establish species, health or genotype. Camera and sonar inputs expose sensor-limited observations to the supervisory model; they do not establish real-world sensor accuracy. Earlier Argon planning and unknown-perception safe-abort records are historical evidence from the previous architecture. Current missions use the inspectable local policy; Argon provides bounded rescan/hold/abort assistance during held issues and advisory review between episodes. Appearance scores cannot establish viability, field accuracy or biological recovery. Live end-to-end results must identify the actual controller, model/solver responses, camera input provenance and outcome; offline transport mocks and a successful deployment do not establish live restoration success.
+From `sim/pelagic`, run the policy/server checks with declared provider doubles:
 
-Run the policy/server checks without billed API calls:
 
 ```sh
 python3 -m unittest discover -s tests -p test_lab_server.py -v
@@ -142,7 +139,3 @@ Click the reef canvas to focus spectator controls: **W/A/S/D** move in the horiz
 The visual ROV now includes a capsule pressure hull, flotation pods, protective skids/frame, four ducted propeller assemblies, camera/sonar/light housings and branding. Its measured visual bounds are1.059×0.631×1.120m within the existing1.12×0.65×1.15m design envelope. The articulated arm and jaws retain the same simulation anchors. This is a procedural engineering visualization, not manufacturing CAD, a validated thruster layout or a new dynamics model.
 
 Detached coral uses a cropped real Pocillopora scan with preserved UVs and the source colony’s tissue material; the14cm specimen has a grasp stem anchored to the same physical fragment state. The tool camera fits the fragment and complete jaws together. Fragment acquisition waits for the vehicle to settle before accumulating exposure.
-
-## Historical presentation artifacts
-
-The former **Start presentation demo** shortcut is not part of current production. If a prior recording used a local scripted controller, synthetic perception or 2× simulation, preserve those original labels and metadata. It cannot be relabelled as a current model-guided run or used as evidence of live inference/recovery.

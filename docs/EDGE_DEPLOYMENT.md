@@ -79,9 +79,17 @@ export EDGE_CACHE=/absolute/path/edge-cache
 export EDGE_EVIDENCE=/absolute/path/edge-evidence
 export EDGE_NAME=reef-edge-gemma
 export EDGE_NETWORK=none
+mkdir -p "$EDGE_CACHE" "$EDGE_EVIDENCE"
+chmod 700 "$EDGE_CACHE"
+# Authenticate the dedicated cache with an account that has model access.
+docker run --rm -it -v "$EDGE_CACHE:/root/.cache/huggingface" \
+  --entrypoint python "$EDGE_IMAGE" -c \
+  'from huggingface_hub import login; login(add_to_git_credential=False)'
 bash sim/pelagic/scripts/edge_serve.sh download
 bash sim/pelagic/scripts/edge_serve.sh serve
 ```
+
+The download container reads authentication from this mounted cache; it does not inherit a host `HF_TOKEN` automatically. Keep the cache private.
 
 The script pins the weight revision, sets offline Hugging Face mode and defaults
 to no container network. `EDGE_MEMORY`, `EDGE_CPUS`, `EDGE_GPU_FRACTION`,
@@ -148,9 +156,18 @@ docker run -d --name reef-edge-cuopt --gpus all --network host \
   -v "$PWD/sim/pelagic/scripts/cuopt_route_adapter.py:/edge/cuopt_route_adapter.py:ro" \
   -v "$EDGE_HOME/evidence:/evidence" reef-edge-cuopt:26.10.0 \
   --port 8013 --warmup-output /evidence/edge_cuopt_warmup.json
+# Explicit values also override empty variables from .env.example.
+export GEMMA_BASE_URL=http://127.0.0.1:8012/v1
+export GEMMA_MODEL=gemma-4-E4B-it
+export GEMMA_DEPLOYMENT=robot
+export CUOPT_ADAPTER_URL=http://127.0.0.1:8013/solve
+export CUOPT_DEPLOYMENT=robot
+python3 -c 'import getpass,json,os; from pathlib import Path; p=Path(os.environ["EDGE_HOME"])/"argon-config.json"; p.write_text(json.dumps({"GEMINI_API_KEY":getpass.getpass("Google API key: "),"ARGON_MODEL":"gemini-4-argon"})); p.chmod(0o600)'
 python3 sim/pelagic/scripts/edge_gateway.py --port 8091 \
-  --cuopt-env "$EDGE_HOME/cuopt.env"
+  --cuopt-env "$EDGE_HOME/cuopt.env" --argon-config "$EDGE_HOME/argon-config.json"
 ```
+
+The private Argon file contains `GEMINI_API_KEY` and `ARGON_MODEL`; the command prompts for the key without echoing it.
 
 Run Gemma in bridge mode as described above. The native solver binds only
 `127.0.0.1:8013`, Gemma is published only on `127.0.0.1:8012`, and the browser
@@ -170,18 +187,10 @@ Open `http://127.0.0.1:18091/lab/`. A standard authenticated `ssh -N -L` tunnel
 can be used on other hosts. No public model endpoint is required. The measured
 loopback deployment is recorded in
 [Gemma service metadata](evidence/edge_loopback_gemma_runtime.json) and the
-[gateway source hash manifest](evidence/edge_gateway_source.json). The manifest
-records the exact copied source snapshot, including uncommitted changes; it
-must not be assumed to match subsequent repository edits.
-The initial [entrypoint and solver source snapshot](evidence/edge_initial_entrypoints.json)
-separately preserves the deployed wrappers and adapter bytes and hashes.
-The later [gateway refresh manifest](evidence/edge_gateway_source_v2.json)
-includes all 170 runtime, web, configuration, asset and script files; the
-already-running native solver still uses the separately preserved initial
-entrypoint/adapter. Its [readiness response](evidence/edge_gateway_readiness_v2.json)
-records the exact model and native solver checks after that refresh.
-The subsequent [v3 source manifest](evidence/edge_gateway_source_v3.json)
-preserves actual file modification times and includes the runtime cache fix.
+[gateway source hash manifest](evidence/edge_gateway_source_v3.json). The manifest
+identifies the deployed source snapshot, including each file's hash. The
+[entrypoint and solver source snapshot](evidence/edge_initial_entrypoints.json)
+preserves the native solver's deployed wrapper and adapter.
 [Live HTTP checks](evidence/edge_gateway_readiness_v3.json) confirmed that HTML,
 JavaScript and CSS return `200` with `Cache-Control: no-store` even when given
 a future `If-Modified-Since` date. This prevents an old browser module from

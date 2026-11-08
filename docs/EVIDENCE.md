@@ -2,6 +2,8 @@
 
 ## Export format
 
+This collection contains selected completed-mission, successful image-inference and service-readiness results with supporting provenance.
+
 Use **Export** in the browser lab to save an episode and its transport activity. Each record ties mission state to the source that produced it.
 
 | Field or record | Purpose |
@@ -17,13 +19,13 @@ Use **Export** in the browser lab to save an episode and its transport activity.
 
 Keep each episode's raw bytes, hashes and provider receipts together. [Scenario configurations](SCENARIOS.md) define reproducible inputs; [source manifests](evidence/edge_gateway_source_v3.json) identify deployed file snapshots.
 
-## Reference artifacts
+## Selected result artifacts
 
 | Artifact | Contents |
 | --- | --- |
 | [Hosted episode](evidence/live-model-episode.json) | Complete episode and activity log exported at `2026-11-08T13:41:14.099Z`. |
 | [Hosted result summary](../sim/pelagic/docs/evidence/live_stack_completed_placement.json) | Source build, artifact hash, model/solver identifiers and outcome counters. |
-| [Run archive index](evidence/readiness-run-index.json) | Individual run paths, source manifests, hashes and recorded outcomes. |
+| [Final artifact index](evidence/final-evidence-index.json) | Selected successful results and supporting provenance, with integrity hashes. |
 | [Spark image benchmark](evidence/edge_gemma_benchmark.json) | Five image requests, raw responses, latencies and resource samples. |
 | [Spark runtime metadata](evidence/edge_runtime_metadata.json) | Pinned model/runtime, networking and configured resources. |
 | [Native solver readiness](evidence/edge_cuopt_warmup.json) | cuOpt version, candidate costs and selected route. |
