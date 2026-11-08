@@ -32,11 +32,11 @@ control/     Thrusters, station keeping, carry-aware control, safety limits
 perception/  Classification and semantic mapping
 agent/       On-device planning loop and site optimiser
 cloud/       Debrief, patch generation, verification
-dashboard/   Live telemetry: camera, detections, map, decision log
+dashboard/   React mission-control interface and read-only data adapter
 eval/        Scenario suite and regression harness
 docs/        Technical summary and supporting assets
 ```
 
 ## Setup
 
-See `SETUP.md` for environment setup and connecting to a remote Isaac Sim instance.
+Run the dashboard with `cd dashboard && npm install && npm run dev` (Node.js 20.19+ or 22.12+). The current interface is an interactive local simulation, not connected to a vehicle. See `dashboard/README.md` for details and `SETUP.md` for Isaac Sim environment setup.
