@@ -1,0 +1,7 @@
+Coral morphology: Smithsonian Institution, National Museum of Natural History, with The Hydrous. Pocillopora damicornis USNM 46926 and Acropora secale USNM 268. Public-domain/CC0 specimen scans. Not a Smithsonian endorsement. Specimens are dried skeletons, not scans of living tissue or this scene.
+Sand 03: Charlotte Baglioni / Poly Haven, CC0. Coral Ground 02: Rob Tuytel / Poly Haven, CC0.
+Artistic tissue maps and browser scene: PELAGIC. No biological recovery is inferred from appearance.
+Original source URLs, hashes and license details: assets/LICENSES.md, assets/pocillopora/manifest.json, assets/corals/manifest.json, assets/materials/manifest.json in the source repository.
+https://3d.si.edu/es/object/3d/pocillopora-damicornis:ae26ad01-e7be-4664-8a3a-b8bffd42a186
+https://polyhaven.com/a/sand_03
+https://polyhaven.com/a/coral_ground_02

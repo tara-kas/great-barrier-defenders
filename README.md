@@ -49,6 +49,10 @@ docs/        Technical summary and supporting assets
 
 See `SETUP.md` for environment setup and connecting to a remote Isaac Sim instance.
 
+## Interactive browser lab
+
+The [Reef Rescue AUV live demo](LIVE_DEMO.md) adds an editable Three.js reef, fault recovery, wildlife avoidance, two navigation routes, simulated sonar, and optional Gemini camera review. It preserves the existing design system. Run `python3 sim/pelagic/scripts/run_lab.py` or open the private hosted demo linked in the guide. Browser physics and sensor models are explicitly separate from Isaac validation.
+
 ## Isaac Sim checkpoint
 
 The `simulation` branch includes the offline DGX Spark simulator, bundled assets, configurations and tests under [`sim/pelagic/`](sim/pelagic/README.md). Start with [`sim/README.md`](sim/README.md) for the connected team mission, natural live-reef harvesting, same-fragment recovery, push testing and offline recording commands. The default recording uses an explicitly labelled pre-mapped perception demo; optional Gemini inference requires separate cloud opt-in.
