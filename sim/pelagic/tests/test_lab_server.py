@@ -2,13 +2,15 @@ import base64
 import hashlib
 import io
 import json
+from pathlib import Path
+import subprocess
 import threading
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from reefsim.lab_server import GeminiPolicy, LabError, MAX_BODY, MAX_IMAGE, MAX_TELEMETRY, make_server, validate_request
+from reefsim.lab_server import ArchitectureAdapters, GeminiPolicy, LabError, MAX_BODY, MAX_IMAGE, MAX_TELEMETRY, make_server, validate_request
 
 
 # An actual 2x2 RGB JPEG generated once for this fixture; no imaging dependency.
@@ -31,6 +33,24 @@ def provider_response(text='{"decision":"proceed","reason":"Pair eligibility che
 
 
 class GeminiPolicyTests(unittest.TestCase):
+    def test_declared_route_suggestion_with_camera_and_fusion(self):
+        reply_text = json.dumps({"decision": "proceed", "reason": "Fused sonar reports a rock ahead; use the declared clearance path.", "routeMode": "clearance"})
+        transport = Mock(return_value=provider_response(reply_text))
+        observation = {"route": {"alternatives": [{"id": "direct"}, {"id": "clearance"}]},
+                       "sensors": {"fusion": {"source": "synthetic", "hazards": ["rock-a"]}}}
+        result = GeminiPolicy(api_key="test", transport=transport).decide(decision_request(observation=observation, image=camera_image()))
+        self.assertEqual(result["routeMode"], "clearance")
+        payload = json.loads(transport.call_args.args[0].data)
+        self.assertEqual(payload["response_format"]["schema"]["properties"]["routeMode"]["enum"], ["direct", "clearance", None])
+        self.assertEqual(json.loads(payload["input"][0]["text"])["observation"], observation)
+
+    def test_rejects_undeclared_or_invalid_route_suggestion(self):
+        for route in ("clearance", "teleport", {}, True):
+            response = provider_response(json.dumps({"decision": "proceed", "reason": "Route request", "routeMode": route}))
+            with self.subTest(route=route), self.assertRaises(LabError) as caught:
+                GeminiPolicy(api_key="test", transport=Mock(return_value=response)).decide(decision_request())
+            self.assertEqual(caught.exception.status, 502)
+
     def test_robot_camera_and_sonar_are_real_multimodal_inputs(self):
         transport = Mock(return_value=provider_response())
         policy = GeminiPolicy(api_key="test-only", transport=transport)
@@ -88,6 +108,7 @@ class GeminiPolicyTests(unittest.TestCase):
         self.assertEqual(result["usage"], {"total_tokens": 120})
         self.assertIsNone(result["inputImageSha256"])
         self.assertEqual(result["inputMode"], "structured_telemetry")
+        self.assertIsNone(result["routeMode"])
         request = transport.call_args.args[0]
         self.assertEqual(request.full_url, "https://generativelanguage.googleapis.com/v1beta/interactions")
         self.assertNotIn("test-only-secret", request.full_url)
@@ -147,10 +168,111 @@ class GeminiPolicyTests(unittest.TestCase):
         self.assertEqual(caught.exception.status, 429)
 
 
+class ArchitectureAdapterTests(unittest.TestCase):
+    def test_telemetry_uplink_ring_receipts_and_no_model_calls(self):
+        transport = Mock()
+        adapters = ArchitectureAdapters(env={}, transport=transport)
+        for batch in range(61):
+            frames = [{"schema":"reef-rescue-telemetry/v1","time":batch+i/5,"phase":"transit"} for i in range(5)]
+            with patch("reefsim.lab_server.time.monotonic", return_value=batch+1):
+                reply = adapters.receive_telemetry({"streamId":"session-1","sequence":batch,"frames":frames})
+        self.assertEqual(reply["acceptedFrames"],5)
+        self.assertEqual(reply["totalFrames"],305)
+        self.assertEqual(reply["retainedFrames"],300)
+        with patch("reefsim.lab_server.time.monotonic", return_value=62):
+            self.assertEqual(adapters.telemetry_health()["lastReceivedAgeSeconds"],1)
+        transport.assert_not_called()
+
+    def test_telemetry_rejects_secrets_raw_images_replays_and_rate_excess(self):
+        adapters = ArchitectureAdapters(env={})
+        frame = {"schema":"reef-rescue-telemetry/v1","time":0}
+        packet = {"streamId":"s","sequence":0,"frames":[frame]}
+        for bad in ({**frame,"image":"raw"}, {**frame,"decision":{"apiKey":"secret"}}, {**frame,"time":float("nan")}):
+            with self.assertRaises(LabError) as error:
+                adapters.receive_telemetry({**packet,"frames":[bad]})
+            self.assertEqual(error.exception.status,400)
+        adapters.receive_telemetry(packet)
+        with self.assertRaises(LabError) as error:
+            adapters.receive_telemetry(packet)
+        self.assertEqual(error.exception.status,400)
+        with self.assertRaises(LabError) as error:
+            adapters.receive_telemetry({**packet,"sequence":1,"frames":[{**frame,"time":1}]})
+        self.assertEqual(error.exception.status,429)
+
+    def test_unconfigured_services_are_explicit_and_local_safety_independent(self):
+        adapters = ArchitectureAdapters(env={})
+        health = adapters.health()
+        self.assertFalse(health["localSafety"]["networkRequired"])
+        self.assertTrue(all(c["status"] == "unconfigured" for c in health["components"].values()))
+        with self.assertRaises(LabError) as error:
+            adapters.perceive({"id": "frame-1", "observation": {}, "image": camera_image()})
+        self.assertEqual(error.exception.status, 503)
+        with self.assertRaises(LabError) as error:
+            adapters.plan(decision_request())
+        self.assertEqual(error.exception.status, 503)
+
+    def test_gemma_actual_image_protocol_without_registry_health_leakage(self):
+        estimate = {"summary": "Pale branching target visible", "uncertainty": "Uncalibrated model estimate", "observations": [
+            {"id": "recipient-1", "health": "bleached_alive", "confidence": .8}]}
+        transport = Mock(return_value=io.BytesIO(json.dumps({"choices": [{"message": {"content": json.dumps(estimate)}}]}).encode()))
+        adapters = ArchitectureAdapters(env={"GEMMA_BASE_URL": "http://127.0.0.1:8000/v1", "GEMMA_DEPLOYMENT": "robot"}, transport=transport)
+        result = adapters.perceive({"id": "frame-1", "observation": {"phase": "inspect_recipient", "targetId": "recipient-1", "registryTruth": "SECRET_HEALTH_LABEL"}, "image": camera_image()})
+        request = transport.call_args.args[0]
+        self.assertEqual(request.full_url, "http://127.0.0.1:8000/v1/chat/completions")
+        payload = json.loads(request.data)
+        self.assertIn(JPEG_B64, payload["messages"][0]["content"][0]["image_url"]["url"])
+        self.assertNotIn("SECRET_HEALTH_LABEL", json.dumps(payload))
+        self.assertEqual(result["source"], "gemma")
+        self.assertEqual(result["frameTime"], 12.5)
+        self.assertEqual(result["observations"], estimate["observations"])
+        self.assertEqual(adapters.health()["components"]["gemma"]["status"], "verified_response")
+
+    def test_gemma_outage_or_invalid_estimate_never_looks_like_clear_scene(self):
+        for text in ('{}', '{"summary":"none","uncertainty":"none","observations":[]}', '{"summary":"x","uncertainty":"x","observations":[{"id":"other","health":"healthy","confidence":0.9}]}'):
+            transport = Mock(return_value=io.BytesIO(json.dumps({"choices": [{"message": {"content": text}}]}).encode()))
+            adapters = ArchitectureAdapters(env={"GEMMA_BASE_URL": "https://gemma.example/v1"}, transport=transport)
+            with self.assertRaises(LabError) as error:
+                adapters.perceive({"id":"f", "observation":{"phase":"inspect_donor","donorId":"donor-1"}, "image":camera_image()})
+            self.assertEqual(error.exception.status, 502)
+            self.assertEqual(adapters.status["gemma"], "error")
+
+    def test_argon_exact_model_low_thinking_and_no_cuopt_fabrication(self):
+        transport = Mock(return_value=provider_response())
+        argon = GeminiPolicy(api_key="test", model="gemini-4-argon", thinking_level="low", transport=transport)
+        adapters = ArchitectureAdapters(env={}, argon=argon)
+        result = adapters.plan(decision_request(observation={"time": 12.5}))
+        payload = json.loads(transport.call_args.args[0].data)
+        self.assertEqual(payload["model"], "gemini-4-argon")
+        self.assertEqual(payload["generation_config"]["thinking_level"], "low")
+        self.assertEqual(result["source"], "argon")
+        self.assertEqual(result["optimizer"]["source"], "not_configured")
+        self.assertTrue(result["localSafetyRequired"])
+
+    def test_bad_timestamp_and_route_fail_before_billed_request(self):
+        transport = Mock()
+        adapters = ArchitectureAdapters(env={}, argon=GeminiPolicy(api_key="test", transport=transport))
+        for observation in ({}, {"time":True}, {"time": 1,"route":[]}, {"time": 1,"route":{"alternatives":{}}}):
+            with self.assertRaises(LabError) as error:
+                adapters.plan(decision_request(observation=observation))
+            self.assertEqual(error.exception.status, 400)
+        transport.assert_not_called()
+
+    def test_declared_cuopt_gateway_result_forwarded_as_evidence(self):
+        optimizer = {"id":"decision-1","source":"cuopt","routeMode":"direct","costs":{"direct":2},"status":"solved"}
+        gateway = Mock(return_value=io.BytesIO(json.dumps(optimizer).encode()))
+        argon_transport = Mock(return_value=provider_response())
+        adapters = ArchitectureAdapters(env={"CUOPT_ADAPTER_URL":"https://cuopt.example/solve"}, transport=gateway,
+            argon=GeminiPolicy(api_key="test", model="gemini-4-argon", transport=argon_transport))
+        result = adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":"direct","points":[[0,0,0],[1,0,0]]}]}}))
+        self.assertEqual(result["optimizer"]["source"], "cuopt")
+        self.assertEqual(adapters.status["cuopt"], "verified_response")
+        self.assertIn('"optimizer"', json.loads(argon_transport.call_args.args[0].data)["input"][0]["text"])
+
+
 class LabHTTPTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.server = make_server(port=0, policy=GeminiPolicy(api_key=""))
+        cls.server = make_server(port=0, policy=GeminiPolicy(api_key=""), architecture=ArchitectureAdapters(env={}))
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
         cls.url = f"http://127.0.0.1:{cls.server.server_port}"
@@ -166,6 +288,8 @@ class LabHTTPTests(unittest.TestCase):
                                {"Content-Type": "application/json", **headers}))
 
     def test_health_and_static_assets(self):
+        with urlopen(self.url + "/api/lab/architecture") as response:
+            self.assertEqual(json.load(response)["components"]["gemma"]["status"], "unconfigured")
         with urlopen(self.url + "/api/lab/health") as response:
             health = json.load(response)
             self.assertFalse(health["geminiConfigured"])
@@ -175,6 +299,33 @@ class LabHTTPTests(unittest.TestCase):
             response.read()
         with urlopen(self.url + "/assets/LICENSES.md") as response:
             self.assertTrue(response.read())
+
+    def test_actual_engine_recorder_batch_crosses_http_contract(self):
+        script = """
+import {ReefLab} from './web/lab/simulation.mjs';
+import {TelemetryRecorder} from './web/lab/telemetry.mjs';
+const sim=new ReefLab(), recorder=new TelemetryRecorder();sim.command({action:'run'});
+for(let i=0;i<4;i++){sim.step(.2);recorder.sample(sim.snapshot());}
+process.stdout.write(JSON.stringify({streamId:'node-contract-test',sequence:0,frames:recorder.frames}));
+"""
+        result = subprocess.run(["node", "--input-type=module", "-e", script], cwd=Path(__file__).resolve().parent.parent,
+                                check=True, capture_output=True, text=True)
+        body = result.stdout.encode()
+        self.assertLess(len(body),65536)
+        frame = json.loads(body)["frames"][0]
+        self.assertIn("registryGroundTruth",frame)
+        self.assertIn("syntheticInspection",frame)
+        self.assertIn("simulationParameters",frame)
+        self.assertIn("regions",frame)
+        self.assertIsInstance(frame["regions"],list)
+        self.assertEqual(frame["numericPrecisionDecimals"],6)
+        with urlopen(Request(self.url+"/api/lab/telemetry",body,{"Content-Type":"application/json"})) as response:
+            receipt=json.load(response)
+        self.assertEqual(receipt["acceptedFrames"],4)
+        self.assertEqual(receipt["sequence"],0)
+        with urlopen(self.url+"/api/lab/architecture") as response:
+            health=json.load(response)
+        self.assertEqual(health["telemetry"]["receivedFrames"],4)
 
     def test_credential_error_is_explicit(self):
         with self.assertRaises(HTTPError) as caught:

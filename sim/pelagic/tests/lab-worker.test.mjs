@@ -108,3 +108,50 @@ test('camera allowance does not expand the structured telemetry limit', async ()
   const response = await worker.fetch(request({...body, image, observation: {large: 'x'.repeat(32768)}}));
   assert.equal(response.status, 400);
 });
+
+test('declared routeMode uses supplied multimodal fusion evidence', async () => {
+  const observation = {route: {alternatives: [{id: 'direct'}, {id: 'clearance'}]}, sensors: {fusion: {source: 'synthetic', hazards: ['rock-a']}}};
+  const worker = createWorker({transport: async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    assert.deepEqual(payload.response_format.schema.properties.routeMode.enum, ['direct', 'clearance', null]);
+    assert.deepEqual(JSON.parse(payload.input[0].text).observation, observation);
+    assert.equal(payload.input[1].type, 'image');
+    return Response.json({status: 'completed', output_text: JSON.stringify({decision: 'proceed', reason: 'Rock-a is on the direct path; use declared clearance route.', routeMode: 'clearance'})});
+  }});
+  const response = await worker.fetch(request({...body, observation, image}), {GEMINI_API_KEY: 'test-only'});
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).routeMode, 'clearance');
+});
+
+test('undeclared or invalid routeMode never becomes an applied decision', async () => {
+  for (const routeMode of ['clearance', 'teleport', {}, true]) {
+    const worker = createWorker({transport: async () => Response.json({status: 'completed', output_text: JSON.stringify({decision: 'proceed', reason: 'Invalid route', routeMode})})});
+    assert.equal((await worker.fetch(request(), {GEMINI_API_KEY: 'test-only'})).status, 502);
+  }
+});
+
+test('architecture is explicit unconfigured without a backend gateway', async () => {
+  const worker = createWorker();
+  const health = await (await worker.fetch(new Request('https://reef.example/api/lab/architecture'))).json();
+  assert.equal(health.components.gemma.status, 'unconfigured');
+  assert.equal(health.components.argon.model, 'gemini-4-argon');
+  assert.equal(health.localSafety.networkRequired, false);
+  const response = await worker.fetch(new Request('https://reef.example/api/lab/plan', {method:'POST',headers:{'content-type':'application/json'},body:'{}'}));
+  assert.equal(response.status, 503);
+});
+
+test('architecture proxy uses fixed configured gateway and rejects unsafe origin', async () => {
+  let calls = 0;
+  const worker = createWorker({transport: async (url, options) => {
+    calls++;
+    assert.equal(url, 'https://gateway.example/api/lab/plan');
+    assert.equal(options.headers.authorization, 'Bearer gateway-test-only');
+    assert.equal(options.redirect, 'error');
+    return Response.json({id:'d-1',source:'argon',decision:'proceed',model:'gemini-4-argon'});
+  }});
+  const env = {LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'gateway-test-only'};
+  const requestPlan = origin => new Request('https://reef.example/api/lab/plan', {method:'POST',headers:{'content-type':'application/json',origin},body:'{}'});
+  assert.equal((await worker.fetch(requestPlan('https://reef.example'), env)).status,200);
+  assert.equal((await worker.fetch(requestPlan('https://attacker.example'), env)).status,403);
+  assert.equal(calls,1);
+});

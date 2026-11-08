@@ -1,3 +1,4 @@
+import {reefRegions,reefRegionAt} from './habitat-regions.mjs';
 import {generateHabitat,generateHabitatRocks} from './habitat.mjs';
 import {terrainHeight,coralHeight,coralContactPoint} from './terrain.mjs';
 /** PELAGIC browser experiment. Z-up metres, seconds, newtons.
@@ -41,20 +42,29 @@ function obstacle(input) {
   return {id:input.id,position,radius:finite(input.radius??0.5,0.1,2,'Obstacle radius')};
 }
 export function defaultScene(seed=42) {
-  const rand=rng(seed), colonies=[];
+  const rand=rng(seed),colonies=[],regions=reefRegions(seed),healthy=regions.filter(r=>r.kind==='healthy'),bleached=regions.filter(r=>r.kind==='bleached_alive');
+  const sample=(region,inner=.45,minGap=1.05)=>{
+    for(let attempt=0;attempt<500;attempt++){
+      const extent=inner+(attempt>=80?.18:0)+(attempt>=180?.17:0);
+      const angle=rand()*Math.PI*2,radius=region.radius*extent*Math.sqrt(rand()),p=[region.center[0]+Math.cos(angle)*radius,region.center[1]+Math.sin(angle)*radius,0];
+      if(Math.abs(p[0])>10||Math.abs(p[1])>10)continue;
+      if(inner<.5&&reefRegionAt(p[0],p[1],seed).kind!==region.kind)continue;
+      if(colonies.every(c=>Math.hypot(c.position[0]-p[0],c.position[1]-p[1])>(c.genet?Math.max(minGap,1.45):minGap)))return p;
+    }
+    throw new Error('Unable to sample a non-overlapping reef layout for this seed');
+  };
   for(let i=0;i<4;i++) {
-    colonies.push(colony({id:`donor-${i+1}`,position:[-3.2+i*1.85,-2.2,0],health:'healthy',genet:`G${i+1}`,radius:0.48,height:0.75}));
-    colonies.push(colony({id:`recipient-${i+1}`,position:[-3+i*1.85,2,0],health:'bleached_alive',genet:`G${i+1}`,radius:0.48,height:0.72}));
+    const donorRegion=healthy[i%healthy.length],targetRegion=bleached[(i+1)%bleached.length];
+    colonies.push(colony({id:`donor-${i+1}`,position:sample(donorRegion),health:'healthy',genet:`G${i+1}`,radius:.43+rand()*.1,height:.68+rand()*.15}));
+    colonies.push(colony({id:`recipient-${i+1}`,position:sample(targetRegion),health:'bleached_alive',genet:`G${i+1}`,radius:.43+rand()*.1,height:.65+rand()*.15}));
   }
-  for(let i=0;i<64;i++) {
-    const a=rand()*Math.PI*2,r=4.7+rand()*4.3;
-    colonies.push(colony({id:`reef-${i+1}`,position:[Math.cos(a)*r,Math.sin(a)*r,0],health:i%5===0?'dead':i%4===0?'bleached_alive':'healthy',genet:'',radius:.3+rand()*.45,height:.35+rand()*.65,morphology:i%3===0?'plate':i%4===0?'boulder':'branching'}));
+  for(let i=0;i<76;i++) {
+    const region=regions[Math.floor(rand()*regions.length)],p=sample(region,1.2,.52),mix=reefRegionAt(p[0],p[1],seed).healthMix,value=rand();
+    const health=value<mix.healthy?'healthy':value<mix.healthy+mix.bleached_alive?'bleached_alive':'dead';
+    colonies.push(colony({id:`reef-${i+1}`,position:p,health,genet:'',radius:.23+rand()*.25,height:.32+rand()*.55,morphology:i%4===0?'plate':i%5===0?'boulder':'branching'}));
   }
-  for(let i=0;i<12;i++) {
-    const x=-3+(i%4)*2,y=[-.7,.35,1.05][Math.floor(i/4)];
-    colonies.push(colony({id:`habitat-${i+1}`,position:[x,y,0],health:i%5===0?'dead':'healthy',genet:'',radius:.23+rand()*.12,height:.3+rand()*.18,morphology:i%3===0?'plate':'branching'}));
-  }
-  return {version:1,seed,water:{current:.08,visibility:8},missionGoal:4,colonies,obstacles:[{id:'rock-1',position:[-1,0,0],radius:.45},{id:'rock-2',position:[3.8,.4,0],radius:.55}]};
+  const obstacles=[{id:'rock-1',position:[-1,.3,0],radius:.45},{id:'rock-2',position:[2.1,.7,0],radius:.55}];
+  return {version:1,seed,water:{current:.08,visibility:8},missionGoal:4,colonies,obstacles};
 }
 function validateScene(input) {
   if (!input || typeof input!=='object' || Array.isArray(input)) throw new Error('Scene must be an object');
@@ -72,15 +82,16 @@ function validateScene(input) {
 export class ReefLab {
   constructor(config={}) {
     this.scene=validateScene(config.colonies?config:{...defaultScene(config.seed??42),...config,water:{...defaultScene().water,...config.water}});
-    this.controller=config.controller==='gemini'?'gemini':'scripted';
+    this.controller=['gemini','base_station'].includes(config.controller)?config.controller:'scripted';
     this.reset();
   }
   reset() {
-    this.random=rng(this.scene.seed);this.time=0;this.accumulator=0;this.running=false;this.completed=false;this.phase='idle';this.phaseTime=0;this.phaseElapsed=0;this.status='Ready to begin';this.nominalStatus=this.status;this.lastCollision=-10;this.holdTarget=null;this.water=clone(this.scene.water);this.colonies=clone(this.scene.colonies);this.obstacles=clone(this.scene.obstacles);this.events=[];this.pendingDecision=null;this.decision=null;this.decisionCounter=0;this.faults=[];this.surgeUntil=0;this.dropoutUntil=0;this.environmentHold=0;this.restoreCurrent=null;this.donorId=null;this.targetId=null;this.fragmentId=null;this.assisted=new Set();this.retries=0;
+    this.random=rng(this.scene.seed);this.time=0;this.accumulator=0;this.running=false;this.completed=false;this.phase='idle';this.phaseTime=0;this.phaseElapsed=0;this.status='Ready to begin';this.nominalStatus=this.status;this.lastCollision=-10;this.holdTarget=null;this.water=clone(this.scene.water);this.colonies=clone(this.scene.colonies);this.obstacles=clone(this.scene.obstacles);this.events=[];this.pendingDecision=null;this.decision=null;this.decisionCounter=0;this.faults=[];this.surgeUntil=0;this.surgeStarted=null;this.dropoutUntil=0;this.environmentHold=0;this.restoreCurrent=null;this.donorId=null;this.targetId=null;this.fragmentId=null;this.assisted=new Set();this.retries=0;
     this.metrics={placed:0,attempts:0,drops:0,recoveries:0,rejectedCuts:0,placementRetries:0,distance:0,energy:0,damage:0,collisions:0,decisionCount:0,wildlifeAvoidances:0,habitatAvoidances:0};
-    this.robot={position:[-4,-4,2],velocity:[0,0,0],target:[-4,-4,2],gripper:[-4,-4,1.35],yaw:0,holding:null,gripperOpen:1};
-    this.habitat=[...generateHabitat(this.colonies),...generateHabitatRocks(this.colonies)];this.habitatIndex=new Map();for(const c of this.habitat){const key=`${Math.floor(c.position[0]/4)},${Math.floor(c.position[1]/4)}`;if(!this.habitatIndex.has(key))this.habitatIndex.set(key,[]);this.habitatIndex.get(key).push(c);}
-    this.route={mode:this.scene.routeMode,goal:clone(this.robot.target),waypoints:[clone(this.robot.target)],index:0,alternatives:[]};this.wildlifeYield=false;this.wildlife=[];this._updateWildlife(0);this.fragments=[];
+    this.regions=reefRegions(this.scene.seed);this.intelligence={architecture:'Gemma perception → telemetry → Argon reasoning / optional cuOpt route proposal → local safety controller',hardwareValidated:false,perceptionMaxAgeSeconds:120,planMaxAgeSeconds:45,onboard:{status:'not_received',reason:'No external Gemma inference has been received.',observations:[],lastPacket:null},baseStation:{status:'not_received',reason:'No external base-station plan has been received.',plan:null,localValidation:null}};this.externalRequestIds=new Set();this.uvObservations=[];this.perceptionReason='Awaiting range-gated UV inspection; lineage is registry data.';this.grip={source:'Reduced hydrodynamic load proxy',loadN:0,dragN:0,inertialN:0,thresholdN:5,areaM2:.002,fragmentMassKg:.018,lastLoss:null};this.sonarCache=null;this.sonarCacheKey=null;this.pilot={mode:'autonomous',command:{forward:0,right:0,vertical:0,yaw:0},lastInputTime:null,watchdogSeconds:2,expired:false};this.forces={thrust:[0,0,0],drag:[0,0,0],buoyancy:[0,0,.15],net:[0,0,0]};
+    this.robot={position:[-4,-4,Math.max(2,terrainHeight(-4,-4)+.9)],velocity:[0,0,0],target:[-4,-4,2],gripper:[-4,-4,1.35],yaw:0,holding:null,gripperOpen:1};
+    this.habitat=[...generateHabitat(this.colonies,this.scene.seed),...generateHabitatRocks(this.colonies,this.scene.seed)];this.habitatIndex=new Map();for(const c of this.habitat){const key=`${Math.floor(c.position[0]/4)},${Math.floor(c.position[1]/4)}`;if(!this.habitatIndex.has(key))this.habitatIndex.set(key,[]);this.habitatIndex.get(key).push(c);}
+    this.route={mode:this.scene.routeMode,goal:clone(this.robot.target),waypoints:[clone(this.robot.target)],index:0,alternatives:[]};this.wildlifeYield=false;this.wildlife=[];this._updateWildlife(0);this.robot.target=clone(this.robot.position);this.robot.gripper=add(this.robot.position,[0,0,-.65]);this.fragments=[];
     for(const c of this.colonies.filter(c=>c.health==='healthy'&&c.genet)) for(let i=0;i<2;i++) this.fragments.push({id:`${c.id}-fragment-${i+1}`,donorId:c.id,position:add(this._top(c),[.05*(i?1:-1),0,0]),velocity:[0,0,0],state:'attached',quality:1,targetId:null});
     this._event('info','Scene ready. Known lineage gates donor–recipient compatibility.');
     return this.snapshot();
@@ -99,7 +110,7 @@ export class ReefLab {
     const direct=[start,goal];
     const cruise=Math.max(start[2],goal[2],...[...this.colonies,...this.habitat].filter(c=>Math.abs(c.position[0]-goal[0])<2).map(c=>c.position[2]+(c.species==='habitat'?c.height:coralHeight(c))+.85));
     if(horizontal>1.5)direct.splice(1,0,[start[0],start[1],cruise],[goal[0],goal[1],cruise]);
-    const side=goal[0]<0?-4.2:4.2;
+    const side=goal[0]<0?-7:7;
     const clear=horizontal>1.5?[start,[start[0],start[1],cruise+.35],[side,start[1],cruise+.35],[side,goal[1],cruise+.35],[goal[0],goal[1],cruise+.35],goal]:[start,goal];
     const mode=this.route?.mode??this.scene.routeMode;
     this.route={mode,goal:clone(goal),waypoints:clone((mode==='clearance'?clear:direct).slice(1)),index:0,alternatives:[{id:'direct',label:'Direct over-reef transit',points:direct},{id:'clearance',label:'Wide corridor · elevated clearance',points:clear}]};
@@ -109,15 +120,119 @@ export class ReefLab {
     if(this.route.index<this.route.waypoints.length-1&&norm(sub(this.robot.position,this.robot.target))<.28){this.route.index++;this.robot.target=clone(this.route.waypoints[this.route.index]);}
     else if(this.route.index===this.route.waypoints.length-1)this.robot.target=clone(this.route.goal);
   }
+  _currentAt(position) {
+    const [x,y,z]=position,phase=(this.scene.seed%97)*.071;
+    const speed=this.water.current*(.94+.12*Math.sin(this.time*.23+x*.31+y*.17+phase)+.05*Math.sin(z*.8+this.time*.41));
+    const angle=.18*Math.sin(this.time*.045+phase)+.08*Math.sin(y*.3+this.time*.12);
+    const age=this.surgeStarted===null?-1:this.time-this.surgeStarted;
+    // Operator-injected four-second cross-current wave, peak3.2m/s; engineering stress proxy.
+    const wave=age>=0&&age<=4?3.2*Math.exp(-(((age-1.2)/.4)**2)):0;
+    return [speed*Math.cos(angle),speed*Math.sin(angle)-wave,this.water.current*.035*Math.sin(x*.4+y*.3+this.time*.16)];
+  }
+  _currentSamples() {
+    const samples=[];for(let x=-8;x<=8;x+=4)for(let y=-8;y<=8;y+=4){const position=[x,y,terrainHeight(x,y)+1.2];samples.push({position,vector:this._currentAt(position)});}return samples;
+  }
+  _externalHealth(id,expectedHealth) {
+    const result=this.intelligence.onboard.observations.find(o=>o.id===id);
+    if(!result)return {ready:false,reason:`Awaiting external Gemma observation for ${id}.`};
+    if(this.time-result.frameTime>this.intelligence.perceptionMaxAgeSeconds)return {ready:false,reason:`Gemma observation for ${id} is stale; a fresh frame is required.`};
+    if(result.health!==expectedHealth||result.confidence<.7)return {ready:false,reason:`Gemma ${id}: ${result.health}, confidence ${result.confidence.toFixed(2)}; conservative inspection gate requires ${expectedHealth} at ≥0.70.`};
+    return {ready:true,reason:'Fresh external health estimate passed the engineering gate; registry lineage remains independent.'};
+  }
+  _ingestPerception(packet) {
+    if(!packet||typeof packet!=='object'||packet.source!=='gemma')throw new Error('Perception packet must identify source gemma');
+    const requestId=packet.requestId??packet.id;if(typeof requestId!=='string'||!requestId||requestId.length>160)throw new Error('Perception needs a bounded requestId');
+    if(this.externalRequestIds.has(`perception:${requestId}`))throw new Error('Perception request was already ingested');
+    const frameTime=finite(packet.frameTime,0,this.time+.1,'Perception frame time');
+    if(this.time-frameTime>this.intelligence.perceptionMaxAgeSeconds)throw new Error('Perception frame is stale');
+    for(const field of ['model','provider'])if(typeof packet[field]!=='string'||!packet[field]||packet[field].length>160)throw new Error(`Perception ${field} provenance is required`);
+    if(!Array.isArray(packet.observations)||!packet.observations.length||packet.observations.length>8)throw new Error('Perception needs one to eight observations');
+    const seen=new Set();const observations=packet.observations.map(o=>{
+      if(!o||!this.colonies.some(c=>c.id===o.id)||![this.donorId,this.targetId].includes(o.id))throw new Error('Perception ID must refer to the active registered pair');
+      if(seen.has(o.id))throw new Error('Duplicate perception observation');seen.add(o.id);
+      if(!['healthy','bleached_alive','dead','unknown'].includes(o.health))throw new Error('Unknown external health estimate');
+      const confidence=finite(o.confidence,0,1,'Perception confidence');
+      const previous=this.intelligence.onboard.observations.find(old=>old.id===o.id);if(previous&&frameTime<previous.frameTime)throw new Error('Out-of-order perception frame');
+      return {id:o.id,health:o.health,confidence,frameTime,receivedTime:this.time,requestId,source:'gemma',model:packet.model,provider:packet.provider,genotypeInferred:false,confidenceCalibration:'Uncalibrated provider score; 0.70 is an engineering demo gate'};
+    });
+    this.externalRequestIds.add(`perception:${requestId}`);
+    const old=this.intelligence.onboard.observations.filter(o=>!seen.has(o.id));
+    this.intelligence.onboard={status:'received',reason:'External model estimates stored separately from scenario registry ground truth.',observations:[...old,...observations].slice(-24),lastPacket:{requestId,frameTime,receivedTime:this.time,source:'gemma',provider:packet.provider,model:packet.model,deployment:typeof packet.deployment==='string'?packet.deployment.slice(0,160):'unspecified',summary:typeof packet.summary==='string'?packet.summary.slice(0,600):'',inputImageSha256:typeof packet.inputImageSha256==='string'?packet.inputImageSha256.slice(0,128):null,latencyMs:typeof packet.latencyMs==='number'&&Number.isFinite(packet.latencyMs)?packet.latencyMs:null}};
+    this._event('perception',`Received external Gemma estimates for ${observations.map(o=>o.id).join(', ')}; no registry fields changed.`);
+  }
+  _routeClearance(mode) {
+    const option=this.route.alternatives.find(r=>r.id===mode);if(!option)return {safe:false,reason:'Route is not a declared local alternative'};
+    let minBedClearance=Infinity,needsLocalReplan=false;
+    for(let i=1;i<option.points.length;i++){
+      const a=option.points[i-1],b=option.points[i],steps=Math.max(1,Math.ceil(norm(sub(b,a))/.3));
+      for(let j=0;j<=steps;j++){const p=a.map((v,k)=>v+(b[k]-v)*j/steps);if(Math.abs(p[0])>12||Math.abs(p[1])>12||p[2]>8)return {safe:false,reason:'Route leaves the local workspace'};const gap=p[2]-terrainHeight(...p);minBedClearance=Math.min(minBedClearance,gap);if(gap<.7-.001)needsLocalReplan=true;}
+    }
+    return {safe:true,needsLocalReplan,minBedClearance,reason:'Bounded route accepted; local terrain, habitat and wildlife reflexes remain authoritative.',guard:'Local closed-loop thrust and nonpenetration controller; external coordinates are never executed'};
+  }
+  _ingestPlan(packet) {
+    if(!packet||typeof packet!=='object'||packet.source!=='argon')throw new Error('Plan packet must identify source argon');
+    if(packet.waypoints!==undefined||packet.path!==undefined)throw new Error('Only declared local route alternatives may be proposed; external coordinates are not executable');
+    const requestId=packet.requestId??packet.id;
+    if(!this.pendingDecision||requestId!==this.pendingDecision.id)throw new Error('Plan does not match the pending local decision');
+    if(this.externalRequestIds.has(`plan:${requestId}`))throw new Error('Plan request was already ingested');
+    const frameTime=finite(packet.frameTime,0,this.time+.1,'Plan frame time');if(this.time-frameTime>this.intelligence.planMaxAgeSeconds)throw new Error('Base-station plan is stale');
+    if(!this.pendingDecision.allowedActions.includes(packet.decision))throw new Error('Base-station decision is not locally allowed');
+    const routeMode=packet.routeMode??null;if(routeMode!==null&&!['direct','clearance'].includes(routeMode))throw new Error('Unknown base-station route');
+    for(const field of ['model','provider'])if(typeof packet[field]!=='string'||!packet[field]||packet[field].length>160)throw new Error(`Plan ${field} provenance is required`);
+    const localValidation=routeMode?this._routeClearance(routeMode):{safe:true,needsLocalReplan:false,reason:'No external route override; local route retained.'};
+    if(!localValidation.safe)throw new Error(localValidation.reason);
+    if(typeof packet.reason!=='string'||packet.reason.length>1600)throw new Error('Plan reason must be bounded text');
+    const optimizer=packet.optimizer&&['cuopt','not_configured'].includes(packet.optimizer.source)?{source:packet.optimizer.source,model:typeof packet.optimizer.model==='string'?packet.optimizer.model.slice(0,160):null,requestId:typeof packet.optimizer.requestId==='string'?packet.optimizer.requestId.slice(0,160):null,latencyMs:typeof packet.optimizer.latencyMs==='number'&&Number.isFinite(packet.optimizer.latencyMs)?packet.optimizer.latencyMs:null}:null;
+    this.intelligence.baseStation={status:'received',reason:'External plan passed local bounds; registry and perception gates still apply.',localValidation,plan:{requestId,frameTime,receivedTime:this.time,source:'argon',provider:packet.provider,model:packet.model,decision:packet.decision,reason:packet.reason,routeMode,optimizer}};
+    this.externalRequestIds.add(`plan:${requestId}`);this._event('plan','Argon proposal received; external planner cannot bypass local eligibility or reflexes.');
+  }
+  _registryTruth() {
+    return {source:'scenario_registry_ground_truth',notModelOutput:true,genotypeSource:'Explicit scenario registry; never inferred from fluorescence or image colour',pair:[this._donor(),this._recipient()].filter(Boolean).map(c=>({id:c.id,health:c.health,species:c.species,genet:c.genet}))};
+  }
+  _recordInspection(dt) {
+    const id=this.phase==='inspect_recipient'?this.targetId:this.phase==='inspect_donor'?this.donorId:null;
+    if(!id)return true;const c=this.colonies.find(c=>c.id===id),point=this._top(c),origin=this.robot.gripper,v=sub(point,origin),distance=norm(v);
+    const occluded=this.obstacles.some(o=>{const centre=add(o.position,[0,0,o.radius*.5]),w=sub(centre,origin),u=v.reduce((a,x,i)=>a+x*w[i],0)/Math.max(.0001,distance**2);return u>.05&&u<.95&&norm(sub(add(origin,scale(v,u)),centre))<o.radius*.75;});
+    const valid=distance<=1.6&&distance<=this.water.visibility&&this.water.visibility>=1.5&&this.time>=this.dropoutUntil&&!occluded&&!this.wildlifeYield;
+    let observation=this.uvObservations.find(o=>o.id===id);
+    if(!observation){observation={id,health:c.health,species:c.species,registryGenet:c.genet||null,uvMarker:null,score:0,exposureSeconds:0,source:'synthetic_camera_uv',rangeM:distance};this.uvObservations.push(observation);}
+    observation.rangeM=distance;
+    if(valid){observation.exposureSeconds=Math.min(1.2,observation.exposureSeconds+dt);observation.score=clamp((1-distance/Math.max(this.water.visibility,1.5))*.95,0,.95);if(observation.exposureSeconds>=1.2)observation.uvMarker=c.health==='dead'?'no_living_marker':`scenario-marker-${c.genet||'unregistered'}`;}
+    this.perceptionReason=valid?'Accumulating synthetic UV exposure at measured range; genotype remains known registry data.':occluded?'Inspection held: rock occludes the synthetic UV view.':'Inspection held: outside sensing range, low visibility or wildlife exclusion.';
+    if(this.controller==='base_station'&&valid&&observation.exposureSeconds>=1.2){const gate=this._externalHealth(id,this.phase==='inspect_donor'?'healthy':'bleached_alive');this.intelligence.onboard.status=gate.ready?'approved':'waiting';this.intelligence.onboard.reason=gate.reason;if(!gate.ready){this.status=gate.reason;return false;}this.status=this.nominalStatus;}
+    return valid&&observation.exposureSeconds>=1.2;
+  }
+  _perception() {
+    const targetId=this.phase==='inspect_donor'?this.donorId:this.phase==='inspect_recipient'?this.targetId:null;
+    const active=this.uvObservations.find(o=>o.id===targetId),target=this._recipient();
+    return {source:'synthetic_camera_uv',stage:this.phase,targetId,exposure:active?clamp(active.exposureSeconds/1.2,0,1):0,requiredExposureSeconds:1.2,observations:this.uvObservations.map(o=>({...o,exposure:clamp(o.exposureSeconds/1.2,0,1)})),candidateComparison:target?this.colonies.filter(c=>c.health==='healthy').slice(0,12).map(c=>({donorId:c.id,targetId:target.id,eligible:!!this._compatible(c,target)&&this.fragments.some(f=>f.donorId===c.id&&f.state==='attached'),reason:!c.genet?'Unknown registered lineage':!this._compatible(c,target)?'Registered species or lineage mismatch':!this.fragments.some(f=>f.donorId===c.id&&f.state==='attached')?'No attached donor stock':'Known matching species and lineage; available donor stock'})):[],reason:this.perceptionReason};
+  }
+  _checkGrip() {
+    const f=this._fragment();if(!f||f.state!=='carried'||this.robot.holding!==f.id){this.grip.loadN=0;this.grip.dragN=0;this.grip.inertialN=0;return;}
+    const relative=sub(this._currentAt(this.robot.gripper),this.robot.velocity);
+    this.grip.dragN=.5*1025*1.15*this.grip.areaM2*norm(relative)**2;
+    this.grip.inertialN=this.grip.fragmentMassKg*norm(this.forces.net)/18;
+    this.grip.loadN=this.grip.dragN+this.grip.inertialN;
+    if(this.grip.loadN>this.grip.thresholdN){this.grip.lastLoss={time:this.time,fragmentId:f.id,loadN:this.grip.loadN,thresholdN:this.grip.thresholdN};this._event('fault',`Hydrodynamic grip load ${this.grip.loadN.toFixed(2)}N exceeded ${this.grip.thresholdN.toFixed(1)}N proxy capacity.`);this._drop();}
+  }
+  _fusion() {
+    const sonar=this._sonar(),opticalAvailable=this.time>=this.dropoutUntil&&this.water.visibility>=1.5;
+    const contacts=sonar.contacts.slice(0,32).map(c=>{const registry=this.colonies.find(x=>x.id===c.id);const optical=opticalAvailable&&registry&&c.distance<this.water.visibility;
+      return {id:c.id,type:c.type,position:c.position,distance:c.distance,confidence:optical?clamp(.96-c.distance/this.water.visibility*.22,.5,.96):.68,sources:optical?['synthetic_geometric_sonar','synthetic_optical_registry']:['synthetic_geometric_sonar'],classification:optical?{health:registry.health,species:registry.species,knownGenet:registry.genet||null}:null};});
+    return {source:'Synthetic geometric sensor fusion; no learned perception or acoustic calibration',time:sonar.time,opticalAvailable,confidence:contacts.length?contacts.reduce((n,c)=>n+c.confidence,0)/contacts.length:0,contacts,controllerSource:this.decision?.source??'none',controllerDecisionId:this.decision?.id??null};
+  }
   _updateWildlife(dt) {
     const t=this.time,previous=new Map(this.wildlife.map(a=>[a.id,a.position]));
-    const animals=[];
+    const animals=[],seedPhase=(this.scene.seed%47)*.19;
     for(let i=0;i<8;i++){
-      const phase=t*.13+i*.65,x=3.7*Math.sin(phase)+.18*(i%3),y=2.7*Math.cos(phase*.79)+.12*(i%2),z=terrainHeight(x,y)+1.05+.15*Math.sin(phase*1.7);
-      animals.push({id:`fish-${i+1}`,type:'fish',position:[x,y,z],radius:.1});
+      const group=Math.floor(i/3),phase=seedPhase+group*2.2,school=i<6;
+      const x=(school?3.1:4.2)*Math.sin(t*(school?.12:.087)+phase)+(school?.22*(i%3):.35*Math.sin(t*.21+phase));
+      const y=2.45*Math.cos(t*(school?.095:.113)+phase*.7)+.22*Math.sin(t*.31+i);
+      const z=terrainHeight(x,y)+1.15+.16*Math.sin(t*.22+phase+i*.3);
+      animals.push({id:`fish-${i+1}`,type:'fish',schoolId:school?`school-${group+1}`:null,behavior:school?'coherent seeded school trajectory':'individual seeded wander',position:[x,y,z],radius:.1});
     }
-    for(let i=0;i<3;i++) {const x=-2.5+i*2+.45*Math.sin(t*.06+i),y=.2+.7*Math.cos(t*.045+i);animals.push({id:`crab-${i+1}`,type:'crab',position:[x,y,terrainHeight(x,y)+.07],radius:.16});}
-    const x=4*Math.sin(t*.055-.9),y=.45*Math.sin(t*.07);animals.push({id:'turtle-1',type:'turtle',position:[x,y,terrainHeight(x,y)+1.65],radius:.42});
+    for(let i=0;i<3;i++) {const p=seedPhase+i*1.8,x=-2.5+i*2+.6*Math.sin(t*.053+p)+.18*Math.sin(t*.137+p),y=.2+.65*Math.cos(t*.041+p)+.2*Math.sin(t*.113+p);animals.push({id:`crab-${i+1}`,type:'crab',behavior:'seeded seabed wander',position:[x,y,terrainHeight(x,y)+.07],radius:.16});}
+    const x=4*Math.sin(t*.055-.9+seedPhase*.2),y=.65*Math.sin(t*.071+seedPhase);animals.push({id:'turtle-1',type:'turtle',behavior:'seeded broad transit',position:[x,y,terrainHeight(x,y)+1.65],radius:.42});
     this.wildlife=animals.map(a=>({...a,velocity:dt&&previous.has(a.id)?scale(sub(a.position,previous.get(a.id)),1/dt):[0,0,0]}));
   }
   _nearHabitat(radius) {
@@ -126,12 +241,13 @@ export class ReefLab {
     return result;
   }
   _sonar() {
-    const range=6,origin=this.robot.position;
+    const range=6,origin=this.robot.position,key=Math.floor(this.time*5+1e-6);
+    if(this.sonarCache&&this.sonarCacheKey===key&&(this.time!==this.sonarCache.time||norm(sub(origin,this.sonarCacheOrigin))<1e-8))return clone(this.sonarCache);
     const sources=[...this.obstacles.map(o=>({...o,type:'rock',position:add(o.position,[0,0,o.radius*.5])})),...this.colonies.map(c=>({...c,type:'coral',position:add(c.position,[0,0,coralHeight(c)*.5])})),...this._nearHabitat(range).map(c=>({...c,type:'habitat',position:add(c.position,[0,0,c.height*.5])})),...this.wildlife];
     const contacts=sources.map(o=>{const delta=sub(o.position,origin),distance=norm(delta);return {...o,distance,bearing:Math.atan2(Math.sin(Math.atan2(delta[1],delta[0])-this.robot.yaw),Math.cos(Math.atan2(delta[1],delta[0])-this.robot.yaw))};}).filter(o=>o.distance<=range).filter(o=>!this.obstacles.some(rock=>{
       if(rock.id===o.id)return false;const centre=add(rock.position,[0,0,rock.radius*.5]),v=sub(o.position,origin),w=sub(centre,origin),u=v.reduce((a,x,i)=>a+x*w[i],0)/Math.max(.0001,o.distance**2);return u>.03&&u<.95&&norm(sub(add(origin,scale(v,u)),centre))<rock.radius*.75;
     })).sort((a,b)=>a.distance-b.distance).map(({id,type,distance,bearing,position})=>({id,type,distance,bearing,position}));
-    return {range,contacts:contacts.slice(0,64),totalContacts:contacts.length,omittedContacts:Math.max(0,contacts.length-64),closestRange:contacts[0]?.distance??null,model:'Synthetic analytic line-of-sight ranges; rock occlusion only, not acoustic propagation',visibilityLimited:false,maxContacts:64};
+    this.sonarCacheKey=key;this.sonarCacheOrigin=clone(origin);this.sonarCache={time:this.time,sampleRateHz:5,range,contacts:contacts.slice(0,64),totalContacts:contacts.length,omittedContacts:Math.max(0,contacts.length-64),closestRange:contacts[0]?.distance??null,model:'Synthetic analytic line-of-sight ranges; rock occlusion only, not acoustic propagation',visibilityLimited:false,maxContacts:64};return clone(this.sonarCache);
   }
   _fragment(){return this.fragments.find(f=>f.id===this.fragmentId);}
   _donor(){return this.colonies.find(c=>c.id===this.donorId);}
@@ -150,20 +266,27 @@ export class ReefLab {
     this._abort(`No eligible pair remains (${this.metrics.placed}/${this.scene.missionGoal} verified). Unknown lineage and dead coral are excluded.`);
   }
   _gate(kind,message) {
+    if(kind==='inspect')this._planRoute(add(this._top(this._recipient()),[0,0,1.3]));
     const allowedActions=kind==='inspect'?['proceed','abort']:['retry','abort'];
-    const request={id:`decision-${++this.decisionCounter}`,kind,allowedActions,observation:{phase:this.phase,reason:message,donorId:this.donorId,targetId:this.targetId,compatible:!!this._compatible(this._donor(),this._recipient()),water:clone(this.water),metrics:clone(this.metrics),fragment:clone(this._fragment()??null),sonar:this._sonar(),wildlife:clone(this.wildlife),route:clone(this.route),retryBudget:3-this.retries}};
-    if(this.controller==='gemini') {this.robot.target=clone(this.robot.position);this.pendingDecision=request;this.status='Waiting for Gemini decision';this.nominalStatus=this.status;this._event('decision',message+' Awaiting live Gemini.');}
+    const request={id:`decision-${++this.decisionCounter}`,kind,allowedActions,observation:{time:this.time,phase:this.phase,registryGroundTruth:this._registryTruth(),onboardPerception:{status:this.intelligence.onboard.status,lastPacket:clone(this.intelligence.onboard.lastPacket),observations:clone(this.intelligence.onboard.observations.filter(o=>[this.donorId,this.targetId].includes(o.id)))},reason:message,donorId:this.donorId,targetId:this.targetId,compatible:!!this._compatible(this._donor(),this._recipient()),water:clone(this.water),metrics:clone(this.metrics),fragment:clone(this._fragment()??null),sonar:this._sonar(),fusion:this._fusion(),perception:this._perception(),grip:clone(this.grip),currentVector:this._currentAt(this.robot.position),wildlife:clone(this.wildlife),route:clone(this.route),retryBudget:3-this.retries}};
+    if(this.controller!=='scripted') {this.robot.target=clone(this.robot.position);this.pendingDecision=request;this.status=this.controller==='base_station'?'Waiting for base-station Argon plan':'Waiting for Gemini decision';this.nominalStatus=this.status;this._event('decision',message+(this.controller==='base_station'?' Awaiting live base-station plan.':' Awaiting live Gemini.'));}
     else {this.pendingDecision=request;this._applyDecision(request.id,allowedActions[0],message,'scripted');}
   }
-  _applyDecision(id,action,reason,source) {
+  _applyDecision(id,action,reason,source,routeMode=null,evidence=null) {
     const pending=this.pendingDecision;
     if(!pending||pending.id!==id)throw new Error('Decision is stale or does not exist');
     if(!pending.allowedActions.includes(action))throw new Error('Decision action is not allowed');
     if(this.controller==='gemini' && source!=='gemini')throw new Error('Gemini mode requires an explicit Gemini result');
+    if(this.controller==='base_station'&&source!=='base_station')throw new Error('Base-station mode requires an explicit base-station result');
     if(typeof reason!=='string'||reason.length>1600)throw new Error('Decision reason must be text of at most 1600 characters');
-    this.pendingDecision=null;this.decision={id,action,reason,source,time:this.time};this.metrics.decisionCount++;this._event('decision',`${source}: ${action} — ${reason}`);
+    if(routeMode!==null&&(!['direct','clearance'].includes(routeMode)||!pending.observation.route.alternatives.some(r=>r.id===routeMode)))throw new Error('Decision route must be a declared alternative');
+    if(this.controller==='base_station'){const plan=this.intelligence.baseStation.plan;const planId=evidence?.planning?.requestId??evidence?.planning?.id;if(!plan||plan.requestId!==id||planId!==id)throw new Error('Ingest the matching base-station plan before applying it');if(this.time-plan.frameTime>this.intelligence.planMaxAgeSeconds)throw new Error('Base-station plan expired before execution');if(action!==plan.decision||routeMode!==plan.routeMode)throw new Error('Applied action must match the validated base-station plan');if(action==='proceed'&&![this._externalHealth(this.donorId,'healthy'),this._externalHealth(this.targetId,'bleached_alive')].every(g=>g.ready))throw new Error('Fresh Gemma health estimates must pass for both colonies before harvesting');}
+    if(routeMode!==null){this.route.mode=routeMode;this.scene.routeMode=routeMode;}
+    const provenance={};if((source==='gemini'||source==='base_station')&&evidence&&typeof evidence==='object'&&!Array.isArray(evidence)){for(const key of ['model','inputMode','inputImageSha256','inputCamera','interactionId'])if(typeof evidence[key]==='string'&&evidence[key].length<=256)provenance[key]=evidence[key];for(const key of ['latencyMs','inputImageTime','inputImageWidth','inputImageHeight'])if(typeof evidence[key]==='number'&&Number.isFinite(evidence[key])&&evidence[key]>=0)provenance[key]=evidence[key];}
+    this.pendingDecision=null;this.decision={id,action,reason,source,routeMode,time:this.time,...provenance};if(source==='base_station'){this.decision.perception=clone(this.intelligence.onboard.lastPacket);this.decision.planning=clone(this.intelligence.baseStation.plan);this.intelligence.baseStation.status='applied';}this.metrics.decisionCount++;this._event('decision',`${source}: ${action} — ${reason}`);
     if(action==='abort'){this._abort('Controller requested a safe abort.');return;}
     if(pending.kind==='inspect') {
+      if(![this.donorId,this.targetId].every(id=>this.uvObservations.some(o=>o.id===id&&o.exposureSeconds>=1.2))){this._abort('Both UV exposure gates must pass before harvesting.');return;}
       if(!this._compatible(this._donor(),this._recipient())){this._abort('Compatibility gate failed.');return;}
       this._setGripTarget(this._fragment().position);this._setPhase('approach','Approaching approved donor cutting');
     } else if(pending.kind==='drop') {
@@ -178,27 +301,48 @@ export class ReefLab {
     if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('Command must be an object');
     const action=data.action;
     switch(action) {
-      case 'run': if(this.completed||this.phase==='aborted')throw new Error('Reset before starting another run');this.running=true;if(this.phase==='idle')this._setPhase('survey','Surveying the editable reef');break;
+      case 'run': if((this.completed||this.phase==='aborted')&&this.pilot.mode!=='manual')throw new Error('Reset before starting another autonomous run');this.running=true;if(this.phase==='idle')this._setPhase('survey','Surveying the editable reef');break;
       case 'pause':this.running=false;break;
       case 'reset':return this.reset();
       case 'set_water': {
         const next={current:data.current===undefined?this.water.current:finite(data.current,0,.8,'Current'),visibility:data.visibility===undefined?this.water.visibility:finite(data.visibility,.2,20,'Visibility')};
         this.water=next;this.scene.water=clone(next);this.restoreCurrent=null;this.surgeUntil=0;this._event('environment','Water conditions updated.');break;
       }
+      case 'ingest_perception':this._ingestPerception(data.packet);break;
+      case 'ingest_plan':this._ingestPlan(data.packet);break;
+      case 'randomize':if(this.running)throw new Error('Pause before randomizing the scene');this.scene=validateScene(defaultScene(finite(data.seed,0,4294967295,'Seed')));return this.reset();
+      case 'set_pilot': {
+        if(!['manual','autonomous'].includes(data.mode))throw new Error('Unknown pilot mode');
+        this.pilot.mode=data.mode;this.pilot.command={forward:0,right:0,vertical:0,yaw:0};this.pilot.lastInputTime=null;this.pilot.expired=false;
+        if(data.mode==='manual'){this.robot.target=clone(this.robot.position);this.running=true;this.status='Manual pilot · thruster control';}
+        else {this._planRoute(this.route.goal);this.status=this.nominalStatus;if(this.completed||this.phase==='aborted')this.running=false;if(this.phase==='idle')this._setPhase('survey','Surveying the editable reef');this._event('plan','Autonomous route replanned from the pilot’s current pose.');}
+        break;
+      }
+      case 'manual_input': {
+        if(this.pilot.mode!=='manual')throw new Error('Enable manual pilot first');
+        const command={};for(const key of ['forward','right','vertical','yaw'])command[key]=finite(data[key]??0,-1,1,key);
+        this.pilot.command=command;this.pilot.lastInputTime=this.time;this.pilot.expired=false;break;
+      }
+      case 'manual_gripper': {
+        if(this.pilot.mode!=='manual'||typeof data.open!=='boolean')throw new Error('Manual gripper requires manual mode and an open boolean');
+        const f=this._fragment();
+        if(data.open&&this.robot.holding){if(f?.state==='carried')this._drop();else if(f?.state==='grasped'){f.state='attached';f.position=this._top(this._donor());this.robot.holding=null;this._setPhase('approach','Reapproaching donor after manual release');this._setGripTarget(f.position);}}
+        this.robot.gripperOpen=data.open?1:0;break;
+      }
       case 'set_route':if(!['direct','clearance'].includes(data.mode))throw new Error('Unknown route mode');this.scene.routeMode=data.mode;this.route.mode=data.mode;this._planRoute(this.route.goal);this._event('plan',`Selected ${data.mode} route; replanning from current position.`);break;
       case 'set_controller':
-        if(!['scripted','gemini'].includes(data.mode))throw new Error('Unknown controller');
+        if(!['scripted','gemini','base_station'].includes(data.mode))throw new Error('Unknown controller');
         this.controller=data.mode;
         if(this.pendingDecision&&data.mode==='scripted')this._applyDecision(this.pendingDecision.id,this.pendingDecision.allowedActions[0],'Operator selected deterministic controller.','scripted');
         break;
       case 'inject_fault':
         if(!FAULTS.includes(data.kind))throw new Error('Unknown fault');
         if(this.phase==='aborted'||this.completed)throw new Error('Reset before injecting faults');
-        if(data.kind==='current_surge'){this.restoreCurrent??=this.water.current;this.water.current=Math.min(.8,this.water.current+.38);this.surgeUntil=this.time+12;this._event('fault','Current surge: elevated drift and safe-hold control for 12 seconds.');}
+        if(data.kind==='current_surge'){this.restoreCurrent??=this.water.current;this.water.current=Math.min(.8,this.water.current+.38);this.surgeUntil=this.time+12;this.surgeStarted=this.time;this._event('fault','Current surge: four-second cross-current wave (3.2m/s localized peak) followed by elevated drift; grip load monitored during safe hold.');}
         else if(data.kind==='sensor_dropout'){this.dropoutUntil=this.time+8;this._event('fault','Camera dropout: perception unavailable for 8 seconds.');}
         else if(data.kind==='drop'&&this._fragment()?.state==='carried')this._drop();
         else {if(this.faults.length>=10)throw new Error('At most ten queued faults');this.faults.push(data.kind);this._event('fault',`${data.kind.replaceAll('_',' ')} armed for its next applicable phase.`);}break;
-      case 'apply_decision':this._applyDecision(data.id,data.decision??data.choice,data.reason,data.source);break;
+      case 'apply_decision':this._applyDecision(data.id,data.decision??data.choice,data.reason,data.source,data.routeMode??null,data.evidence??null);break;
       case 'edit_colony':case 'add_colony':case 'remove_colony':case 'add_obstacle':case 'remove_obstacle': {
         if(this.running)throw new Error('Pause before editing the environment');
         const next=this.exportScene();
@@ -228,9 +372,16 @@ export class ReefLab {
     return this.snapshot();
   }
   _physics(dt,hold=false) {
-    const r=this.robot;const old=clone(r.position);const err=sub(r.target,r.position);let force=err.map((v,i)=>18*v-14*r.velocity[i]);
+    const r=this.robot;const old=clone(r.position);const err=sub(r.target,r.position);let desiredVelocity=scale(err,.9);const speedLimit=r.holding?.95:1.3;if(norm(desiredVelocity)>speedLimit)desiredVelocity=scale(desiredVelocity,speedLimit/norm(desiredVelocity));let force=scale(sub(desiredVelocity,r.velocity),24);
+    if(this.pilot.mode==='manual'&&!hold){
+      const stale=this.pilot.lastInputTime===null||this.time-this.pilot.lastInputTime>this.pilot.watchdogSeconds;
+      this.pilot.expired=stale;const input=stale?{forward:0,right:0,vertical:0,yaw:0}:this.pilot.command;
+      if(stale)this.pilot.command={forward:0,right:0,vertical:0,yaw:0};
+      r.yaw+=input.yaw*.85*dt;r.yaw=Math.atan2(Math.sin(r.yaw),Math.cos(r.yaw));
+      force=[32*(input.forward*Math.cos(r.yaw)+input.right*Math.sin(r.yaw)),32*(input.forward*Math.sin(r.yaw)-input.right*Math.cos(r.yaw)),28*input.vertical];
+    }
     // Approximate habitat envelopes protect robot body; active tool targets are exempt.
-    const habitat=[...this.obstacles.map(o=>({...o,position:add(o.position,[0,0,o.radius*.5])})),...this.colonies.filter(c=>c.id!==this.donorId&&c.id!==this.targetId).map(c=>({id:c.id,position:add(c.position,[0,0,coralHeight(c)*.45]),radius:Math.max(c.radius*.72,coralHeight(c)*.45),top:c.position[2]+coralHeight(c)})),...this._nearHabitat(2.6).map(c=>({id:c.id,position:add(c.position,[0,0,c.height*.45]),radius:Math.max(c.radius*.72,c.height*.45),top:c.position[2]+c.height,influence:.15}))];
+    const habitat=[...this.obstacles.map(o=>({...o,position:add(o.position,[0,0,o.radius*.5])})),...this.colonies.filter(c=>this.pilot.mode==='manual'||(c.id!==this.donorId&&c.id!==this.targetId)).map(c=>({id:c.id,position:add(c.position,[0,0,coralHeight(c)*.45]),radius:Math.max(c.radius*.72,coralHeight(c)*.45),top:c.position[2]+coralHeight(c)})),...this._nearHabitat(2.6).map(c=>({id:c.id,position:add(c.position,[0,0,c.height*.45]),radius:Math.max(c.radius*.72,c.height*.45),top:c.position[2]+c.height,influence:.15}))];
     const nearby=this.wildlife.filter(a=>norm(sub(r.position,a.position))<a.radius+(this.wildlifeYield?.7:a.type==='crab'?.58:.45));
     const yielding=nearby.length>0;
     if(yielding&&!this.wildlifeYield){this.metrics.wildlifeAvoidances++;this._event('hold',`Yielding to ${nearby[0].type}; pausing progress and reducing thrust.`);}
@@ -239,17 +390,18 @@ export class ReefLab {
     if(yielding){force=scale(r.velocity,-22);for(const a of nearby){const d=sub(r.position,a.position),n=norm(d);if(n>.001)force=add(force,scale(d,12*(a.radius+.85-n)/n));}}
     for(const o of habitat){if(o.top!==undefined&&r.position[2]-.3>o.top+.15)continue;const d=sub(r.position,o.position),n=norm(d),safe=o.radius+.3,influence=o.influence??.65;if(n<safe+influence&&n>1e-6){const gain=24*(safe+influence-n);force=add(force,scale(d,gain/n));}}
     const magnitude=norm(force);if(magnitude>42)force=scale(force,42/magnitude);
-    const flow=[this.water.current,0,0];
-    for(let i=0;i<3;i++){const relative=r.velocity[i]-flow[i];const drag=-7*relative*Math.abs(relative)-2*relative;const acceleration=(force[i]+drag+(i===2?.15:0))/18;r.velocity[i]+=acceleration*dt;r.position[i]+=r.velocity[i]*dt;}
+    const flow=this._currentAt(r.position);this.water.currentVector=clone(flow);this.water.currentSpeed=norm(flow);this.forces={thrust:clone(force),drag:[0,0,0],buoyancy:[0,0,.15],net:[0,0,0]};
+    for(let i=0;i<3;i++){const relative=r.velocity[i]-flow[i];const drag=-7*relative*Math.abs(relative)-2*relative;this.forces.drag[i]=drag;this.forces.net[i]=force[i]+drag+(i===2?.15:0);const acceleration=this.forces.net[i]/18;r.velocity[i]+=acceleration*dt;r.position[i]+=r.velocity[i]*dt;}
     r.position[2]=Math.max(terrainHeight(...r.position)+.7,r.position[2]);
     for(const o of habitat){if(o.top!==undefined&&r.position[2]-.3>o.top+.15)continue;const d=sub(r.position,o.position),n=norm(d),safe=o.radius+.3;if(n<safe){const unit=n>1e-6?scale(d,1/n):[0,0,1];r.position=add(o.position,scale(unit,safe));r.velocity=[0,0,0];if(this.time-(this.lastCollision??-10)>1){this.metrics.collisions++;this.metrics.habitatAvoidances++;this.lastCollision=this.time;this._event('warning','Obstacle contact detected; controller replanning locally.');}}}
+    for(let i=0;i<2;i++){const bounded=clamp(r.position[i],-12,12);if(bounded!==r.position[i])r.velocity[i]=0;r.position[i]=bounded;}r.position[2]=clamp(r.position[2],terrainHeight(...r.position)+.7,8);
     const movement=norm(sub(r.position,old));this.metrics.distance+=movement;this.metrics.energy+=norm(force)*norm(r.velocity)*dt;
-    if(norm(r.velocity)>.05)r.yaw=Math.atan2(r.velocity[1],r.velocity[0]);r.gripper=add(r.position,[0,0,-.65]);
+    if(this.pilot.mode!=='manual'&&norm(r.velocity)>.05){const desired=Math.atan2(r.velocity[1],r.velocity[0]),delta=Math.atan2(Math.sin(desired-r.yaw),Math.cos(desired-r.yaw));r.yaw+=clamp(delta,-dt*1.2,dt*1.2);}r.gripper=add(r.position,[0,0,-.65]);this._checkGrip();
     for(const f of this.fragments){
       if(f.state==='carried'||f.state==='grasped'){f.position=clone(r.gripper);f.velocity=clone(r.velocity);}
       else if(f.state==='dropped'||f.state==='rejected'){
         // Effective submerged gravity: coral density 2,500 kg/m³ in seawater 1,025 kg/m³.
-        f.velocity[0]+=(this.water.current-f.velocity[0])*1.5*dt;f.velocity[1]-=f.velocity[1]*1.5*dt;f.velocity[2]+=(-5.79-4*f.velocity[2]*Math.abs(f.velocity[2]))*dt;
+        const fragmentFlow=this._currentAt(f.position);f.velocity[0]+=(fragmentFlow[0]-f.velocity[0])*1.5*dt;f.velocity[1]+=(fragmentFlow[1]-f.velocity[1])*1.5*dt;f.velocity[2]+=(-5.79-4*f.velocity[2]*Math.abs(f.velocity[2]))*dt;
         f.position=add(f.position,scale(f.velocity,dt));const bed=terrainHeight(...f.position)+.07;if(f.position[2]<bed){f.position[2]=bed;f.velocity=[0,0,0];}
       }
     }
@@ -261,18 +413,20 @@ export class ReefLab {
     if(environmentUnsafe){
       if(!this.environmentHold){this.holdTarget=clone(this.robot.target);this.robot.target=clone(this.robot.position);this._event('hold','Safe hold: current, visibility or camera quality exceeds operating limits.');}
       this.environmentHold+=dt;this.status='Safe hold · waiting for usable sensing and current';this._physics(dt,true);
-      if(this.environmentHold>30)this._abort('Environmental limits exceeded for 30 seconds. No unsafe manipulation attempted.');return;
+      if(this.environmentHold>30){if(this.pilot.mode==='manual'){this.running=false;this.status='Manual pilot paused: environmental limits exceeded.';}else this._abort('Environmental limits exceeded for 30 seconds. No unsafe manipulation attempted.');}return;
     }
     if(this.environmentHold){this.robot.target=this.holdTarget;this.environmentHold=0;this.status=this.nominalStatus;this._event('recovery','Conditions recovered; resuming from the same mission state.');}
+    if(this.pilot.mode==='manual'){this._physics(dt);return;}
     if(this.pendingDecision){this._physics(dt,true);return;}
     this.phaseElapsed+=dt;
-    if(this.phaseElapsed>90){this._abort('Motion timeout: target cannot be reached safely.');return;}
+    const waitingOnPerception=this.controller==='base_station'&&['inspect_recipient','inspect_donor'].includes(this.phase);if(this.phaseElapsed>(waitingOnPerception?180:90)){this._abort(waitingOnPerception?'Onboard perception wait exceeded 180 simulation seconds.':'Motion timeout: target cannot be reached safely.');return;}
     const f=this._fragment(),donor=this._donor(),target=this._recipient();
     if(this.phase==='recover_drop'&&f)this._setGripTarget(f.position);
     if(this.phase==='recover_placement'&&f)this._setGripTarget(f.position);
     this._advanceRoute();this._physics(dt);
     const routeFinished=this.route.index===this.route.waypoints.length-1;
-    const arrived=routeFinished&&!this.wildlifeYield&&norm(sub(this.robot.position,this.robot.target))<.16&&norm(this.robot.velocity)<.22;
+    const inspectionApproved=this._recordInspection(dt);
+    const arrived=inspectionApproved&&routeFinished&&!this.wildlifeYield&&norm(sub(this.robot.position,this.robot.target))<.16&&norm(this.robot.velocity)<.22;
     if(arrived||this.phase==='survey')this.phaseTime+=dt;
     const done=this.phaseTime>=(DURATIONS[this.phase]??1);
     if(!done)return;
@@ -300,12 +454,12 @@ export class ReefLab {
     }
   }
   snapshot() {
-    return clone({time:this.time,running:this.running,seed:this.scene.seed,phase:this.phase,phaseProgress:clamp(this.phaseTime/(DURATIONS[this.phase]??1),0,1),controller:this.controller,status:this.status,water:this.water,colonies:this.colonies,obstacles:this.obstacles,terrain:{model:'Shared sloping limestone relief',units:'metres'},habitatCount:this.habitat.length,wildlife:this.wildlife,sonar:this._sonar(),route:this.route,robot:this.robot,fragments:this.fragments,targetId:this.targetId,donorId:this.donorId,metrics:this.metrics,events:this.events,decision:this.decision,pendingDecision:this.pendingDecision,completed:this.completed,missionGoal:this.scene.missionGoal,queuedFaults:this.faults,environmentHold:this.environmentHold,physics:{model:'Reduced buoyancy, thrust and quadratic drag; bounded kinematic grip/contact',massKg:18,maxThrustN:42,stepSeconds:1/60},limits:{biology:'Mechanical verification only; no tissue fusion or biological recovery',perception:'Synthetic known scene labels; no image-based genotype inference',contacts:'Approximate obstacle collision and fragment contact; no fracture or glue chemistry'}});
+    return clone({time:this.time,running:this.running,seed:this.scene.seed,phase:this.phase,phaseProgress:clamp(this.phaseTime/(DURATIONS[this.phase]??1),0,1),controller:this.controller,status:this.status,water:{...this.water,currentSamples:this._currentSamples(),fieldSource:'Exact samples of the reduced flow field used by vehicle and loose-fragment drag'},regions:this.regions,colonies:this.colonies,obstacles:this.obstacles,terrain:{model:'Shared sloping limestone relief',units:'metres'},habitatCount:this.habitat.length,wildlife:this.wildlife,intelligence:this.intelligence,registryGroundTruth:this._registryTruth(),perception:this._perception(),grip:this.grip,pilot:this.pilot,sensors:{fusion:this._fusion()},navigation:{velocity:this.robot.velocity,speed:norm(this.robot.velocity),bedClearance:this.robot.position[2]-terrainHeight(...this.robot.position),waypointIndex:this.route.index},sonar:this._sonar(),route:this.route,robot:this.robot,fragments:this.fragments,targetId:this.targetId,donorId:this.donorId,metrics:this.metrics,events:this.events,decision:this.decision,pendingDecision:this.pendingDecision,completed:this.completed,missionGoal:this.scene.missionGoal,queuedFaults:this.faults,environmentHold:this.environmentHold,physics:{parameterProvenance:'Engineering demonstration constants; not calibrated to a vehicle or validated onboard hardware',uvProxy:{minimumExposureSeconds:1.2,rangeM:1.6,genotypeInference:false},gripProxy:{capacityN:5,areaM2:.002,fragmentMassKg:.018,waterDensityKgM3:1025,dragCoefficient:1.15},waveProxy:{localizedPeakMS:3.2,envelopeSeconds:4},model:'Reduced buoyancy, thrust and quadratic drag; bounded kinematic grip/contact',massKg:18,maxThrustN:42,stepSeconds:1/60,forces:this.forces,currentModel:'Seeded continuous spatial, depth and temporal current field',assetResponses:{stonyCoral:'Rigid terrain-anchored skeleton collision proxies; not swaying plants',rocks:'Rigid terrain-anchored collision proxies',flexibleTissue:'Bounded visual bending driven by local flow; not a structural mechanics simulation',looseFragments:'Submerged weight and local-flow drag',vehicles:'Thrust, buoyancy residual and relative-current drag'}},limits:{biology:'Mechanical verification only; no tissue fusion or biological recovery',perception:'Synthetic known scene labels; no image-based genotype inference',contacts:'Approximate obstacle collision and fragment contact; no fracture or glue chemistry'}});
   }
   evaluate({seeds=[42,43,44],scenario='baseline'}={}) {
     if(!Array.isArray(seeds)||!seeds.length||seeds.length>30)throw new Error('Evaluation accepts 1–30 seeds');
     if(!['baseline',...FAULTS].includes(scenario))throw new Error('Unknown evaluation scenario');
     const runs=seeds.map(seed=>{const scene=this.exportScene();scene.seed=seed;const sim=new ReefLab(scene);if(scenario!=='baseline')sim.command({action:'inject_fault',kind:scenario});sim.command({action:'run'});for(let i=0;i<600&&sim.running;i++)sim.step(1);const timedOut=sim.running;if(timedOut)sim._abort('Evaluation exceeded its 600-second simulation budget.');const s=sim.snapshot();return {seed,success:s.completed,timedOut,time:s.time,phase:s.phase,metrics:s.metrics,reason:s.status,unconsumedFaults:s.queuedFaults};});
-    return {scenario,controller:'scripted',timeLimitSeconds:600,seedVariation:'Fixed exported scene geometry; seeds vary procedural cut-quality samples only. Fault timing is deterministic.',model:'Browser reduced physics; synthetic fault injection',runs,successRate:runs.filter(r=>r.success).length/runs.length};
+    return {scenario,controller:'scripted',timeLimitSeconds:600,seedVariation:'Fixed exported scene geometry; seeds vary procedural cut-quality samples, wildlife and current phases. New randomize scenes also vary mission and habitat layout. Fault timing is deterministic.',model:'Browser reduced physics; synthetic fault injection',runs,successRate:runs.filter(r=>r.success).length/runs.length};
   }
 }

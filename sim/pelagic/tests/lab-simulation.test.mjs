@@ -97,7 +97,7 @@ test('wildlife affects control and produces deterministic range observations',()
  const result=finish(sim);assert.ok(result.metrics.wildlifeAvoidances>0);assert.ok(result.events.some(e=>e.message.includes('Wildlife clear')));assert.notDeepEqual(result.wildlife[0].position,initial.wildlife[0].position);assert.equal(result.completed,true);
 });
 test('direct and clearance routes follow distinct waypoints without teleportation',()=>{
- const direct=finish(new ReefLab());const sim=new ReefLab();sim.command({action:'set_route',mode:'clearance'});sim.command({action:'run'});until(sim,s=>s.phase==='inspect_recipient');
+ const direct=finish(new ReefLab());const sim=new ReefLab();sim.command({action:'set_route',mode:'clearance'});sim.command({action:'run'});until(sim,s=>s.phase==='inspect_donor');
  const before=sim.snapshot();assert.equal(before.route.alternatives.length,2);assert.ok(before.route.waypoints.length>3);sim.step(1/60);const after=sim.snapshot();assert.ok(Math.hypot(...after.robot.position.map((v,i)=>v-before.robot.position[i]))<.1);
  const result=finish(sim);assert.equal(result.completed,true);assert.ok(result.metrics.distance>direct.metrics.distance+20);assert.equal(result.route.mode,'clearance');assert.throws(()=>sim.command({action:'set_route',mode:'unknown'}));
 });
@@ -112,4 +112,89 @@ test('dense visible habitat has shared broadphase and sonar proxies',()=>{
 });
 test('near-seabed crab encounter triggers actual vehicle yielding',()=>{
  const sim=new ReefLab(),crab=sim.wildlife.find(a=>a.type==='crab');sim.robot.position=[...crab.position];sim.robot.position[2]+=.65;sim.robot.target=[sim.robot.position[0]+1,...sim.robot.position.slice(1)];sim._physics(1/60);assert.equal(sim.wildlifeYield,true);assert.equal(sim.metrics.wildlifeAvoidances,1);
+});
+test('manual body-frame thrust moves smoothly and watchdog returns to neutral',()=>{
+ const sim=new ReefLab();sim.robot.position=[0,0,5];sim.robot.gripper=[0,0,4.35];sim.command({action:'set_pilot',mode:'manual'});assert.equal(sim.running,true);sim.command({action:'manual_input',forward:1,right:0,vertical:0,yaw:0});sim.step(1);
+ let s=sim.snapshot();assert.ok(s.robot.position[0]>.3);assert.ok(s.robot.velocity[0]>0);assert.ok(Math.hypot(...s.physics.forces.thrust)<=42.00001);
+ sim.step(1.2);s=sim.snapshot();assert.equal(s.pilot.expired,true);assert.deepEqual(s.pilot.command,{forward:0,right:0,vertical:0,yaw:0});assert.deepEqual(s.physics.forces.thrust,[0,0,0]);assert.ok(s.robot.position[0]<3);
+ sim.command({action:'pause'});const frozen=sim.snapshot();sim.step(1);assert.deepEqual(sim.snapshot(),frozen);
+});
+test('neutral manual vehicle responds to continuous current while forces remain measurable',()=>{
+ const make=current=>{const sim=new ReefLab({water:{current}});sim.robot.position=[0,0,5];sim.command({action:'set_pilot',mode:'manual'});sim.step(2);return sim.snapshot();};
+ const still=make(0),flowing=make(.3);assert.ok(flowing.robot.velocity[0]>still.robot.velocity[0]+.02);assert.ok(flowing.water.currentSpeed>0);assert.ok(flowing.physics.forces.drag.some(v=>v!==0));assert.equal(flowing.physics.forces.buoyancy[2],.15);
+});
+test('manual release conserves the held cutting and autonomous recovery resumes from current pose',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});until(sim,s=>s.phase==='transport');const id=sim.snapshot().robot.holding;assert.ok(id);sim.command({action:'set_pilot',mode:'manual'});sim.command({action:'manual_gripper',open:true});assert.equal(sim.snapshot().fragments.find(f=>f.id===id).state,'dropped');assert.equal(sim.snapshot().fragments.length,8);
+ const pose=sim.snapshot().robot.position;sim.command({action:'set_pilot',mode:'autonomous'});assert.deepEqual(sim.snapshot().robot.position,pose);assert.equal(finish(sim).completed,true);
+});
+test('manual movement enforces world and seabed bounds and validates all input axes',()=>{
+ const sim=new ReefLab();sim.robot.position=[11.99,0,5];sim.command({action:'set_pilot',mode:'manual'});sim.command({action:'manual_input',forward:1,vertical:-1});sim.step(1.5);const s=sim.snapshot();assert.ok(s.robot.position[0]<=12);assert.ok(s.robot.position[2]>=terrainHeight(...s.robot.position)+.7);
+ for(const value of [NaN,Infinity,2,-2])assert.throws(()=>sim.command({action:'manual_input',forward:value}));assert.throws(()=>sim.command({action:'set_pilot',mode:'fake'}));
+});
+test('new seeds randomize actual mission positions and reproducibly varied schools',()=>{
+ const a=new ReefLab({seed:42}),b=new ReefLab({seed:43});assert.notDeepEqual(a.snapshot().colonies.find(c=>c.id==='donor-1').position,b.snapshot().colonies.find(c=>c.id==='donor-1').position);assert.notDeepEqual(a.snapshot().wildlife,b.snapshot().wildlife);
+ a.command({action:'randomize',seed:43});assert.deepEqual(a.exportScene(),b.exportScene());assert.deepEqual(a.snapshot().wildlife,b.snapshot().wildlife);assert.ok(a.snapshot().wildlife.filter(x=>x.schoolId).length>=6);
+ a.command({action:'run'});a.step(10);assert.ok(a.snapshot().wildlife.every(x=>x.position.every(Number.isFinite)&&Math.hypot(...x.velocity)<3));assert.throws(()=>a.command({action:'randomize',seed:44}));
+});
+test('sensor fusion is bounded and honestly labeled and sonar samples at five hertz',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});sim.step(.21);const first=sim.snapshot();sim.step(.05);const next=sim.snapshot();assert.equal(first.sonar.time,next.sonar.time);assert.ok(next.sensors.fusion.contacts.length<=32);assert.match(next.sensors.fusion.source,/Synthetic/);assert.equal(next.sensors.fusion.controllerSource,'none');assert.ok(next.navigation.bedClearance>=.7);
+});
+test('Gemini can select only a declared high-level route',()=>{
+ const sim=new ReefLab({controller:'gemini'});sim.command({action:'run'});const s=until(sim,s=>!!s.pendingDecision);const id=s.pendingDecision.id;assert.throws(()=>sim.command({action:'apply_decision',id,decision:'proceed',reason:'x',source:'gemini',routeMode:'teleport'}));sim.command({action:'apply_decision',id,decision:'proceed',reason:'Prefer clearance',source:'gemini',routeMode:'clearance'});assert.equal(sim.snapshot().route.mode,'clearance');assert.equal(sim.snapshot().decision.routeMode,'clearance');
+});
+test('Gemini provenance records only bounded explicit scalar evidence',()=>{
+ const sim=new ReefLab({controller:'gemini'});sim.command({action:'run'});const s=until(sim,s=>!!s.pendingDecision);assert.ok(JSON.stringify(s.pendingDecision.observation).length<32768);
+ sim.command({action:'apply_decision',id:s.pendingDecision.id,decision:'proceed',reason:'Image and telemetry reviewed',source:'gemini',evidence:{model:'gemini-test',latencyMs:250,inputMode:'image_and_telemetry',inputImageSha256:'abc',inputCamera:'wrist',inputImageTime:10,rawImage:'must not store',apiKey:'must not store',inputImageWidth:640}});
+ const d=sim.snapshot().decision;assert.equal(d.model,'gemini-test');assert.equal(d.latencyMs,250);assert.equal(d.inputCamera,'wrist');assert.equal(d.rawImage,undefined);assert.equal(d.apiKey,undefined);
+});
+test('manual exploration after completion preserves verified mission metrics',()=>{
+ const sim=new ReefLab();finish(sim);const metrics=sim.snapshot().metrics.placed;sim.command({action:'set_pilot',mode:'manual'});sim.command({action:'run'});sim.command({action:'manual_input',vertical:1});sim.step(.2);assert.equal(sim.snapshot().metrics.placed,metrics);assert.equal(sim.snapshot().completed,true);sim.command({action:'set_pilot',mode:'autonomous'});assert.equal(sim.snapshot().running,false);
+});
+test('UV inspection exposure requires actual safe range and both registered colonies before cut',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});until(sim,s=>s.phase==='inspect_recipient');const targetId=sim.targetId;sim.robot.gripper=[12,12,7];const before=sim.uvObservations.find(o=>o.id===targetId)?.exposureSeconds??0;assert.equal(sim._recordInspection(.5),false);assert.equal(sim.uvObservations.find(o=>o.id===targetId).exposureSeconds,before);
+ const s=until(sim,s=>s.phase==='cut');assert.equal(s.phase,'cut');for(const id of [s.targetId,s.donorId]){const observation=s.perception.observations.find(o=>o.id===id);assert.ok(observation);assert.equal(observation.exposure,1);assert.equal(observation.source,'synthetic_camera_uv');assert.ok(observation.registryGenet);assert.ok(observation.uvMarker.startsWith('scenario-marker-'));}assert.ok(s.perception.candidateComparison.some(c=>!c.eligible));
+});
+test('injected current wave overloads the carried grip and recovers the same cutting',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});until(sim,s=>s.phase==='transport');const id=sim.snapshot().robot.holding;sim.command({action:'inject_fault',kind:'current_surge'});sim.step(4);
+ const failure=sim.snapshot();assert.equal(failure.metrics.drops,1);assert.equal(failure.metrics.placed,0);assert.equal(failure.completed,false);assert.equal(failure.grip.lastLoss.fragmentId,id);assert.ok(failure.grip.lastLoss.loadN>failure.grip.lastLoss.thresholdN);assert.equal(failure.fragments.find(f=>f.id===id).state,'dropped');
+ const result=finish(sim);assert.equal(result.completed,true);assert.equal(result.fragments.find(f=>f.id===id).state,'placed');assert.equal(result.metrics.recoveries,1);assert.equal(result.fragments.length,8);
+});
+test('a current wave cannot detach a cutting before its authorized cut',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});until(sim,s=>s.phase==='cut');const id=sim.fragmentId;sim.command({action:'inject_fault',kind:'current_surge'});sim.step(4);assert.equal(sim.snapshot().fragments.find(f=>f.id===id).state,'grasped');assert.equal(sim.snapshot().metrics.drops,0);assert.equal(sim.snapshot().grip.lastLoss,null);assert.equal(finish(sim).completed,true);
+});
+test('seeded dense habitat changes and remains shared with physical proxies',()=>{
+ const a=new ReefLab({seed:42}),b=new ReefLab({seed:43});assert.notDeepEqual(a.habitat[0].position,b.habitat[0].position);assert.deepEqual(a.habitat,new ReefLab({seed:42}).habitat);
+});
+const externalPerception=(sim,id,health,overrides={})=>({requestId:`frame-${id}-${sim.time}`,frameTime:sim.time,source:'gemma',provider:'test_fixture_transport',model:'gemma-fixture-not-live',observations:[{id,health,confidence:.92}],...overrides});
+const externalPlan=(sim,overrides={})=>({requestId:sim.pendingDecision.id,frameTime:sim.pendingDecision.observation.time,source:'argon',provider:'test_fixture_transport',model:'argon-fixture-not-live',decision:sim.pendingDecision.allowedActions[0],reason:'Offline fixture chooses a bounded local alternative.',routeMode:'direct',optimizer:{source:'not_configured'},...overrides});
+function runBaseFixture(sim){sim.command({action:'run'});let maxBytes=0;while(sim.running&&sim.time<600){sim.step(.2);const p=sim.snapshot().perception;if(p.targetId&&p.exposure>=.8&&!sim.intelligence.onboard.observations.some(o=>o.id===p.targetId)){sim.command({action:'ingest_perception',packet:externalPerception(sim,p.targetId,p.stage==='inspect_donor'?'healthy':'bleached_alive')});}if(sim.pendingDecision){maxBytes=Math.max(maxBytes,JSON.stringify(sim.pendingDecision.observation).length);const packet=externalPlan(sim);sim.command({action:'ingest_plan',packet});sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});}}return {state:sim.snapshot(),maxBytes};}
+test('base-station architecture waits for model perception and keeps physics/reflexes running',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});until(sim,s=>s.perception.exposure===1);const before=sim.snapshot();assert.equal(before.phase,'inspect_recipient');assert.equal(before.intelligence.onboard.status,'waiting');sim.step(3);const after=sim.snapshot();assert.equal(after.phase,'inspect_recipient');assert.ok(after.time>before.time);assert.equal(after.metrics.placed,0);assert.equal(after.intelligence.onboard.lastPacket,null);assert.equal(after.pendingDecision,null);assert.notDeepEqual(after.wildlife[0].position,before.wildlife[0].position);
+});
+test('external Gemma estimates cannot overwrite registry truth or bypass a conservative health gate',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});until(sim,s=>s.perception.exposure===1);const id=sim.targetId,registry=sim.snapshot().registryGroundTruth;const packet=externalPerception(sim,id,'dead');packet.observations[0].genet='invented';sim.command({action:'ingest_perception',packet});sim.step(2);assert.equal(sim.phase,'inspect_recipient');assert.deepEqual(sim.snapshot().registryGroundTruth,registry);assert.equal(sim.intelligence.onboard.observations[0].genotypeInferred,false);assert.equal(sim.intelligence.onboard.observations[0].genet,undefined);assert.equal(sim.metrics.attempts,1);assert.equal(sim.fragments.every(f=>f.state==='attached'),true);
+});
+test('perception packet freshness, ordering and replay validation rejects unsafe updates',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});until(sim,s=>s.perception.exposure===1);const id=sim.targetId,packet=externalPerception(sim,id,'bleached_alive');sim.command({action:'ingest_perception',packet});assert.throws(()=>sim.command({action:'ingest_perception',packet}));assert.throws(()=>sim.command({action:'ingest_perception',packet:{...packet,requestId:'future',frameTime:sim.time+1}}));assert.throws(()=>sim.command({action:'ingest_perception',packet:{...packet,requestId:'older',frameTime:sim.time-1}}));assert.throws(()=>sim.command({action:'ingest_perception',packet:{...packet,requestId:'unknown',observations:[{id:'nonexistent',health:'healthy',confidence:.9}]}}));sim.time+=121;assert.throws(()=>sim.command({action:'ingest_perception',packet:{...packet,requestId:'stale'}}));assert.equal(sim._externalHealth(id,'bleached_alive').ready,false);
+});
+test('offline architecture fixture exercises Gemma gating and Argon planning without claiming live models',()=>{
+ const sim=new ReefLab({controller:'base_station'}),{state,maxBytes}=runBaseFixture(sim);assert.equal(state.completed,true);assert.equal(state.metrics.placed,4);assert.equal(state.intelligence.onboard.observations.length,8);assert.equal(state.decision.source,'base_station');assert.equal(state.decision.planning.model,'argon-fixture-not-live');assert.equal(state.decision.perception.model,'gemma-fixture-not-live');assert.equal(state.decision.planning.optimizer.source,'not_configured');assert.ok(maxBytes<32768);assert.equal(state.intelligence.hardwareValidated,false);
+});
+test('Argon route proposals require matching fresh plans and local bounded alternatives',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});while(!sim.pendingDecision&&sim.running){sim.step(.2);const p=sim.snapshot().perception;if(p.targetId&&p.exposure>=.8&&!sim.intelligence.onboard.observations.some(o=>o.id===p.targetId))sim.command({action:'ingest_perception',packet:externalPerception(sim,p.targetId,p.stage==='inspect_donor'?'healthy':'bleached_alive')});}
+ const packet=externalPlan(sim);assert.throws(()=>sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,source:'base_station',routeMode:'direct',evidence:{planning:packet}}));assert.throws(()=>sim.command({action:'ingest_plan',packet:{...packet,requestId:'stale-other'}}));assert.throws(()=>sim.command({action:'ingest_plan',packet:{...packet,routeMode:'teleport'}}));assert.throws(()=>sim.command({action:'ingest_plan',packet:{...packet,waypoints:[[999,0,0]]}}));sim.command({action:'ingest_plan',packet});assert.equal(sim.intelligence.baseStation.localValidation.safe,true);assert.throws(()=>sim.command({action:'ingest_plan',packet}));sim.time+=46;assert.throws(()=>sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,source:'base_station',routeMode:'direct',evidence:{planning:packet}}));assert.equal(sim.phase,'approval');assert.equal(sim.metrics.placed,0);
+});
+test('seeded mission colonies occupy multiple nonlinear healthy and bleached regions',()=>{
+ const sim=new ReefLab({seed:42}),s=sim.snapshot(),donors=s.colonies.filter(c=>c.id.startsWith('donor-')),recipients=s.colonies.filter(c=>c.id.startsWith('recipient-'));
+ assert.equal(s.regions.filter(r=>r.kind==='healthy').length,2);assert.equal(s.regions.filter(r=>r.kind==='bleached_alive').length,2);assert.ok(s.regions.some(r=>r.kind==='mixed'));
+ for(const [colonies,kind] of [[donors,'healthy'],[recipients,'bleached_alive']]){const occupied=new Set();for(const c of colonies){const nearest=s.regions.filter(r=>r.kind===kind).sort((a,b)=>Math.hypot(c.position[0]-a.center[0],c.position[1]-a.center[1])-Math.hypot(c.position[0]-b.center[0],c.position[1]-b.center[1]))[0];assert.ok(Math.hypot(c.position[0]-nearest.center[0],c.position[1]-nearest.center[1])<nearest.radius*.5);occupied.add(nearest.id);}assert.equal(occupied.size,2);assert.equal(new Set(colonies.map(c=>c.position[1].toFixed(3))).size,4);}
+ const [a,b,c]=donors.map(c=>c.position);assert.ok(Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))>.5);
+ for(const c of s.colonies)assert.ok(c.position[2]>=terrainHeight(...c.position));
+});
+test('visible current samples are the exact local field used by dynamics and vanish at zero base current',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});sim.step(1);const samples=sim.snapshot().water.currentSamples;assert.equal(samples.length,25);for(const s of samples)assert.deepEqual(s.vector,sim._currentAt(s.position));assert.notDeepEqual(samples[0].vector,samples[12].vector);assert.match(sim.snapshot().physics.assetResponses.stonyCoral,/Rigid/);
+ sim.command({action:'set_water',current:0});assert.ok(sim.snapshot().water.currentSamples.every(s=>s.vector.every(v=>v===0)));
+});
+test('one thousand seeded layouts generate without crowded-region sampling failures',()=>{
+ for(let seed=0;seed<1000;seed++){const scene=defaultScene(seed);assert.equal(scene.colonies.length,84);assert.equal(new Set(scene.colonies.map(c=>c.id)).size,84);const mission=scene.colonies.filter(c=>c.genet);for(let i=0;i<mission.length;i++){assert.ok(mission[i].position.every(Number.isFinite));for(let j=i+1;j<mission.length;j++)assert.ok(Math.hypot(mission[i].position[0]-mission[j].position[0],mission[i].position[1]-mission[j].position[1])>1.45);}}
 });

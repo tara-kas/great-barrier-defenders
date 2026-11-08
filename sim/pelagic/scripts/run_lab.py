@@ -18,7 +18,7 @@ def main():
     args = parser.parse_args()
     server = make_server(args.host, args.port)
     print(f"Reef Rescue AUV lab: http://{args.host}:{server.server_port}/lab/", flush=True)
-    print("Browser physics demonstration · optional server-side Gemini camera + sonar decisions", flush=True)
+    print("Local browser demo · Gemma perception / base-station Argon + optional cuOpt adapters · local safety remains independent", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
