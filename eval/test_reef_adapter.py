@@ -89,7 +89,7 @@ def test_native_grasp_pose_is_continuous_at_harvest_recovery_and_release(complet
             assert math.dist(expected, worker["gripper_world"]) < 1e-8
             heading=(worker['yaw']+worker.get('wrist_yaw',0.)-fragment['yaw'])%(2*math.pi)
             if 'grip_heading' not in locals(): grip_heading=heading
-            assert abs((heading-grip_heading+math.pi)%(2*math.pi)-math.pi)<1e-8, 'Coral rotated inside closed jaws' 
+            assert abs((heading-grip_heading+math.pi)%(2*math.pi)-math.pi)<1e-8, 'Coral rotated inside closed jaws'
         if previous:
             old_snapshot, old_fragment, _ = previous
             fragment_turn = abs((fragment["yaw"]-old_fragment["yaw"]+math.pi) % (2*math.pi)-math.pi)

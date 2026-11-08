@@ -286,7 +286,7 @@ class ReefRobotAdapter(RobotInterface):
         co,si=math.cos(f['yaw']),math.sin(f['yaw'])
         contact_offset=np.array([co*local[0]-si*local[1],si*local[0]+co*local[1],local[2]])
         max_contact_gap=0.
-        response=push_response(); self.worker['state']='PUSH_TEST' 
+        response=push_response(); self.worker['state']='PUSH_TEST'
         self.manual_jaw=True
         contact=base+np.asarray(self._grasp_offset(f))
         self._arm('PUSH_APPROACH',(contact+n*.055).tolist(),1.2)
