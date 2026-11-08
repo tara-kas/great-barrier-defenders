@@ -32,6 +32,8 @@ These are reduced dynamics integrated by the mission adapter and flexible-tissue
 
 ## Fresh offline recording
 
-The fresh mission capture is 60 seconds (1,440 frames at 24 fps, 1600 × 900) and includes actual director, scout, and wrist-camera views. Its full decode, 98 native geometry checks, and 98 actual USD linkage checks passed. The push test's maximum tissue-to-triangle gap is 0.382 mm. The eight-second fixed-camera current comparison has 192 frames and a measured 106.1 mm fan-tip excursion; its zero-current control and full decode passed.
+The fresh mission capture is 59.625 seconds (1,431 frames at 24 fps, 1600 × 900) and includes actual director, scout, and wrist-camera views. Its full decode, 98 native geometry checks, and 98 actual USD linkage checks passed. The push test's maximum tissue-to-triangle gap is 0.382 mm. The eight-second fixed-camera current comparison has 192 frames and a measured 106.1 mm fan-tip excursion; its zero-current control and full decode passed.
 
 Visual review found a foreground sea fan obstructing the main recovery camera, while the wrist view stayed clear. The recovery director now chooses a clear side using colony, rock, vehicle, and swept fan envelopes, then holds that viewing angle. A targeted fresh capture replays the same full camera history and replaces only the affected frames plus five seconds of settling, without altering poses, decisions, frame timing, or motion interpolation. `scripts/apply_camera_patch.py` checks trace hashes, schedules, and geometry/linkage reports before assembling those actual captures. The original take is retained for provenance.
+
+The assembler preserves the valid base frame at the replacement entry to avoid a stale initial Kit camera buffer, and the renderer warms the first replacement capture explicitly. No generated motion frames or optical-flow interpolation are used. The final MP4 is decoded again and its entry/exit frame boundaries are visually reviewed.

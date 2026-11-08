@@ -37,9 +37,13 @@ def main():
         assert (patch/f'patch-{index:05d}.png').is_file()
     original = base/'reef-rescue-mission.mp4'
     backup = base/'reef-rescue-mission-before-camera-fix.mp4'
-    assert not backup.exists(), 'Already applied; retain the original capture provenance'
-    source_hash = digest(original)
-    capture = cv2.VideoCapture(str(original))
+    # The first render-product read after skipped frames may still contain
+    # Kit's cached initial view. Preserve that timestamp from the valid base.
+    preserved_entry = min(indices)
+    indices.remove(preserved_entry)
+    source = backup if backup.exists() else original
+    source_hash = digest(source)
+    capture = cv2.VideoCapture(str(source))
     assert int(capture.get(cv2.CAP_PROP_FRAME_COUNT)) == count
     assert abs(capture.get(cv2.CAP_PROP_FPS)-fps) < .001
     result = base/'reef-rescue-mission-patched.mp4'
@@ -61,11 +65,11 @@ def main():
         if encoder.poll() is None:
             encoder.terminate(); encoder.wait()
     subprocess.run(['ffmpeg','-v','error','-i',str(result),'-f','null','-'],check=True)
-    original.rename(backup)
-    result.rename(original)
+    if not backup.exists(): original.rename(backup)
+    result.replace(original)
     report = {'mode':'camera-only replacement with fresh audited Isaac captures',
               'original_sha256':source_hash,'sha256':digest(original),'frames':count,'fps':fps,
-              'patch_indices':sorted(indices),'trace_sha256':info['trace_sha256'],
+              'patch_indices':sorted(indices),'preserved_entry_frame':preserved_entry,'trace_sha256':info['trace_sha256'],
               'geometry_checks':info['geometry_validation']['checks'],
               'linkage_checks':len(info['linkage_validation']['checks']),
               'frame_timing_unchanged':True,'interpolated_frames':False,'decode_passed':True}

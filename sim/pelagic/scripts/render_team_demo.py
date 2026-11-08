@@ -379,7 +379,7 @@ def main():
             if check:
                 audit.check(state,name)
                 linkage_checks.append(check_linkage(scene,state))
-            for _ in range(max(12,args.samples) if args.preview_stills else args.samples):
+            for _ in range(max(12,args.samples) if args.preview_stills or (args.patch_recovery and index == patch_indices[0]) else args.samples):
                 app.update()
             images = {key:_capture(*products[key],state,key=="director",seed=tick,scene=scene,camera=key) for key in specs}
             speed = 1. if args.preview_stills else max(.1,(state["time"]-frames[previous_tick]["time"])*args.fps)
