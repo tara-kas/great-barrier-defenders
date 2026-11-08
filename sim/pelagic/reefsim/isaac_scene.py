@@ -1125,6 +1125,35 @@ class IsaacReefScene:
         matrix.SetLookAt(_v(eye), _v(target), _v(up))
         self._camera_ops[mode].Set(matrix.GetInverse())
 
+    def _smooth_director_pose(self, snapshot, eye, target, focal):
+        """Ease phase changes without changing any robot/coral transforms.
+
+        Rewinding a trace (including the geometry preflight) starts a fresh
+        camera history. A repeated timestamp never integrates the filter
+        twice. Movie recorders supply presentation_dt so accelerated transit
+        cannot accidentally accelerate the camera transition as well.
+        """
+        if not self.config.get("render", {}).get("smooth_transitions", False):
+            return eye, target, focal
+        now = float(snapshot.get("time", 0.))
+        previous = getattr(self, "_director_continuity", None)
+        explicit_dt = snapshot.get("_presentation_dt")
+        reset = (previous is None or now < previous[0] - 1e-8 or
+                 (explicit_dt is None and now - previous[0] > 1.))
+        if reset:
+            result = (_v(eye), _v(target), float(focal))
+        elif abs(now - previous[0]) < 1e-8:
+            result = previous[1:]
+        else:
+            dt = float(explicit_dt) if explicit_dt is not None else min(.1, now - previous[0])
+            dt = max(0., min(.1, dt))
+            alpha = 1. - math.exp(-dt / .45)
+            result = (previous[1] + (_v(eye) - previous[1]) * alpha,
+                      previous[2] + (_v(target) - previous[2]) * alpha,
+                      previous[3] + (float(focal) - previous[3]) * alpha)
+        self._director_continuity = (now, *result)
+        return result
+
     def _update_cameras(self, snapshot):
         half = getattr(self, "_world_half", 5.)
         self._look_at("overview", (-half * 1.05, -half * 1.12, 2.55), (-.8, -.35, .40))
@@ -1150,6 +1179,11 @@ class IsaacReefScene:
         pickup_states = {"APPROACH_FRAGMENT", "CLOSE_GRIPPER", "DETACH_FRAGMENT", "RETRACT_FRAGMENT"}
         recovery_states = {"FRAGMENT_LOST", "RECOVER_FRAGMENT", "RECOVERY_APPROACH", "RECOVERY_GRASP", "RECOVERY_LIFT"}
         plant_states = {"LOWER_FRAGMENT", "SECURE_FRAGMENT", "OPEN_GRIPPER", "RETRACT_GRIPPER", "VERIFY_ATTACHMENT", "PUSH_TEST", "PUSH_APPROACH"}
+        if (self.config.get("render", {}).get("smooth_transitions", False)
+                and state == "COMPLETE" and worker.get("task_id")):
+            # Hold the verified contact shot instead of snapping to a chase
+            # view as soon as the controller declares completion.
+            plant_states.add("COMPLETE")
         active = state in pickup_states | plant_states | recovery_states
         fragment = next((f for f in snapshot.get("fragments", []) if f["id"] == worker.get("fragment_id")), None)
         shoulder, elbow, tip = self._arm_pose(worker, snapshot)
@@ -1264,6 +1298,7 @@ class IsaacReefScene:
             else:
                 target = p + Gf.Vec3d(0, 0, -.25)
                 focal = 23.
+        director_eye, target, focal = self._smooth_director_pose(snapshot, director_eye, target, focal)
         UsdGeom.Camera.Get(self.stage, self.CAMERA_PATHS["director"]).GetFocalLengthAttr().Set(focal)
         UsdGeom.Camera.Get(self.stage, self.CAMERA_PATHS["chase"]).GetFocalLengthAttr().Set(focal)
         self._look_at("director", director_eye, target)

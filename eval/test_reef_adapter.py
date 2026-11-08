@@ -175,3 +175,14 @@ def test_carried_replan_preserves_identity_and_requires_prior_uv_approval(comple
     assert robot.prepare_pair(entry,source)['allowed'] is True
     assert robot.active_fragment is fragment and fragment['target_id']==target['id']
     assert robot.can_return_fragment(source) is False
+
+
+def test_push_approach_meets_push_motion_without_tool_snap(completed_reef_mission):
+    robot, _ = completed_reef_mission
+    boundaries = []
+    for before, after in zip(robot.frames, robot.frames[1:]):
+        first, second = before['robots'][1], after['robots'][1]
+        if first['state'] == 'PUSH_APPROACH' and second['state'] == 'PUSH_TEST':
+            boundaries.append(math.dist(first['gripper_world'], second['gripper_world']))
+    assert len(boundaries) == 1
+    assert boundaries[0] < .002, 'Push test jumped from its approach endpoint'

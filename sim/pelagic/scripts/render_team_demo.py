@@ -341,6 +341,8 @@ def main():
         milestone_ticks = set(schedule["milestones"].values())
         for index,(tick,name) in enumerate(targets):
             state = copy.deepcopy(frames[tick])
+            if not args.preview_stills:
+                state["_presentation_dt"] = 1. / args.fps
             scene.update(state)
             if config.get("inspection",{}).get("enabled"):
                 state["inspection"] = scene.inspection_metadata()

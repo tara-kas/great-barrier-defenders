@@ -289,7 +289,7 @@ class ReefRobotAdapter(RobotInterface):
         response=push_response(); self.worker['state']='PUSH_TEST'
         self.manual_jaw=True
         contact=base+np.asarray(self._grasp_offset(f))
-        self._arm('PUSH_APPROACH',(contact+n*.055).tolist(),1.2)
+        self._arm('PUSH_APPROACH',(contact+n*.015).tolist(),1.2)
         self.worker['state']='PUSH_TEST'
         for i in range(0,len(response['samples']),5):
             row=response['samples'][i]

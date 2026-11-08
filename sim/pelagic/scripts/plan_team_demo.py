@@ -21,7 +21,7 @@ class ExplicitOfflineDemo:
 def plan(output,config_path=None,inject_drop=True):
     config=load_config(config_path or ROOT/'configs/natural_reef.json')
     config['mission']['planting_sites']=1
-    config['render'].update(natural_cuttings=True,reef_quality=True,reef_hero_colonies=48,reef_triangle_budget=20_000_000, recovery_clearings=[{'center':[-.9,-1.67],'radius':.28}])
+    config['render'].update(natural_cuttings=True,reef_quality=True,smooth_transitions=True,reef_hero_colonies=48,reef_triangle_budget=20_000_000, recovery_clearings=[{'center':[-.9,-1.67],'radius':.28}])
     config['assumptions']['scale']='Natural 5–9 cm branch clusters extracted from the donor scan; geometric cutting and reduced attachment physics, not a validated field harvesting device.'
     robot=ReefRobotAdapter(config,inject_drop=inject_drop)
     registry=SemanticSeabedRegistry()
