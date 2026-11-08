@@ -1,0 +1,298 @@
+{
+  "evidenceType": "actual_live_browser_episode",
+  "recordedAt": "2026-11-08T13:41:14.099Z",
+  "sourceBuild": "b5967bb2b6399ab387408812c9344e0e1606c680",
+  "sourceEpisodeSha256": "18ccaa83ff528e0536ea3e738c10f4fee185c0c014fc036e4c802d4f984ce115",
+  "scene": "configs/reef_lab_compact_recovery.json",
+  "modelHosting": "Gemma on Modal; Argon on Google Interactions; cuOpt on Modal",
+  "result": {
+    "time": 80.54999999999671,
+    "phase": "complete",
+    "status": "Mission complete \u00b7 all placements verified",
+    "completed": true,
+    "missionGoal": 1,
+    "metrics": {
+      "placed": 1,
+      "attempts": 1,
+      "drops": 0,
+      "recoveries": 0,
+      "rejectedCuts": 0,
+      "placementRetries": 0,
+      "distance": 9.782571739334793,
+      "energy": 41.71855311876355,
+      "damage": 0,
+      "collisions": 0,
+      "decisionCount": 1,
+      "wildlifeAvoidances": 0,
+      "habitatAvoidances": 0
+    }
+  },
+  "lastPerception": {
+    "visualContract": "appearance/v1",
+    "targetVisible": true,
+    "objectKind": "coral_fragment",
+    "appearance": "pigmented",
+    "confidence": 0.9,
+    "viabilityKnown": false,
+    "uncertainty": "The object is clearly visible and distinct from the surrounding substrate.",
+    "requestId": "capture-5-3-57550",
+    "captureRequestId": "capture-5",
+    "targetId": "donor-1-fragment-1",
+    "targetKind": "fragment",
+    "fragmentVisible": true,
+    "gripperState": "empty",
+    "frameTime": 57.549999999998015,
+    "receivedTime": 60.316666666664524,
+    "source": "gemma",
+    "provider": "vllm_openai_compatible",
+    "model": "gemma-4-E4B-it",
+    "deployment": "modal",
+    "summary": "A small, reddish-pink coral fragment is visible on the ground.",
+    "inputImageFocus": {
+      "source": "tracked_camera_projection",
+      "target": [
+        0.4959132139691699,
+        0.6989950292655353
+      ],
+      "gripper": [
+        0.5047871881967066,
+        0.3604018122444682
+      ]
+    },
+    "inputImageSha256": "7a934244453223289771f72b963cb74380e58fd37564ba6f03fbcf59890abc94",
+    "latencyMs": 2320
+  },
+  "lastPlanner": {
+    "status": "applied",
+    "reason": "External plan passed local bounds; registry and perception gates still apply.",
+    "localValidation": {
+      "safe": true,
+      "needsLocalReplan": false,
+      "minBedClearance": 1.0761817298082201,
+      "reason": "Bounded route accepted; local terrain, habitat and wildlife reflexes remain authoritative.",
+      "guard": "Local closed-loop thrust and nonpenetration controller; external coordinates are never executed"
+    },
+    "plan": {
+      "requestId": "decision-1",
+      "frameTime": 61.31666666666447,
+      "receivedTime": 62.14999999999775,
+      "source": "local_planner",
+      "provider": "inspectable_policy",
+      "model": "reef-local-policy-v1",
+      "decision": "proceed",
+      "reason": "Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative.",
+      "routeMode": "direct",
+      "optimizer": {
+        "source": "cuopt",
+        "configured": true,
+        "status": "solved",
+        "solverStatus": "SUCCESS",
+        "requestId": "decision-1",
+        "routeMode": "direct",
+        "objectiveCost": 2.1318345069885254,
+        "costs": {
+          "direct": 2.1318345069885254,
+          "clearance": 2.1318345069885254
+        },
+        "model": "nvidia-cuopt",
+        "solverVersion": "26.10.0",
+        "solveTimeMs": 198
+      }
+    }
+  },
+  "transportActivity": [
+    {
+      "time": 2.1833333333333305,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T13:39:28.045Z"
+    },
+    {
+      "time": 4.049999999999991,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:04 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-1. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:39:30.025Z"
+    },
+    {
+      "time": 7.09999999999998,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 3075ms: The object at the target point is a large, pale, irregularly shaped coral colony. Uncertainty: The texture is rough and porous, consistent with bleached coral. recipient-1: pale or bleached (90% provider score; viability from registry only) Frame T+ 00:04.",
+      "receivedAt": "2026-11-08T13:39:33.101Z"
+    },
+    {
+      "time": 9.800000000000066,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:09 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target donor-1 \u00b7 capture capture-2. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:39:35.954Z"
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2877ms: The object at the target point is a distinct, pinkish, irregularly shaped piece of coral. Uncertainty: The exact texture and composition are difficult to determine with certainty from this distance. donor-1: pigmented (90% provider score; viability from registry only) Frame T+ 00:09.",
+      "receivedAt": "2026-11-08T13:39:38.832Z"
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "request",
+      "message": "Sending perception_uncertainty at T+ 00:12 to Argon assistance (1/3). Robot held; permitted suggestions: rescan / hold / abort. Awaiting actual response.",
+      "receivedAt": "2026-11-08T13:39:38.833Z"
+    },
+    {
+      "time": 35.09999999999929,
+      "type": "response",
+      "message": "Argon assistance gemini-4-argon (22700ms): RESCAN \u2014 During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fresh matched view.. Advisory only; fresh Gemma gates remain authoritative.",
+      "receivedAt": "2026-11-08T13:40:01.533Z"
+    },
+    {
+      "time": 36.099999999999234,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:36 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-3. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:02.794Z"
+    },
+    {
+      "time": 39.333333333332384,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 3201ms: The object at the target point is a large, pale, irregularly shaped coral colony. Uncertainty: The exact structure is complex, but it appears to be a colony. recipient-1: pale or bleached (90% provider score; viability from registry only) Frame T+ 00:36.",
+      "receivedAt": "2026-11-08T13:40:05.996Z"
+    },
+    {
+      "time": 48.76666666666518,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:48 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target donor-1 \u00b7 capture capture-4. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:15.756Z"
+    },
+    {
+      "time": 51.61666666666502,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2824ms: The object at the target point is a section of a pinkish, textured coral colony. Uncertainty: The texture is complex, but the overall form is clearly visible. donor-1: pigmented (90% provider score; viability from registry only) Frame T+ 00:48.",
+      "receivedAt": "2026-11-08T13:40:18.580Z"
+    },
+    {
+      "time": 57.549999999998015,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:57 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target donor-1-fragment-1 \u00b7 capture capture-5. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:24.762Z"
+    },
+    {
+      "time": 60.316666666664524,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2687ms: A small, reddish-pink coral fragment is visible on the ground. Uncertainty: The object is clearly visible and distinct from the surrounding substrate. Fragment visible: true; gripper: empty. Frame T+ 00:57.",
+      "receivedAt": "2026-11-08T13:40:27.449Z"
+    },
+    {
+      "time": 60.74999999999783,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T13:40:27.863Z"
+    },
+    {
+      "time": 61.41666666666446,
+      "type": "request",
+      "message": "Sending observations to inspectable policy \u00b7 actions proceed/abort \u00b7 routes direct/clearance \u00b7 cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T13:40:28.686Z"
+    },
+    {
+      "time": 62.14999999999775,
+      "type": "response",
+      "message": "Local planner reef-local-policy-v1 responded in 689ms: PROCEED \u2014 Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative. cuOpt selected direct; objective 2.1318345069885254.",
+      "receivedAt": "2026-11-08T13:40:29.380Z"
+    }
+  ],
+  "events": [
+    {
+      "time": 0,
+      "type": "warning",
+      "message": "No collision-clear loose-fragment pickup for donor-1; inaccessible stock excluded."
+    },
+    {
+      "time": 0,
+      "type": "info",
+      "message": "Scene ready. Known lineage gates donor\u2013recipient compatibility."
+    },
+    {
+      "time": 3.016666666666661,
+      "type": "plan",
+      "message": "Pair donor-1 \u2192 recipient-1; same registered genet G1."
+    },
+    {
+      "time": 7.09999999999998,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for donor-1; no registry fields changed."
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "hold",
+      "message": "Fresh Gemma colony observation is uncertain or incompatible: The exact texture and composition are difficult to determine with certainty from this distance."
+    },
+    {
+      "time": 35.09999999999929,
+      "type": "perception",
+      "message": "Argon assistance requested fresh evidence: During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fr"
+    },
+    {
+      "time": 36.38333333333255,
+      "type": "fault",
+      "message": "Camera dropout: perception unavailable for 8 seconds."
+    },
+    {
+      "time": 36.39999999999922,
+      "type": "hold",
+      "message": "Safe hold: current, visibility or camera quality exceeds operating limits."
+    },
+    {
+      "time": 39.333333333332384,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 44.39999999999876,
+      "type": "recovery",
+      "message": "Conditions recovered; resuming from the same mission state."
+    },
+    {
+      "time": 51.61666666666502,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for donor-1; no registry fields changed."
+    },
+    {
+      "time": 60.316666666664524,
+      "type": "perception",
+      "message": "Received external Gemma fragment/gripper view of donor-1-fragment-1; no registry fields changed."
+    },
+    {
+      "time": 61.31666666666447,
+      "type": "decision",
+      "message": "Argon assistance requested fresh evidence: During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fr Awaiting live base-station plan."
+    },
+    {
+      "time": 62.14999999999775,
+      "type": "plan",
+      "message": "Planner proposal received; the planner cannot bypass local eligibility or reflexes."
+    },
+    {
+      "time": 62.14999999999775,
+      "type": "decision",
+      "message": "base_station: proceed \u2014 Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative."
+    },
+    {
+      "time": 65.08333333333093,
+      "type": "collection",
+      "message": "donor-1-fragment-1 collected from registered loose stock; healthy colonies unchanged."
+    },
+    {
+      "time": 80.54999999999671,
+      "type": "success",
+      "message": "donor-1-fragment-1 mechanically verified on recipient-1. Biological recovery is not simulated."
+    }
+  ],
+  "limits": [
+    "Browser reduced-physics simulation, not an Isaac-controlled mission.",
+    "One placement after a sensor dropout; no current-induced fragment drop in this run.",
+    "Biological recovery, detector accuracy, onboard hardware and field reliability are not established."
+  ]
+}

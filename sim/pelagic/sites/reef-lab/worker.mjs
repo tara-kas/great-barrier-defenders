@@ -137,7 +137,7 @@ export function createWorker({transport = (...args) => fetch(...args), now = () 
         return json(payload,response.ok?200:503);
       }catch{return json({ok:false,status:'error',stale:true,error:'Team mission source unavailable; no sample data substituted'},503);}finally{clearTimeout(timer);}
     }
-    const architecturePaths = ['/api/lab/architecture', '/api/lab/warmup', '/api/lab/perception', '/api/lab/plan', '/api/lab/telemetry'];
+    const architecturePaths = ['/api/lab/architecture', '/api/lab/warmup', '/api/lab/perception', '/api/lab/plan', '/api/lab/telemetry', '/api/lab/review', '/api/lab/assist'];
     if (architecturePaths.includes(url.pathname)) {
       const health = url.pathname.endsWith('/architecture');
       if (request.method !== (health ? 'GET' : 'POST')) return json({ok:false,error:'Unsupported method'},405);
@@ -171,7 +171,9 @@ export function createWorker({transport = (...args) => fetch(...args), now = () 
         const valid = health ? Boolean(payload?.components)
           : url.pathname.endsWith('/warmup') ? payload?.ok === true && ['warming','ready','started'].includes(payload?.status)
           : url.pathname.endsWith('/telemetry') ? Number.isInteger(payload?.acceptedFrames) && payload.acceptedFrames>=1 && payload.acceptedFrames<=5
-          : payload?.source === (url.pathname.endsWith('/perception') ? 'gemma' : 'argon');
+          : url.pathname.endsWith('/assist') ? payload?.source === 'argon_assist' && payload?.advisoryOnly === true && payload?.controlAuthority === false && ['rescan','hold','abort'].includes(payload?.action)
+          : url.pathname.endsWith('/review') ? payload?.source === 'argon_review' && payload?.reviewOnly === true
+          : payload?.source === (url.pathname.endsWith('/perception') ? 'gemma' : 'local_planner');
         if (!payload || typeof payload !== 'object' || !valid) throw new Error('Invalid gateway response');
         return json(payload, response.status === 202 ? 202 : 200);
       } catch (error) {

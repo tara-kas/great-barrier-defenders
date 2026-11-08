@@ -1,6 +1,6 @@
 import { ReefLab } from './simulation.mjs';
 self.onmessage=({data})=>{
- const conditions=['baseline','drop','bad_cut','bad_placement','current_surge','sensor_dropout'];
+ const conditions=['baseline','drop','bad_cut','bad_placement','current_surge','sensor_dropout'].filter(c=>c!=='bad_cut'||data.scene.restorationMode!=='loose_fragment');
  const count=Math.min(10,Math.max(1,Number(data.count)||3));
  const report={version:1,controller:'scripted',model:'Browser reduced hydrodynamics and synthetic fault models',budgetSeconds:600,conditions,scene:data.scene,runs:[],limits:'Finite modeled scenarios only. No Isaac contact parity, image perception or biological recovery claims. Seeds vary modeled cut quality; geometry remains the supplied scene.'};
  for(const condition of conditions)for(let i=0;i<count;i++){

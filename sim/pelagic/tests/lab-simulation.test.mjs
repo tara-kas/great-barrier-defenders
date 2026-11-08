@@ -244,3 +244,64 @@ test('manual rescan during uncertainty review reacquires colony views instead of
  sim.command({action:'ingest_perception',packet:externalPerception(sim,c.targetId,'unknown')});sim.command({action:'review_uncertainty'});sim.command({action:'request_rescan'});
  assert.equal(sim.phase,'inspect_recipient');assert.equal(sim.perceptionRequest.targetKind,'colony');assert.equal(sim.rescanContext.kind,'inspect');assert.equal(sim.pendingDecision,null);
 });
+test('visual appearance gates are independent from registry viability and never assert RGB health',()=>{
+ for(const [appearance,visible,confidence,expected] of [['pale_or_bleached',true,.85,true],['pigmented',true,.95,false],['unknown',true,.95,false],['pale_or_bleached',false,.95,false],['pale_or_bleached',true,.69,false]]){
+  const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});until(sim,s=>s.perceptionRequest?.ready);const id=sim.perceptionRequest.targetId;
+  const packet=externalPerception(sim,id,'unknown',{visualContract:'appearance/v1',targetVisible:visible,objectKind:'coral_colony',appearance,confidence,viabilityKnown:false,observations:[{id,health:'unknown',confidence,targetVisible:visible,objectKind:'coral_colony',appearance,viabilityKnown:false}]});
+  sim.command({action:'ingest_perception',packet});assert.equal(sim._externalHealth(id,'bleached_alive').ready,expected);assert.equal(sim.intelligence.onboard.observations[0].health,'unknown');
+  sim.colonies.find(c=>c.id===id).health='dead';assert.equal(sim._externalHealth(id,'bleached_alive').ready,false);
+ }
+});
+
+test('loose restoration mode validates, round-trips and survives seeded regeneration',()=>{
+ const sim=new ReefLab({seed:42,restorationMode:'loose_fragment'});assert.equal(sim.exportScene().restorationMode,'loose_fragment');assert.equal(sim.snapshot().restorationMode,'loose_fragment');const imported=new ReefLab(sim.exportScene());assert.deepEqual(imported.fragments,sim.fragments);sim.command({action:'randomize',seed:43});assert.equal(sim.scene.restorationMode,'loose_fragment');assert.equal(new ReefLab().scene.restorationMode,'donor_cut');assert.throws(()=>new ReefLab({restorationMode:'harvest_wild'}));assert.throws(()=>sim.command({action:'inject_fault',kind:'bad_cut'}),/does not cut/);
+});
+test('every eligible loose stock fragment is grounded, reachable and collected without cutting a healthy colony',()=>{
+ for(const seed of [42,43,44]){
+  const original=new ReefLab({seed,restorationMode:'loose_fragment',missionGoal:1});assert.equal(original.fragments.length,8);
+  for(const stock of original.fragments){
+   assert.equal(stock.state,'available');assert.equal(stock.detachedAtStart,true);assert.ok(Math.abs(stock.position[2]-terrainHeight(...stock.position)-.07)<1e-9);assert.deepEqual(stock.position,stock.sourcePosition);
+   const sim=new ReefLab({seed,restorationMode:'loose_fragment',missionGoal:1}),before=structuredClone(sim.colonies);sim.fragments=sim.fragments.filter(f=>f.id===stock.id);sim.command({action:'run'});let cut=false,seenGrasp=false;
+   while(sim.running&&sim.time<600){sim.step(.1);cut ||= sim.phase==='cut';if(sim.phase==='grasp'){seenGrasp=true;assert.ok(Math.hypot(...sim.robot.gripper.map((v,i)=>v-stock.position[i]))<.19);}}
+   assert.equal(sim.completed,true,`${seed} ${stock.id}: ${sim.status}`);assert(seenGrasp);assert.equal(cut,false);assert.equal(sim.metrics.damage,0);assert.equal(sim.metrics.rejectedCuts,0);assert.equal(sim.metrics.collisions,0);assert.deepEqual(sim.colonies,before);assert.equal(sim.fragments[0].id,stock.id);assert.equal(sim.fragments[0].state,'placed');assert.equal(sim.fragments.length,1);
+  }
+ }
+});
+test('loose fragment mode rejects dead or unknown-lineage sources and dead recipients',()=>{
+ const base=defaultScene(42);for(const c of base.colonies)if(c.genet)c.health='dead';const dead=new ReefLab({...base,restorationMode:'loose_fragment',missionGoal:1});assert.equal(dead.fragments.length,0);assert.equal(finish(dead).phase,'aborted');
+ const sim=new ReefLab({restorationMode:'loose_fragment',missionGoal:1});for(const c of sim.colonies)if(c.health==='bleached_alive')c.health='dead';assert.equal(finish(sim).metrics.placed,0);assert.equal(sim.metrics.damage,0);
+ const unknownScene=defaultScene(42);for(const c of unknownScene.colonies)c.genet='';const unknown=new ReefLab({...unknownScene,restorationMode:'loose_fragment',missionGoal:1});assert.equal(unknown.fragments.length,0);assert.equal(finish(unknown).phase,'aborted');
+});
+test('loose full-stack fixture inspects actual pickup fragment and preserves its identity through current-induced loss',()=>{
+ const sim=new ReefLab({restorationMode:'loose_fragment',controller:'base_station',missionGoal:1});const initial=structuredClone(sim.fragments),colonies=structuredClone(sim.colonies);let injected=false,sawPickupView=false;
+ const {state}=runBaseFixture(sim,s=>{if(s.phase==='inspect_fragment'&&s._fragment().state==='available'){sawPickupView=true;assert.equal(s.robot.holding,null);}if(!injected&&s.phase==='transport'){injected=true;s.command({action:'inject_fault',kind:'current_surge'});}});
+ assert(sawPickupView);assert.equal(state.completed,true);assert.equal(state.metrics.placed,1);assert.equal(state.metrics.drops,1);assert.equal(state.metrics.recoveries,1);assert.equal(state.metrics.damage,0);assert.equal(state.metrics.rejectedCuts,0);assert.equal(state.metrics.collisions,0);assert.deepEqual(state.colonies,colonies);const id=state.grip.lastLoss.fragmentId;assert(initial.some(f=>f.id===id&&f.detachedAtStart));assert.equal(state.fragments.find(f=>f.id===id).state,'placed');assert.equal(state.fragments.length,initial.length);
+});
+test('local planner provenance is preserved and held to the same matching solver and action gates',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});while(!sim.pendingDecision&&sim.running){sim.step(.2);const request=sim.perceptionRequest;if(request?.ready&&!sim.externalRequestIds.has(`perception:${request.id}`))sim.command({action:'ingest_perception',packet:externalPerception(sim,request.targetId,request.expectedHealth)});}
+ const packet=externalPlan(sim,{source:'local_planner',provider:'inspectable_policy',model:'reef-local-policy-v1'});assert.equal(sim.pendingDecision.observation.decisionKind,'inspect');assert.equal(sim.pendingDecision.observation.robot.holding,null);sim.command({action:'ingest_plan',packet});assert.equal(sim.intelligence.baseStation.plan.source,'local_planner');sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});assert.equal(sim.decision.planning.source,'local_planner');assert.equal(sim.decision.planning.optimizer.solverStatus,'SUCCESS');
+});
+
+test('fragment camera exposure waits for a settled vehicle and resets on motion',()=>{
+ const sim=new ReefLab({restorationMode:'loose_fragment',missionGoal:1});sim.command({action:'run'});until(sim,s=>s.phase==='inspect_fragment');assert.equal(sim.phase,'inspect_fragment');
+ sim.robot.position=[...sim.robot.target];sim.robot.velocity=[.3,0,0];sim._recordInspection(2);assert.equal(sim.perceptionRequest.ready,false);assert.equal(sim.perceptionRequest.exposureSeconds,0);
+ sim.robot.velocity=[0,0,0];sim._recordInspection(1.2);assert.equal(sim.perceptionRequest.ready,true);
+ sim.robot.velocity=[.3,0,0];sim._recordInspection(.1);assert.equal(sim.perceptionRequest.ready,false);assert.equal(sim.perceptionRequest.exposureSeconds,0);
+});
+
+test('assistance hold preserves live current and grip-loss physics without advancing the mission',()=>{
+ const sim=new ReefLab({restorationMode:'loose_fragment',missionGoal:1});sim.command({action:'run'});until(sim,s=>s.phase==='transport');const id=sim.robot.holding,phaseTime=sim.phaseTime,time=sim.time;
+ sim.command({action:'set_assistance_hold',active:true,reason:'Inspect current instability'});sim.step(.5);assert.equal(sim.phaseTime,phaseTime);assert(sim.time>time);assert(sim.snapshot().assistanceHold);
+ sim.command({action:'inject_fault',kind:'current_surge'});sim.step(5);assert.equal(sim.metrics.drops,1);assert.equal(sim.grip.lastLoss.fragmentId,id);assert(sim.assistanceHold);
+ sim.command({action:'set_assistance_hold',active:false});const result=finish(sim);assert(result.completed);assert.equal(result.fragments.find(f=>f.id===id).state,'placed');assert.equal(result.metrics.recoveries,1);
+});
+test('assistance hold is bounded, manual override clears it and explicit abort is terminal',()=>{
+ const sim=new ReefLab();sim.command({action:'run'});sim.command({action:'set_assistance_hold',active:true});sim.command({action:'set_pilot',mode:'manual'});assert.equal(sim.assistanceHold,null);assert.throws(()=>sim.command({action:'set_assistance_hold',active:true}));sim.command({action:'set_pilot',mode:'autonomous'});sim.command({action:'set_assistance_hold',active:true});sim.step(60);sim.step(31);assert.equal(sim.phase,'aborted');assert.equal(sim.running,false);assert.equal(sim.assistanceHold,null);
+ const other=new ReefLab();other.command({action:'run'});other.command({action:'abort',reason:'Bounded advisory requested abort'});assert.equal(other.phase,'aborted');assert.equal(other.status,'Bounded advisory requested abort');assert.throws(()=>other.command({action:'set_assistance_hold',active:true}));
+});
+
+test('a new fragment capture invalidates an otherwise recent pre-drop pickup image',()=>{
+ const sim=new ReefLab({restorationMode:'loose_fragment'});sim.fragmentId=sim.fragments[0].id;sim.fragmentCaptureId='old-pickup';sim.intelligence.onboard.lastPacket={captureRequestId:'old-pickup',targetKind:'fragment',targetId:sim.fragmentId,fragmentVisible:true,gripperState:'empty',frameTime:0};assert(sim._fragmentEvidenceReady());
+ sim._setPhase('inspect_fragment','Reacquiring dropped fragment');assert.notEqual(sim.perceptionRequest.id,'old-pickup');assert.equal(sim._fragmentEvidenceReady(),false);
+ sim.intelligence.onboard.lastPacket.captureRequestId=sim.perceptionRequest.id;assert(sim._fragmentEvidenceReady());sim.robot.holding=sim.fragmentId;assert.equal(sim._fragmentEvidenceReady(),false);
+});

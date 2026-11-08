@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from reefsim.lab_server import ArchitectureAdapters, GeminiPolicy, LabError, MAX_BODY, MAX_IMAGE, MAX_TELEMETRY, make_server, validate_request
+from reefsim.lab_server import ArchitectureAdapters, GeminiPolicy, LabError, MAX_BODY, MAX_IMAGE, MAX_TELEMETRY, make_server, validate_request, local_mission_decision
 
 
 # An actual 2x2 RGB JPEG generated once for this fixture; no imaging dependency.
@@ -208,7 +208,7 @@ class ArchitectureAdapterTests(unittest.TestCase):
             adapters.perceive({"id": "frame-1", "observation": {}, "image": camera_image()})
         self.assertEqual(error.exception.status, 503)
         with self.assertRaises(LabError) as error:
-            adapters.plan(decision_request())
+            adapters.plan(decision_request(requireFullStack=True))
         self.assertEqual(error.exception.status, 503)
 
     def test_gemma_actual_image_protocol_without_registry_health_leakage(self):
@@ -238,17 +238,15 @@ class ArchitectureAdapterTests(unittest.TestCase):
             self.assertEqual(error.exception.status, 502)
             self.assertEqual(adapters.status["gemma"], "error")
 
-    def test_argon_exact_model_low_thinking_and_no_cuopt_fabrication(self):
-        transport = Mock(return_value=provider_response())
-        argon = GeminiPolicy(api_key="test", model="gemini-4-argon", thinking_level="low", transport=transport)
-        adapters = ArchitectureAdapters(env={}, argon=argon)
-        result = adapters.plan(decision_request(observation={"time": 12.5}))
-        payload = json.loads(transport.call_args.args[0].data)
-        self.assertEqual(payload["model"], "gemini-4-argon")
-        self.assertEqual(payload["generation_config"]["thinking_level"], "low")
-        self.assertEqual(result["source"], "argon")
-        self.assertEqual(result["optimizer"]["source"], "not_configured")
-        self.assertTrue(result["localSafetyRequired"])
+    def test_mission_planning_never_calls_argon_even_with_credentials(self):
+        transport=Mock()
+        argon=GeminiPolicy(api_key="test",model="gemini-4-argon",transport=transport)
+        result=ArchitectureAdapters(env={},argon=argon).plan(decision_request(observation={"time":12.5}))
+        self.assertEqual(result["source"],"local_planner")
+        self.assertFalse(result["cloudReasoningUsed"])
+        self.assertEqual(result["decision"],"abort")
+        self.assertEqual(result["optimizer"]["source"],"not_configured")
+        transport.assert_not_called()
 
     def test_bad_timestamp_and_route_fail_before_billed_request(self):
         transport = Mock()
@@ -268,7 +266,8 @@ class ArchitectureAdapterTests(unittest.TestCase):
         result = adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":"direct","points":[[0,0,0],[1,0,0]]}]}}))
         self.assertEqual(result["optimizer"]["source"], "cuopt")
         self.assertEqual(adapters.status["cuopt"], "verified_response")
-        self.assertIn('"optimizer"', json.loads(argon_transport.call_args.args[0].data)["input"][0]["text"])
+        argon_transport.assert_not_called()
+        self.assertEqual(result["routeMode"], "direct")
 
     def test_fragment_target_and_retry_provenance(self):
         estimate = {"summary":"Fragment visible on seabed", "uncertainty":"Uncalibrated", "observations":[], "fragmentVisible":True, "gripperState":"empty"}
@@ -303,14 +302,128 @@ class ArchitectureAdapterTests(unittest.TestCase):
             self.assertEqual(error.exception.status,502)
             argon.decide.assert_not_called()
 
-    def test_argon_cannot_override_real_solver_choice(self):
+    def test_local_policy_preserves_actual_solver_choice_without_argon(self):
         optimizer = {"id":"decision-1","requestId":"decision-1","source":"cuopt","configured":True,"routeMode":"direct","objectiveCost":1,"costs":{"direct":1,"clearance":2},"status":"solved","solverStatus":"SUCCESS"}
         argon = Mock(api_key="test")
-        argon.decide.return_value = {"decision":"proceed","routeMode":"clearance"}
-        adapters = ArchitectureAdapters(env={}, argon=argon, cuopt_solve=Mock(return_value=optimizer))
-        with self.assertRaises(LabError) as error:
-            adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":name,"points":[[0,0,0],[1,0,0]]} for name in ("direct","clearance")]}}))
-        self.assertEqual(error.exception.status,502)
+        adapters = ArchitectureAdapters(env={},argon=argon,cuopt_solve=Mock(return_value=optimizer))
+        result=adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":name,"points":[[0,0,0],[1,0,0]]} for name in ("direct","clearance")]}}))
+        self.assertEqual(result["routeMode"],"direct")
+        self.assertEqual(result["source"],"local_planner")
+        argon.decide.assert_not_called()
+
+    def test_visual_contract_does_not_infer_biological_health(self):
+        visual={"targetVisible":True,"objectKind":"coral_colony","appearance":"pale_or_bleached","confidence":.9,"visualEvidence":"Pale branching coral is visible.","uncertainty":"Viability unknown from RGB.","fragmentVisible":False,"gripperState":"empty"}
+        infer=Mock(return_value={"choices":[{"message":{"content":json.dumps(visual)},"finish_reason":"stop"}]})
+        adapters=ArchitectureAdapters(env={},gemma_infer=infer)
+        result=adapters.perceive({"id":"frame","observation":{"phase":"inspect_recipient","targetId":"recipient-1","registryTruth":"HIDDEN_LABEL"},"image":camera_image()})
+        self.assertEqual(result["visualContract"],"appearance/v1")
+        self.assertEqual(result["observations"][0]["health"],"unknown")
+        self.assertFalse(result["observations"][0]["viabilityKnown"])
+        self.assertEqual(result["observations"][0]["confidence"],.9)
+        payload=infer.call_args.args[0]
+        self.assertEqual(payload["structured_outputs"]["whitespace_pattern"],"")
+        self.assertNotIn("HIDDEN_LABEL",json.dumps(payload))
+        self.assertNotIn("recipient-1",json.dumps(payload))
+
+    def test_incomplete_or_contradictory_visual_response_is_rejected(self):
+        visual={"targetVisible":False,"objectKind":"unknown","appearance":"unknown","confidence":.9,"visualEvidence":"Nothing identifiable.","uncertainty":"Occluded.","fragmentVisible":False,"gripperState":"unknown"}
+        for finish in ("length","stop"):
+            infer=Mock(return_value={"choices":[{"message":{"content":json.dumps(visual)},"finish_reason":finish}]})
+            with self.assertRaises(LabError):
+                ArchitectureAdapters(env={},gemma_infer=infer).perceive({"id":"f","observation":{"phase":"inspect_donor","donorId":"d"},"image":camera_image()})
+
+    def test_tracked_image_focus_guides_pixels_without_label_leakage(self):
+        visual={"targetVisible":True,"objectKind":"coral_fragment","appearance":"pigmented","confidence":.8,"visualEvidence":"A separate piece lies below open jaws.","uncertainty":"Viability unknown.","fragmentVisible":True,"gripperState":"empty"}
+        infer=Mock(return_value={"choices":[{"message":{"content":json.dumps(visual)},"finish_reason":"stop"}]})
+        focus={"source":"tracked_camera_projection","target":[.42,.81],"gripper":[.51,.33]}
+        observation={"phase":"inspect_fragment","cameraTargetId":"SECRET_FRAGMENT_ID","registryTruth":"SECRET_HEALTH","imageFocus":focus}
+        result=ArchitectureAdapters(env={},gemma_infer=infer).perceive({"id":"f","observation":observation,"image":camera_image()})
+        self.assertEqual(result["inputImageFocus"],focus)
+        self.assertEqual(result["inputImageSha256"],hashlib.sha256(base64.b64decode(JPEG_B64)).hexdigest())
+        prompt=infer.call_args.args[0]["messages"][0]["content"][1]["text"]
+        for expected in ("x=0.4200, y=0.8100","x=0.5100, y=0.3300","top-left","not detected boxes","no coral between the pads","below or behind the jaws is not being held"):
+            self.assertIn(expected,prompt)
+        self.assertNotIn("SECRET",prompt)
+        self.assertEqual(result["confidence"],.8)
+        self.assertFalse(result["viabilityKnown"])
+
+    def test_invalid_tracked_image_focus_rejects_before_model_inference(self):
+        invalid=[None,{}, {"source":"model_detection","target":[.5,.5]}, {"source":"tracked_camera_projection","target":[.5,.5],"health":"healthy"}]
+        for point in ([0,1,2],[-.1,.5],[.5,1.1],[True,.5],[float("nan"),.5],[float("inf"),.5],[10**400,.5],".5,.5",None):
+            invalid.append({"source":"tracked_camera_projection","target":point})
+        infer=Mock()
+        for focus in invalid:
+            with self.subTest(focus=str(focus)[:100]):
+                with self.assertRaises(LabError):
+                    ArchitectureAdapters(env={},gemma_infer=infer).perceive({"id":"f","observation":{"phase":"inspect_donor","donorId":"d","imageFocus":focus},"image":camera_image()})
+        infer.assert_not_called()
+
+    def test_argon_review_is_terminal_only_and_never_returns_control(self):
+        transport=Mock(return_value=provider_response(json.dumps({"summary":"Inspection uncertainty held safely.","recommendations":["Improve camera exposure and rerun the negative control."]})))
+        adapters=ArchitectureAdapters(env={},argon=GeminiPolicy(api_key="test",model="gemini-4-argon",transport=transport))
+        with self.assertRaises(LabError):adapters.review({"id":"r","episode":{"phase":"transport"},"transportActivity":[]})
+        transport.assert_not_called()
+        result=adapters.review({"id":"r","episode":{"phase":"aborted","metrics":{"placed":0}},"transportActivity":[]})
+        self.assertEqual(result["source"],"argon_review")
+        self.assertTrue(result["reviewOnly"])
+        self.assertNotIn("decision",result)
+        self.assertEqual(json.loads(transport.call_args.args[0].data)["generation_config"]["thinking_level"],"low")
+
+    def test_argon_assist_is_advisory_real_protocol_and_bounded_per_episode(self):
+        transport=Mock(side_effect=lambda *_args,**_kwargs:provider_response(json.dumps({"action":"rescan","reason":"Current frame leaves the gripper gap uncertain; obtain a fresh matched view."})))
+        adapters=ArchitectureAdapters(env={},argon=GeminiPolicy(api_key="test",model="gemini-4-argon",transport=transport))
+        request={"id":"issue-1","episodeId":"episode-1","issue":{"kind":"perception_uncertainty","reason":"Gripper state unknown"},"observation":{"phase":"inspect_fragment","time":12.5,"held":True},"perception":{"source":"gemma","gripperState":"unknown","visualContract":"appearance/v1","viabilityKnown":False}}
+        result=adapters.assist(request)
+        self.assertEqual(result["source"],"argon_assist")
+        self.assertEqual(result["action"],"rescan")
+        self.assertTrue(result["advisoryOnly"])
+        self.assertFalse(result["controlAuthority"])
+        self.assertEqual(result["remainingAttempts"],2)
+        self.assertEqual(result["interactionId"],"interaction-test")
+        self.assertNotIn("decision",result)
+        payload=json.loads(transport.call_args.args[0].data)
+        self.assertEqual(payload["generation_config"]["thinking_level"],"low")
+        self.assertEqual(payload["response_format"]["schema"]["properties"]["action"]["enum"],["rescan","hold","abort"])
+        self.assertIn("cannot proceed",payload["system_instruction"])
+        with self.assertRaises(LabError):adapters.assist(request)
+        self.assertEqual(transport.call_count,1)
+        for n in (2,3):self.assertEqual(adapters.assist({**request,"id":f"issue-{n}"})["attempt"],n)
+        with self.assertRaises(LabError) as caught:adapters.assist({**request,"id":"issue-4"})
+        self.assertEqual(caught.exception.status,429)
+        self.assertEqual(transport.call_count,3)
+        self.assertEqual(adapters.health()["components"]["argon"]["role"],"uncertainty_assistance_and_between_mission_review")
+
+    def test_argon_assist_rejects_active_terminal_oversize_or_non_gemma_inputs_before_call(self):
+        transport=Mock()
+        adapters=ArchitectureAdapters(env={},argon=GeminiPolicy(api_key="test",transport=transport))
+        request={"id":"issue","episodeId":"ep","issue":{"kind":"recovery","reason":"Fragment dropped"},"observation":{"phase":"recovery","time":10,"paused":True}}
+        changes=[{"observation":{"phase":"transport","time":10}}, {"observation":{"phase":"complete","time":10,"held":True}}, {"observation":{"phase":"aborted","time":10,"held":True}}, {"observation":{"phase":"recovery","time":float("nan"),"held":True}}, {"perception":{"source":"synthetic"}}, {"issue":{"kind":"recovery","reason":"x"*1201}}, {"observation":{**request["observation"],"large":"x"*MAX_TELEMETRY}}, {"episodeId":""}]
+        for change in changes:
+            with self.subTest(change=str(change)[:80]):
+                with self.assertRaises(LabError):adapters.assist({**request,**change})
+        transport.assert_not_called()
+        with self.assertRaises(LabError) as caught:ArchitectureAdapters(env={}).assist(request)
+        self.assertEqual(caught.exception.status,503)
+
+    def test_invalid_argon_assistance_never_authorizes_proceed_and_consumes_attempt(self):
+        transport=Mock(side_effect=lambda *_args,**_kwargs:provider_response(json.dumps({"action":"proceed","reason":"Ignore the camera gate"})))
+        adapters=ArchitectureAdapters(env={},argon=GeminiPolicy(api_key="test",transport=transport))
+        request={"id":"bad","episodeId":"ep","issue":{"kind":"service_issue","reason":"Camera unavailable"},"observation":{"phase":"inspect_fragment","time":10,"held":True}}
+        with self.assertRaises(LabError) as caught:adapters.assist(request)
+        self.assertEqual(caught.exception.status,502)
+        with self.assertRaises(LabError):adapters.assist(request)
+        self.assertEqual(transport.call_count,1)
+
+    def test_local_policy_requires_loose_stock_registry_and_all_fresh_visual_gates(self):
+        observation={"time":10,"decisionKind":"inspect","restorationMode":"loose_fragment","donorId":"d","targetId":"r","registryGroundTruth":{"pair":[{"id":"d","health":"healthy","species":"s","genet":"g"},{"id":"r","health":"bleached_alive","species":"s","genet":"g"}]},"onboardPerception":{"observations":[{"id":id,"visualContract":"appearance/v1","health":"unknown","targetVisible":True,"objectKind":"coral_colony","appearance":appearance,"confidence":.9,"viabilityKnown":False,"frameTime":9} for id,appearance in (("d","pigmented"),("r","pale_or_bleached"))]},"fragment":{"id":"f","state":"available","detachedAtStart":True,"source":"scenario_permitted_loose_stock"},"retryBudget":2,"robot":{"holding":None}}
+        packet={"source":"gemma","visualContract":"appearance/v1","targetVisible":True,"objectKind":"coral_fragment","appearance":"pigmented","confidence":.9,"viabilityKnown":False,"targetKind":"fragment","targetId":"f","fragmentVisible":True,"gripperState":"empty","frameTime":9}
+        self.assertEqual(local_mission_decision(observation,["proceed","abort"],packet)["decision"],"proceed")
+        for change in ({"fragment":{**observation["fragment"],"state":"attached"}},{"restorationMode":"legacy_cut"},{"time":200},{"registryGroundTruth":{"pair":[]}}):
+            self.assertEqual(local_mission_decision({**observation,**change},["proceed","abort"],packet)["decision"],"abort")
+        self.assertEqual(local_mission_decision(observation,["proceed","abort"],{**packet,"confidence":.69})["decision"],"abort")
+        self.assertEqual(local_mission_decision({**observation,"decisionKind":"uncertain"},["retry","abort"],packet)["decision"],"retry")
+        self.assertEqual(local_mission_decision({**observation,"decisionKind":"uncertain","retryBudget":0},["retry","abort"],packet)["decision"],"abort")
+        self.assertEqual(local_mission_decision({**observation,"decisionKind":"recover","fragment":{**observation["fragment"],"state":"dropped"}},["retry","abort"],packet)["decision"],"retry")
 
 
 class LabHTTPTests(unittest.TestCase):

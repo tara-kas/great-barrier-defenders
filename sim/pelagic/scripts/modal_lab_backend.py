@@ -93,10 +93,12 @@ def gateway():
     from fastapi import FastAPI, Request
     from fastapi.responses import JSONResponse, Response
     from reefsim.team_feed import TeamFeed, FeedError
+    from reefsim.live_feed import LiveFeed
     from reefsim.lab_server import ArchitectureAdapters, LabError, MAX_BODY
     api = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     gemma, cuopt = GemmaRuntime(), CuOptRuntime()
     team_feed = TeamFeed()
+    live_feed = LiveFeed()
     def generate(payload):
         try:
             return gemma.generate.remote(payload)
@@ -130,7 +132,7 @@ def gateway():
             for name, item in runtime.items():
                 value["components"][name].update(readiness=item["state"], ready=item["state"] == "ready")
             value["components"]["argon"].update(readiness="ready" if adapters.argon.api_key else "unconfigured", ready=bool(adapters.argon.api_key))
-            value["pipelineReady"] = all(v["ready"] for v in value["components"].values())
+            value["pipelineReady"] = all(value["components"][name]["ready"] for name in ("gemma", "cuopt"))
             value["status"] = "ready" if value["pipelineReady"] else "warming" if any(v["state"] == "warming" for v in runtime.values()) else "not_started"
             value["runtime"] = {"platform": "modal", "authentication": "bearer", "perceptionResidency": "remote_gpu", "argonAccessVerified": adapters.status["argon"] == "verified_response"}
             return value
@@ -151,20 +153,20 @@ def gateway():
     async def get_team_state(request: Request):
         if request.query_params:
             return JSONResponse({"ok":False,"error":"Team source paths are server configured"}, status_code=400)
-        status, payload = await asyncio.to_thread(team_feed.state)
+        status, payload = await asyncio.to_thread(lambda: live_feed.state() or team_feed.state())
         return JSONResponse(payload, status_code=status)
     @api.get("/api/lab/team-frame")
     async def get_team_frame(request: Request):
         if request.query_params and (set(request.query_params) != {"v"} or not request.query_params["v"].isdigit()):
             return JSONResponse({"ok":False,"error":"Team source paths are server configured"}, status_code=400)
         try:
-            body, mime = await asyncio.to_thread(team_feed.frame)
+            body, mime = await asyncio.to_thread(live_feed.frame if live_feed.state() else team_feed.frame)
             return Response(body, media_type=mime)
         except FeedError:
             return JSONResponse({"ok":False,"error":"Team frame unavailable or unconfigured"}, status_code=503)
     @api.post("/api/lab/{operation}")
     async def operate(operation: str, request: Request):
-        if operation not in ("warmup", "perception", "plan", "telemetry"):
+        if operation not in ("warmup", "perception", "plan", "review", "assist", "telemetry", "team-snapshot"):
             return JSONResponse({"ok": False, "error": "Unknown endpoint"}, status_code=404)
         try:
             if request.headers.get("content-type", "").split(";")[0] != "application/json":
@@ -172,9 +174,11 @@ def gateway():
             body = bytearray()
             async for chunk in request.stream():
                 body.extend(chunk)
-                if len(body) > MAX_BODY:
+                if len(body) > (3500000 if operation == "team-snapshot" else MAX_BODY):
                     raise LabError(413, "Request too large")
             data = json.loads(body)
+            if operation == "team-snapshot":
+                return await asyncio.to_thread(live_feed.ingest, data)
             if operation == "warmup":
                 if data != {}:
                     raise LabError(400, "Warmup expects an empty object")
@@ -197,6 +201,8 @@ def gateway():
                 return JSONResponse(result, status_code=200 if result["pipelineReady"] else 202)
             if operation == "telemetry":
                 return adapters.receive_telemetry(data)
+            if operation in ("review", "assist"):
+                return await asyncio.to_thread(adapters.call, operation, data)
             state = await asyncio.to_thread(health)
             needed = ("gemma",) if operation == "perception" else ("gemma", "cuopt")
             if not all(state["components"][name]["ready"] for name in needed):

@@ -17,3 +17,19 @@ test('memory retention is bounded, deduplicated and expires without refreshing s
 test('storage failures degrade to in-session context and explicit clear/export remain safe',()=>{
  const broken={getItem:()=>{throw Error('denied');},setItem:()=>{throw Error('full');},removeItem:()=>{throw Error('denied');}},sim=new ReefLab(),memory=new SemanticMemory({storage:broken,clock:()=>1000});memory.bindScene(sim.exportScene());assert.ok(memory.status.lastError);memory.remember(observed(sim));assert.equal(memory.entries().length,1);assert.ok(memory.status.lastError);memory.clear();assert.equal(memory.entries().length,0);assert.ok(memory.status.lastError);assert.throws(()=>new SemanticMemory({maxRecords:257}));assert.throws(()=>memory.importJSON('x'.repeat(1024*1024+1)));
 });
+test('appearance observations survive persistence and context without implying viability or control',()=>{
+ const db=storage(),sim=new ReefLab(),memory=new SemanticMemory({storage:db,clock:()=>1000});memory.bindScene(sim.exportScene());
+ const snapshot=observed(sim),visual={health:'unknown',visualContract:'appearance/v1',targetVisible:true,objectKind:'coral_colony',appearance:'pale_or_bleached',viabilityKnown:false};Object.assign(snapshot.intelligence.onboard.observations[0],visual);memory.remember(snapshot);
+ const restored=new SemanticMemory({storage:db,clock:()=>1100});restored.bindScene(sim.exportScene());
+ for(const record of [restored.entries()[0],restored.planningContext().records[0]])for(const [key,value] of Object.entries(visual))assert.equal(record[key],value);
+ assert.equal(restored.entries()[0].usableForControl,false);assert.equal(restored.planningContext().usableForControl,false);assert.equal(sim.intelligence.onboard.observations.length,0);
+});
+test('memory rejects malformed or biologically relabelled visual records on write and import',()=>{
+ const sim=new ReefLab(),memory=new SemanticMemory({storage:storage(),clock:()=>1000});memory.bindScene(sim.exportScene());
+ const snapshot=observed(sim),visual={health:'unknown',visualContract:'appearance/v1',targetVisible:true,objectKind:'coral_colony',appearance:'pigmented',viabilityKnown:false};Object.assign(snapshot.intelligence.onboard.observations[0],visual);memory.remember(snapshot);const exported=JSON.parse(memory.exportJSON());
+ for(const change of [{appearance:'healthy'},{objectKind:'living_coral'},{viabilityKnown:true},{health:'healthy'},{visualContract:'appearance/v2'},{targetVisible:'yes'}]){
+  const candidate=observed(sim,'recipient-1','new');Object.assign(candidate.intelligence.onboard.observations[0],visual,change);assert.throws(()=>memory.remember(candidate),/visual appearance/);
+  const imported=structuredClone(exported);Object.assign(imported.records[0],change);assert.throws(()=>memory.importJSON(JSON.stringify(imported)),/visual appearance/);
+ }
+ assert.equal(memory.entries().length,1);assert.equal(memory.entries()[0].viabilityKnown,false);
+});

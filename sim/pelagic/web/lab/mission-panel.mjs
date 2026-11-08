@@ -79,7 +79,7 @@ export class MissionPanel{
  renderFrame(){
   if(this.source==='lab')return;const feed=this.feed,image=$('team-evidence-frame'),layer=$('team-evidence-boxes'),allowed=typeof feed?.frameUrl==='string'&&/^\/api\/lab\/team-frame(?:\?|$)/.test(feed.frameUrl);
   image.hidden=!allowed;layer.replaceChildren();$('team-frame-note').textContent=allowed?`${feed.frame_synthetic?'Synthetic source frame':'File frame · camera origin unverified'} · ${stamp(feed.frame_updated)} · overlays only from supplied detections.`:'No frame supplied by the team mission source.';
-  if(!allowed){image.removeAttribute('src');return;}const key=`${feed.frameUrl}:${feed.frame_updated}`;if(key!==this.frameKey){this.frameKey=key;image.src=feed.frameUrl+(feed.frameUrl.includes('?')?'&':'?')+'v='+encodeURIComponent(feed.frame_updated||'current');}
+  if(!allowed){image.removeAttribute('src');return;}const key=`${feed.frameUrl}:${feed.frame_updated}`;if(key!==this.frameKey){this.frameKey=key;const frameUrl=new URL(feed.frameUrl,location.origin);frameUrl.searchParams.set('v',String(Math.round(Number(feed.frame_updated||0)*1000)));image.src=frameUrl.pathname+frameUrl.search;}
   if(!$('evidence-boxes').checked)return;for(const detection of feed.detections||[]){const box=detection.box;if(!Array.isArray(box)||box.length!==4||box.some(n=>!Number.isFinite(n)||n<0||n>1))continue;const mark=element('div','','team-detection');mark.style.left=box[0]*100+'%';mark.style.top=box[1]*100+'%';mark.style.width=Math.min(box[2],1-box[0])*100+'%';mark.style.height=Math.min(box[3],1-box[1])*100+'%';mark.append(element('span',text(detection.cluster_id)));layer.append(mark);}
  }
  dispose(){clearInterval(this.timer);this.request?.abort();}

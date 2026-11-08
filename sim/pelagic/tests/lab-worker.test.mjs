@@ -147,7 +147,7 @@ test('architecture proxy uses fixed configured gateway and rejects unsafe origin
     assert.equal(url, 'https://gateway.example/api/lab/plan');
     assert.equal(options.headers.authorization, 'Bearer gateway-test-only');
     assert.equal(options.redirect, 'manual');
-    return Response.json({id:'d-1',source:'argon',decision:'proceed',model:'gemini-4-argon'});
+    return Response.json({id:'d-1',source:'local_planner',decision:'proceed',model:'reef-local-policy-v1'});
   }});
   const env = {LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'gateway-test-only'};
   const requestPlan = origin => new Request('https://reef.example/api/lab/plan', {method:'POST',headers:{'content-type':'application/json',origin},body:'{}'});
@@ -192,4 +192,19 @@ test('team frame proxy rejects redirects, wrong MIME and oversized content',asyn
  const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'};const request=()=>new Request('https://lab.example/api/lab/team-frame?v=22');
  for(const response of [new Response(null,{status:302,headers:{location:'https://other.example'}}),new Response('<html>',{headers:{'content-type':'text/html'}}),new Response(new Uint8Array(2*1024*1024+1),{headers:{'content-type':'image/png'}})])assert.equal((await createWorker({transport:async()=>response}).fetch(request(),env)).status,503);
  const bytes=new Uint8Array([137,80,78,71]);const good=await createWorker({transport:async()=>new Response(bytes,{headers:{'content-type':'image/png'}})}).fetch(request(),env);assert.equal(good.status,200);assert.equal(good.headers.get('cache-control'),'no-store');assert.deepEqual(new Uint8Array(await good.arrayBuffer()),bytes);
+});
+
+test('Argon is accepted only as a read-only post-mission review, never a live plan',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'};
+ const call=(worker,path)=>worker.fetch(new Request('https://reef.example/api/lab/'+path,{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env);
+ assert.equal((await call(createWorker({transport:async()=>Response.json({source:'argon'})}),'plan')).status,502);
+ assert.equal((await call(createWorker({transport:async()=>Response.json({source:'argon_review',reviewOnly:true})}),'review')).status,200);
+ assert.equal((await call(createWorker({transport:async()=>Response.json({source:'argon_review',reviewOnly:false})}),'review')).status,502);
+});
+
+test('Argon assistance permits only non-authoritative bounded advice',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'};
+ const call=payload=>createWorker({transport:async()=>Response.json(payload)}).fetch(new Request('https://reef.example/api/lab/assist',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env);
+ for(const action of ['rescan','hold','abort'])assert.equal((await call({source:'argon_assist',advisoryOnly:true,controlAuthority:false,action})).status,200);
+ for(const payload of [{source:'argon_assist',advisoryOnly:true,controlAuthority:false,action:'proceed'},{source:'argon_assist',advisoryOnly:true,controlAuthority:true,action:'rescan'},{source:'argon_assist',advisoryOnly:false,controlAuthority:false,action:'rescan'}])assert.equal((await call(payload)).status,502);
 });

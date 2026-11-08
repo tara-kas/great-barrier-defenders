@@ -2,6 +2,7 @@ import * as THREE from '../vendor/three.module.js';
 import { terrainHeight, terrainNormal, coralContactPoint } from './terrain.mjs';
 import { reefRegions } from './habitat-regions.mjs';
 import { generateHabitat, generateHabitatRocks } from './habitat.mjs';
+import { buildVehicleBody } from './vehicle.mjs';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const asset = (name) => new URL(`./assets/${name}`, import.meta.url).href;
@@ -257,16 +258,9 @@ export class ReefScene {
   }
   buildRobot() {
     this.robot=new THREE.Group();this.scene.add(this.robot);this.robot.name='RESTORE-02';
-    const white=this.mat({color:0xe4e5d7,roughness:.45,metalness:.16},false),dark=this.mat({color:0x142b32,roughness:.55,metalness:.55},false),teal=this.mat({color:0x35b6ad,roughness:.42,metalness:.3},false),metal=this.mat({color:0x9faeac,roughness:.3,metalness:.7},false),glass=this.mat({color:0x092332,roughness:.14,metalness:.7},false);
+    const vehicle=buildVehicleBody({THREE,group:this.robot,mat:(options,caustics)=>this.mat(options,caustics),add:(geometry,material,parent)=>this.add(geometry,material,parent)});
+    const {dark,teal,metal}=vehicle.materials;if(vehicle.labelTexture)this.textures.set('robot-label',vehicle.labelTexture);this.vehicleVisual=vehicle;
     const box=(size,p,mat,parent=this.robot)=>{const m=this.add(new THREE.BoxGeometry(...size),mat,parent);m.position.set(...p);return m;};
-    box([.65,.27,.92],[0,0,0],white);box([.52,.1,.7],[0,.18,0],teal);box([.4,.08,.44],[0,.25,-.08],dark);
-    for(const x of [-.42,.42]){
-      const skid=this.add(new THREE.CylinderGeometry(.027,.027,1.15,10),dark,this.robot);skid.rotation.x=Math.PI/2;skid.position.set(x,-.35,0);
-      for(const z of [-.35,.35]){box([.04,.2,.04],[x,-.24,z],metal);const cage=this.add(new THREE.CylinderGeometry(.14,.14,.18,20,1,true),dark,this.robot);cage.rotation.z=Math.PI/2;cage.position.set(x,0,z);const prop=this.add(new THREE.BoxGeometry(.02,.19,.045),metal,cage);prop.rotation.y=.5;}
-    }
-    for(const x of [-.24,.24]){const lamp=this.add(new THREE.CylinderGeometry(.055,.06,.065,16),dark,this.robot);lamp.rotation.x=Math.PI/2;lamp.position.set(x,-.04,-.49);const lens=this.add(new THREE.CircleGeometry(.043,16),new THREE.MeshBasicMaterial({color:0xd1fbff}),lamp);lens.rotation.x=-Math.PI/2;lens.position.y=.035;}
-    const eye=this.add(new THREE.SphereGeometry(.075,16,12),glass,this.robot);eye.position.set(0,.06,-.49);
-    const texCanvas=document.createElement('canvas');texCanvas.width=512;texCanvas.height=128;const ctx=texCanvas.getContext('2d');ctx.fillStyle='#e4e5d7';ctx.fillRect(0,0,512,128);ctx.fillStyle='#12343e';ctx.font='bold 53px sans-serif';ctx.font='bold 42px sans-serif';ctx.fillText('REEF RESCUE',24,76);ctx.font='18px monospace';ctx.fillText('R E S T O R E – 0 2',280,102);const tex=new THREE.CanvasTexture(texCanvas);tex.colorSpace=THREE.SRGBColorSpace;this.textures.set('robot-label',tex);const label=this.add(new THREE.PlaneGeometry(.59,.148),new THREE.MeshBasicMaterial({map:tex}),this.robot);label.position.set(0,.041,.466);
     this.arm=new THREE.Group();this.scene.add(this.arm);this.armMat=metal;
     this.armA=this.add(new THREE.CylinderGeometry(.038,.045,1,12),dark,this.arm);this.armB=this.add(new THREE.CylinderGeometry(.025,.03,1,12),metal,this.arm);
     this.shoulder=this.add(new THREE.SphereGeometry(.07,14,10),teal,this.arm);this.elbow=this.add(new THREE.SphereGeometry(.06,14,10),dark,this.arm);
@@ -321,10 +315,34 @@ export class ReefScene {
     const ids=new Set();for(const o of state.obstacles||[]){ids.add(o.id);let mesh=this.obstacles.get(o.id);if(!mesh){mesh=this.add(this.rockGeo,this.rockMat);this.obstacles.set(o.id,mesh);}mesh.position.copy(vec(o.position));mesh.position.y+=(o.radius||.4)*.75;mesh.scale.set(o.radius||.4,(o.radius||.4)*.75,o.radius||.4);}
     for(const[id,m]of this.obstacles)if(!ids.has(id)){this.scene.remove(m);this.obstacles.delete(id);}
   }
+  buildFragmentGeometry() {
+    // Crop one real peripheral Pocillopora branch cluster, preserving UV seams,
+    // measured surface normals and the scan's coral texture (not metal primitives).
+    const source=this.heroScan,position=source.attributes.position,index=source.index,kept=[];
+    for(let i=0;i<index.count;i+=3){const vertices=[index.getX(i),index.getX(i+1),index.getX(i+2)];if(vertices.every(v=>position.getY(v)>.47&&Math.hypot(position.getX(v)-.05,position.getZ(v)-.76)<.18))kept.push(...vertices);}
+    if(kept.length<300)throw new Error('Coral fragment scan crop is unexpectedly empty');
+    const geometry=new THREE.BufferGeometry();
+    for(const name of ['position','normal','uv']){const attribute=source.attributes[name],values=new Float32Array(kept.length*attribute.itemSize);kept.forEach((vertex,i)=>{for(let j=0;j<attribute.itemSize;j++)values[i*attribute.itemSize+j]=attribute.array[vertex*attribute.itemSize+j];});geometry.setAttribute(name,new THREE.BufferAttribute(values,attribute.itemSize));}
+    geometry.computeBoundingBox();const box=geometry.boundingBox,size=box.getSize(new THREE.Vector3()),centre=box.getCenter(new THREE.Vector3());
+    // Physics settles the tracked grasp anchor 7cm above the bed. Centre the
+    // 14cm fragment on that anchor so settled stock actually touches the terrain.
+    geometry.translate(-centre.x,-box.min.y,-centre.z);geometry.scale(.095/size.y,.095/size.y,.095/size.y);geometry.translate(0,-.025,0);geometry.computeBoundingSphere();geometry.computeBoundingBox();this.geometries.add(geometry);this.fragmentGeometry=geometry;
+    this.fragmentMaterials=new Map();
+    this.fragmentStemGeometry=new THREE.CylinderGeometry(.009,.013,.095,14);this.geometries.add(this.fragmentStemGeometry);
+  }
   syncFragments(state) {
-    const ids=new Set();
-    for(const f of state.fragments||[]){ids.add(f.id);let group=this.fragments.get(f.id);if(!group){group=new THREE.Group();const mat=this.mat({color:0xb7a7a0,normalMap:this.branchNormal,roughness:.95});const stem=this.add(new THREE.CylinderGeometry(.014,.025,.16,9),mat,group);stem.position.y=.08;for(let i=0;i<4;i++){const b=this.add(new THREE.CylinderGeometry(.006,.012,.08,7),mat,group);b.position.set((i%2?1:-1)*.025,.07+i*.025,0);b.rotation.z=(i%2?1:-1)*.6;}this.scene.add(group);this.fragments.set(f.id,group);}group.position.copy(vec(f.position));group.visible=!['consumed','lost','quarantined','rejected'].includes(f.state);group.rotation.z=f.state==='dropped'?Math.sin(state.time||0)*.15:0;}
-    for(const[id,g]of this.fragments)if(!ids.has(id)){this.scene.remove(g);g.traverse(o=>{if(o.isMesh)o.geometry.dispose();});this.fragments.delete(id);}
+    if(!this.fragmentGeometry)this.buildFragmentGeometry();const ids=new Set();
+    for(const f of state.fragments||[]){
+      ids.add(f.id);const donor=this.colonies.get(f.donorId)?.mesh,source=donor===this.uvActive?.mesh?this.uvActive.base:donor?.material||this.coralMats[0];
+      // Same specimen tissue/albedo as its registered source, never a classifier
+      // colour cue. Marker fluorescence is temporary and is never copied to stock.
+      let material=this.fragmentMaterials.get(source.uuid);if(!material){material=source.clone();material.metalness=0;material.roughness=1;material.side=THREE.DoubleSide;material.emissiveIntensity=0;this.materials.add(material);this.fragmentMaterials.set(source.uuid,material);}
+      let group=this.fragments.get(f.id);if(!group){group=new THREE.Group();this.add(this.fragmentGeometry,material,group);const stem=this.add(this.fragmentStemGeometry,material,group);stem.position.y=-.0225;this.scene.add(group);this.fragments.set(f.id,group);}else group.children.forEach(mesh=>mesh.material=material);
+      group.position.copy(vec(f.position));group.visible=!['consumed','lost','quarantined','rejected'].includes(f.state);group.rotation.y=(hash(f.id)%360)*Math.PI/180;group.rotation.z=f.state==='dropped'?Math.sin(state.time||0)*.15:0;
+    }
+    // Geometry/materials are shared immutable assets; disposing one removed stock
+    // group must not invalidate surviving fragments after an edited scene reset.
+    for(const[id,g]of this.fragments)if(!ids.has(id)){this.scene.remove(g);this.fragments.delete(id);}
   }
   segment(mesh,a,b) { const d=new THREE.Vector3().subVectors(b,a);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.scale.y=d.length();mesh.quaternion.setFromUnitVectors(UP,d.normalize()); }
   update(state, dt = 1/60) {
@@ -341,14 +359,36 @@ export class ReefScene {
     const visibility=state.water?.visibility??8;this.scene.fog.density=THREE.MathUtils.clamp(.34/visibility,.022,.24);
     const current=Number(state.water?.current)||0;for(const f of this.fans){f.group.rotation.z=Math.sin(t*.65+f.phase)*(.025+current*.12);}
     if(this.particles){const flow=vec(state.water?.currentVector||[current,0,0]),elapsed=Math.max(0,Math.min(1,t-(this.lastWaterTime??t))),positions=this.particles.geometry.attributes.position;for(let i=0;i<positions.count;i++){const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);let vx=flow.x,vy=flow.y,vz=flow.z,best=Infinity;for(const sample of state.water?.currentSamples||[]){const distance=(sample.position[0]-px)**2+(sample.position[1]+pz)**2;if(distance<best){best=distance;vx=sample.vector[0];vy=sample.vector[2];vz=-sample.vector[1];}}let x=px+vx*elapsed,y=py+vy*elapsed,z=pz+vz*elapsed;x=((x+17.5)%35+35)%35-17.5;z=((z+17.5)%35+35)%35-17.5;y=((y%8)+8)%8;positions.setXYZ(i,x,y,z);}positions.needsUpdate=true;this.lastWaterTime=t;}
+    const fragmentInspection=state.perceptionRequest?.targetKind==='fragment',inspectionAim=fragmentInspection?vec(state.perceptionRequest.targetPosition).lerp(gripper.clone().add(new THREE.Vector3(0,.1,0)),.5):null;
+    // This is the real tool optic used by every view, with an inspection offset
+    // and a bounded variable field of view. Fit the actual jaws and target together.
+    this.toolCamera.position.copy(gripper).addScaledVector(right,fragmentInspection?.48:.38).addScaledVector(forward,fragmentInspection?-.65:-.46).add(new THREE.Vector3(0,fragmentInspection?.4:.3,0));
+    this.toolCamera.lookAt(inspectionAim||gripper.clone().add(new THREE.Vector3(0,.015,0)));this.toolCamera.fov=58;
+    if(fragmentInspection)this.fitFragmentOptic(vec(state.perceptionRequest.targetPosition),gripper);
+    this.toolCamera.updateProjectionMatrix();this.camera.fov=this.cameraMode==='wrist'&&fragmentInspection?this.toolCamera.fov:46;this.camera.updateProjectionMatrix();
     const smoothing=1-Math.exp(-Math.min(dt,.1)*5),desired=new THREE.Vector3(),aim=this.target.clone();
     if(this.cameraMode==='pilot'){desired.copy(p).addScaledVector(forward,.7).add(new THREE.Vector3(0,.08,0));aim.copy(desired).addScaledVector(forward,4).add(new THREE.Vector3(0,-.45,0));}
     else if(this.cameraMode==='follow'){aim.copy(p).lerp(gripper,.2);desired.copy(p).addScaledVector(forward,-3.2).addScaledVector(right,2.0).add(new THREE.Vector3(0,1.6,0));}
-    else if(this.cameraMode==='wrist'){desired.copy(gripper).addScaledVector(right,.38).addScaledVector(forward,-.46).add(new THREE.Vector3(0,.3,0));aim.copy(gripper).add(new THREE.Vector3(0,.015,0));}
+    else if(this.cameraMode==='wrist'){desired.copy(this.toolCamera.position);aim.copy(inspectionAim||gripper.clone().add(new THREE.Vector3(0,.015,0)));}
     else if(this.cameraMode==='top'){aim.set(0,1.3,0);const fit=7.2/(Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))*Math.min(1,this.camera.aspect));desired.set(0,Math.max(18,3.5+fit),.001);}
     else{desired.set(Math.sin(this.azimuth)*Math.cos(this.elevation)*this.distance,Math.sin(this.elevation)*this.distance,Math.cos(this.azimuth)*Math.cos(this.elevation)*this.distance).add(this.target);}
     if(!this.cameraInitialized||this.cameraMode==='pilot'){this.camera.position.copy(desired);this.lookAt=aim.clone();this.cameraInitialized=true;}else{this.camera.position.lerp(desired,smoothing);this.lookAt.lerp(aim,smoothing);}
-    this.camera.up.set(0,this.cameraMode==='top'?0:1,this.cameraMode==='top'?-1:0);this.camera.lookAt(this.lookAt);this.toolCamera.position.copy(gripper).addScaledVector(right,.38).addScaledVector(forward,-.46).add(new THREE.Vector3(0,.3,0));this.toolCamera.lookAt(gripper.clone().add(new THREE.Vector3(0,.015,0)));this.forwardCamera.position.copy(p).addScaledVector(forward,.7).add(new THREE.Vector3(0,.08,0));this.forwardCamera.lookAt(this.forwardCamera.position.clone().addScaledVector(forward,4).add(new THREE.Vector3(0,-.45,0)));this.renderer.render(this.scene,this.camera);
+    this.camera.up.set(0,this.cameraMode==='top'?0:1,this.cameraMode==='top'?-1:0);this.camera.lookAt(this.lookAt);this.forwardCamera.position.copy(p).addScaledVector(forward,.7).add(new THREE.Vector3(0,.08,0));this.forwardCamera.lookAt(this.forwardCamera.position.clone().addScaledVector(forward,4).add(new THREE.Vector3(0,-.45,0)));this.renderer.render(this.scene,this.camera);
+  }
+  fitFragmentOptic(fragment,gripper) {
+    this.toolCamera.updateMatrixWorld(true);const inverse=this.toolCamera.matrixWorldInverse;let tangent=0;
+    // Whole parallel jaws/actuator, and the physically sized branch cluster.
+    for(const [centre,extent] of [[fragment,new THREE.Vector3(.075,.07,.075)],[gripper.clone().add(new THREE.Vector3(0,.105,0)),new THREE.Vector3(.145,.135,.115)]])
+      for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1]){const p=centre.clone().add(new THREE.Vector3(x*extent.x,y*extent.y,z*extent.z)).applyMatrix4(inverse);if(p.z<-.015)tangent=Math.max(tangent,Math.abs(p.y)/-p.z,Math.abs(p.x)/(-p.z*this.toolCamera.aspect));}
+    this.toolCamera.fov=THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2*Math.atan(tangent*1.06)),38,100);
+  }
+  moveSpectator({forward=0,right=0,up=0}={},dt=1/60) {
+    if(!this.ready||this.disposed)return;
+    const input=new THREE.Vector3(...[right,up,forward].map(value=>THREE.MathUtils.clamp(Number(value)||0,-1,1)));if(input.lengthSq()===0)return;if(input.length()>1)input.normalize();
+    const heading=this.camera.getWorldDirection(new THREE.Vector3());heading.y=0;if(heading.lengthSq()<1e-6)heading.set(-Math.sin(this.azimuth),0,-Math.cos(this.azimuth));heading.normalize();const lateral=new THREE.Vector3().crossVectors(heading,UP).normalize();
+    const step=new THREE.Vector3().addScaledVector(heading,input.z).addScaledVector(lateral,input.x).addScaledVector(UP,input.y).multiplyScalar(Math.min(.1,Math.max(0,Number(dt)||0))*Math.min(4,Math.max(.6,this.distance*.16)));
+    if(this.cameraMode!=='orbit'){const offset=this.camera.position.clone().sub(this.lookAt||this.target);this.distance=THREE.MathUtils.clamp(offset.length(),1.1,30);this.azimuth=Math.atan2(offset.x,offset.z);this.elevation=THREE.MathUtils.clamp(Math.asin(offset.y/Math.max(.001,offset.length())),.09,1.48);this.target.copy(this.lookAt||this.target);this.cameraMode='orbit';}
+    const previous=this.target.clone();this.target.add(step);this.target.x=THREE.MathUtils.clamp(this.target.x,-30,30);this.target.z=THREE.MathUtils.clamp(this.target.z,-30,30);this.target.y=THREE.MathUtils.clamp(this.target.y,.1,16);step.copy(this.target).sub(previous);this.camera.position.add(step);this.lookAt?.add(step);this.camera.lookAt(this.lookAt||this.target);
   }
   updateInspectionLight(state,body,gripper,forward) {
     const inspecting=['inspect_recipient','inspect_donor'].includes(state.phase),request=state.perceptionRequest;
@@ -411,15 +451,19 @@ export class ReefScene {
   }
   cameraFrame(width=768,height=576,options={}) {
     if(!this.ready||!this.snapshot)throw new Error('Robot camera is not ready');
-    const camera=options.camera==='forward'?this.forwardCamera.clone():this.toolCamera.clone();if(options.camera!=='forward'&&Array.isArray(options.targetPosition))camera.lookAt(vec(options.targetPosition));camera.aspect=width/height;camera.updateProjectionMatrix();
+    const camera=options.camera==='forward'?this.forwardCamera.clone():this.toolCamera.clone();if(options.camera!=='forward'&&Array.isArray(options.targetPosition)&&this.snapshot.perceptionRequest?.targetKind!=='fragment')camera.lookAt(vec(options.targetPosition));camera.aspect=width/height;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+    // Geometric registration from the known tracker, not an image detection.
+    // Keep pixels unchanged; provide only points actually inside this camera view.
+    const projectPoint=position=>{if(!Array.isArray(position)||position.length!==3||!position.every(Number.isFinite))return null;const world=vec(position),local=world.clone().applyMatrix4(camera.matrixWorldInverse);if(local.z>=-camera.near)return null;const ndc=world.project(camera);if(![ndc.x,ndc.y,ndc.z].every(Number.isFinite)||Math.abs(ndc.x)>1||Math.abs(ndc.y)>1||Math.abs(ndc.z)>1)return null;return[(ndc.x+1)/2,(1-ndc.y)/2];};
+    const targetImagePoint=projectPoint(options.targetPosition||this.snapshot.perceptionRequest?.targetPosition),gripperImagePoint=projectPoint(this.snapshot.robot?.gripper),projection={...(targetImagePoint?{targetImagePoint}:{}),...(gripperImagePoint?{gripperImagePoint}:{})};
     this.cameraBuffers??=new Map();const key=`${width}x${height}`;let buffer=this.cameraBuffers.get(key);
     if(!buffer){const target=new THREE.WebGLRenderTarget(width,height,{depthBuffer:true});target.texture.colorSpace=THREE.SRGBColorSpace;const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');buffer={target,canvas,context,pixels:new Uint8Array(width*height*4),image:context.createImageData(width,height)};this.cameraBuffers.set(key,buffer);}
     const previous=this.renderer.getRenderTarget(),autoShadow=this.renderer.shadowMap.autoUpdate,overlays=[this.routeGroup,this.sonarGroup,this.currentGroup,this.regionGroup,this.selection,this.targetMarker,this.donorMarker].filter(Boolean),visibility=overlays.map(o=>o.visible);
-    try{overlays.forEach(o=>o.visible=false);this.renderer.shadowMap.autoUpdate=false;this.renderer.setRenderTarget(buffer.target);this.renderer.render(this.scene,camera);this.renderer.readRenderTargetPixels(buffer.target,0,0,width,height,buffer.pixels);for(let y=0;y<height;y++)buffer.image.data.set(buffer.pixels.subarray(y*width*4,(y+1)*width*4),(height-1-y)*width*4);buffer.context.putImageData(buffer.image,0,0);return{canvas:buffer.canvas,camera:options.camera==='forward'?'forward':'tool',time:this.snapshot.time};}
+    try{overlays.forEach(o=>o.visible=false);this.renderer.shadowMap.autoUpdate=false;this.renderer.setRenderTarget(buffer.target);this.renderer.render(this.scene,camera);this.renderer.readRenderTargetPixels(buffer.target,0,0,width,height,buffer.pixels);for(let y=0;y<height;y++)buffer.image.data.set(buffer.pixels.subarray(y*width*4,(y+1)*width*4),(height-1-y)*width*4);buffer.context.putImageData(buffer.image,0,0);return{canvas:buffer.canvas,camera:options.camera==='forward'?'forward':'tool',time:this.snapshot.time,...projection};}
     finally{this.renderer.setRenderTarget(previous);this.renderer.shadowMap.autoUpdate=autoShadow;overlays.forEach((o,i)=>o.visible=visibility[i]);}
   }
   renderPreview(canvas,options={}){const frame=this.cameraFrame(canvas.width,canvas.height,options);canvas.getContext('2d').drawImage(frame.canvas,0,0);return{camera:frame.camera,time:frame.time};}
-  captureObservation(options={}) {const frame=this.cameraFrame(768,576,options);return{mimeType:'image/jpeg',data:frame.canvas.toDataURL('image/jpeg',.83).split(',')[1],camera:frame.camera,time:frame.time};}
+  captureObservation(options={}) {const frame=this.cameraFrame(768,576,options),image={mimeType:'image/jpeg',data:frame.canvas.toDataURL('image/jpeg',.83).split(',')[1],camera:frame.camera,time:frame.time};if(options.includeProjection===true&&(frame.targetImagePoint||frame.gripperImagePoint))image.imageFocus={source:'tracked_camera_projection',...(frame.targetImagePoint?{target:frame.targetImagePoint}:{}),...(frame.gripperImagePoint?{gripper:frame.gripperImagePoint}:{})};return image;}
   setCamera(mode) { if(!['orbit','follow','top','wrist','pilot'].includes(mode))throw new Error('Unknown camera mode');this.cameraMode=mode; }
   setQuality(quality) {this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,quality==='high'?2:1));this.renderer.shadowMap.enabled=quality==='high';this.resize();}
   setSelected(id) {this.selected=id;}
