@@ -72,8 +72,9 @@ Implementation is split among UI, backend, and simulation/parameters agents. See
 - [x] **Regression tests — working.** Deterministic replay, scene validation, eligibility, identity conservation, faults, route differences, terrain, wildlife and API validation have automated coverage. Expand counts/evidence only from completed test runs.
 - [ ] **Scenario matrix — extend.** Sweep current direction/speed, visibility, slopes, density, missed detections, wrong classifications, sensor latency, moving obstacles, insufficient stock, impossible placement and repeated failures. Report failures and confidence intervals where appropriate; do not equate 18 selected scenarios with general reliability.
 - [x] **Scene save/load/export — working.** Persist edited environments and replay seeds. Semantic memory remains a separate outstanding item above.
-- [x] **Repository delivery — initial checkpoint pushed.** Canonical location: `great-barrier-defenders/sim/pelagic/web/lab`. Keep follow-up changes, backend, tests, assets and guides synchronized and commit/push each verified checkpoint without including teammates' unrelated edits.
-- [ ] **Final hosted demo + video evidence — pending latest checkpoint.** Publish the verified source, confirm deployment, record the 60-second take, retain an offline backup, and link the exact commit and validation report.
+- [x] **Repository delivery — verified checkpoint pushed.** Canonical location: `great-barrier-defenders/sim/pelagic/web/lab`. Keep follow-up changes, backend, tests, assets and guides synchronized and commit/push each verified checkpoint without including teammates' unrelated edits.
+- [x] **Hosted checkpoint — published.** Private website version 2 contains the verified regional reef and UI update; implementation commit `eb0bb17` is pushed to `simulation`. The hosted page uses scripted control; model and telemetry adapters require the configured backend.
+- [ ] **Video evidence — still required.** Record the rehearsed 60-second take, retain an offline backup, and link the exact scene, commit and validation evidence.
 
 ## Definition of ready for judging
 
