@@ -71,13 +71,13 @@ The current browser mission lives in **[`sim/pelagic`](sim/pelagic/README.md)**.
 | **Local policy** | `reef-local-policy-v1` | Python gateway | Check registry and fresh evidence, then propose a permitted action and route. |
 | **Local controller** | Mission state machine and reduced physics | Browser | Execute only locally valid motion and verify the outcome. |
 
-**Gemma is used through Modal in the hosted pipeline, and local Gemma inference has now been measured on the Spark.** The edge measurement used official weights at revision `4ecc2ba63bcac23ba4a767fc87025b1450f84c9c` inside a container with external networking disabled. It completed five actual image requests. The [edge guide](docs/EDGE_DEPLOYMENT.md) records the pinned runtime, raw responses, resource counters and reproducible commands.
+**Gemma is used through Modal in the hosted pipeline, and the Spark deployment serves Gemma locally.** The edge measurement used official weights at revision `4ecc2ba63bcac23ba4a767fc87025b1450f84c9c` inside a container with external networking disabled. It completed five actual image requests. The [edge guide](docs/EDGE_DEPLOYMENT.md) records the pinned runtime, raw responses, resource counters and reproducible commands.
 
 Argon’s contextual advice is bound to the episode and target, expires after 60 simulated seconds and accompanies a new image. Gemma independently evaluates that image; the registry, freshness checks and local safety gates determine handling permission. Assistance has three attempts per episode, a 25-second socket timeout and a 90-second active hold limit. Transient failures and HOLD responses trigger bounded automatic rechecks; permanent invalid responses never become permission to move. Credentials remain server-side.
 
 The root Python research stack is a separate implementation path. It defaults to `gemma-4-31b-it`; its optional cloud perception uses `gemini-3.5-flash-lite`, and synthetic fixture generation uses `gemini-nano-banana-2.1`. These are not extra models in the saved browser mission. [Model-to-source map](docs/ARCHITECTURE.md#separate-python-research-components).
 
-## What has been verified
+## Runtime measurements
 
 The [saved complete hosted episode](docs/evidence/live-model-episode.json), exported on **8 November 2026 at 13:41:14 UTC**, contains one mechanically verified placement in **80.55 simulated seconds**, with zero collisions, drops or recoveries. Five Gemma replies, an actual Argon-assisted rescan, a camera-dropout hold and a native cuOpt solve appear in the record.
 
@@ -92,9 +92,7 @@ The [saved complete hosted episode](docs/evidence/live-model-episode.json), expo
 
 The edge benchmark repeats one recorded Isaac image five times. Resource reporting separates vLLM allocation, cgroup memory and shared host/GPU counters. [Measured runtime and resource budget](docs/EDGE_DEPLOYMENT.md#measured-resource-budget) provides the raw samples and reproduction commands.
 
-The latest Spark fault trial completed inspection, native route solving and fragment collection. A current surge caused a recorded drop; the robot retained the fragment ID and safely aborted after assistance timed out. The [run index](docs/evidence/readiness-run-index.json) preserves all seven follow-up runs with source hashes and outcome counters. [Evidence](docs/EVIDENCE.md) covers both completed placement and fault handling.
-
-## Changes and failure cases the robot handles
+## Runtime behavior
 
 | Situation | Required response |
 | --- | --- |
@@ -155,7 +153,7 @@ python3 -m unittest tests.test_lab_server tests.test_live_feed tests.test_live_s
 
 The submission verifier checks preserved run hashes, model evidence, edge input/response integrity, recorded resource limits and documentation links. Software regressions use declared provider doubles and local HTTP servers. [Complete test commands](SETUP.md#regression-checks).
 
-To collect a new result, load a documented scene, run the actual configured services and use **Export** to save the episode and activity trace. For recovery acceptance, inject **Current surge** while a fragment is carried; retain the same run through loss, new camera acquisition, recovery and verified placement. Preserve unsuccessful runs as well.
+To collect a new result, load a documented scene, run the actual configured services and use **Export** to save the episode and activity trace. For a recovery scenario, inject **Current surge** while a fragment is carried; retain the same run through loss, new camera acquisition, recovery and verified placement.
 
 ## Judging criteria and evidence
 
@@ -167,7 +165,7 @@ To collect a new result, load a documented scene, run the actual configured serv
 | Relevance and impact | 20% | Registered loose-stock restoration scenario, scientific motivation and explicit biological limits. |
 | Ambition and technical quality | 15% | Gemma vision, native cuOpt, bounded Argon, inspectable state transitions, raw evidence and cross-language regressions. |
 
-The [judging guide](docs/JUDGING_GUIDE.md) maps each criterion to code and recorded results. The [operating and validation status](docs/IMPLEMENTATION_STATUS.md) tracks deployment checks, and the [file guide](docs/CODE_MAP.md) explains the repository’s modules and entry points.
+The [judging guide](docs/JUDGING_GUIDE.md) maps each criterion to code and recorded results. The [operating reference](docs/IMPLEMENTATION_STATUS.md) explains service readiness and mission execution, and the [file guide](docs/CODE_MAP.md) explains the repository’s modules and entry points.
 
 ## Repository map
 

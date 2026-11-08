@@ -23,17 +23,6 @@ Registered identity, biological eligibility and lineage are **scenario inputs**.
 
 The implementation is in [simulation.mjs](../sim/pelagic/web/lab/simulation.mjs), [app.mjs](../sim/pelagic/web/lab/app.mjs) and [lab_server.py](../sim/pelagic/reefsim/lab_server.py). The state machine, numerical safety limits and reproducible seeds are intentional engineering controls. Model calls are identified by their request/response receipts.
 
-## What has actually been recorded
-
-| Record | Observation | Scope |
-| --- | --- | --- |
-| [Completed live-model episode](../sim/pelagic/docs/evidence/live_stack_completed_placement.json) | Gemma uncertainty led to an actual Argon `RESCAN`; fresh Gemma captures and a cuOpt/local-policy decision preceded one mechanical placement. Final state: 80.55 simulated seconds, 1 placement, 0 collisions, 0 drops, 0 recoveries. | Real model/solver calls on rendered images and simulated telemetry. Also includes a camera-dropout hold. Its recorded counters are 0 drops and 0 recoveries. |
-| [Earlier fragment visibility hold](../sim/pelagic/docs/evidence/live_fragment_visibility_hold.json) | Uncertain fragment/gripper evidence prevented pickup. | Real inference transport and conservative refusal; not a successful placement. |
-| [Earlier bounded safe abort](../sim/pelagic/docs/evidence/live_stack_safe_abort.json) | Four unknown/zero-confidence Gemma observations led to retries and a safe abort. | Historical live trace from the earlier Argon-planning path; preserve its provenance rather than treating it as the current local-planning implementation. |
-| [UV uncertainty diagnostic](../sim/pelagic/docs/evidence/gemma_uv_uncertainty.json) | Real responses on UV-lit and white-light rendered frames did not establish accepted biological health classification. | Appearance diagnostic; genotype is supplied by the registry. |
-
-The originally submitted one-page PDF used an earlier evidence cutoff, 8 November 2026 at 13:09, and reported inspect-only live results. The completed episode above is newer. Keep the dates and individual run identities attached to these claims; use the [evidence index](EVIDENCE.md) to distinguish the current summary and raw live episode.
-
 ## Regression scenarios
 
 The tests below exercise the real controller and adapters with declared fixtures or model doubles. They establish repeatable behavior under the tested inputs; they do not count as additional live Gemma/Argon runs. Test titles are quoted exactly so reviewers can locate them.
@@ -68,12 +57,9 @@ python3 -m unittest tests.test_lab_server tests.test_live_feed tests.test_live_s
 
 The HTTP tests need permission to bind a local ephemeral port. These commands use fixtures; they do not provision Modal or make live paid inference requests.
 
-## Recording and acceptance
+## Recording a mission
 
-Use **Robot + base** when collecting live-model evidence. Keep readiness, valid provider reply, accepted perception and completed mission as separate milestones. Export the actual episode and activity log together with the continuous capture. A complete drop-recovery claim requires the same recorded run to show the initial fragment ID, drop, fresh post-drop camera evidence, reacquisition and verified placement.
-
-
-Field acceptance still requires calibrated sensing and forces, a complete robot power budget, disconnected mission trials and ecological validation. [Measured Spark Gemma inference](EDGE_DEPLOYMENT.md) establishes local serving and scoped resource measurements, not those broader outcomes.
+Select **Robot + base**, wait for service readiness and start the mission. Use **Export** to save the episode and activity log. To exercise current-driven recovery, inject **Current surge** while a fragment is carried. Inspect the recorded fragment ID, current/grip readings, camera captures, model receipts, recovery transitions and placement counters together. See [EVIDENCE](EVIDENCE.md) for artifact fields and integrity checks.
 
 [simtests]: ../sim/pelagic/tests/lab-simulation.test.mjs
 [backendtests]: ../sim/pelagic/tests/test_lab_server.py

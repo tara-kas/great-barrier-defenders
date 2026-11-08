@@ -7,7 +7,7 @@
 - [Scenarios](SCENARIOS.md) — nominal mission and failure-case verification.
 - [Judging guide](JUDGING_GUIDE.md) — rubric mapping and reviewer questions.
 - [Evidence](EVIDENCE.md) — immutable raw episode, result summary and submission PDFs.
-- [Implementation status](IMPLEMENTATION_STATUS.md) — completed capabilities and remaining acceptance work.
+- [Operating reference](IMPLEMENTATION_STATUS.md) — readiness, mission execution and service behavior.
 - [Agent instructions](../AGENTS.md) — review and editing invariants.
 
 The files `plan.md`, `simulation-gemini.md` and `tasks/` are historical design records. Use the current source and evidence above to determine what is implemented.

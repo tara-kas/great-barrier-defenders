@@ -71,6 +71,6 @@ Use [EDGE_DEPLOYMENT](EDGE_DEPLOYMENT.md) for the pinned local deployment and ev
 | [tools/verify_submission.py](../tools/verify_submission.py) | Verifies submission links, evidence hashes, run-index consistency and recorded edge benchmark metadata. |
 | [tools/build_technical_summary.py](../tools/build_technical_summary.py) | Builds the current technical-summary PDF. |
 | [docs/evidence/](evidence/), [docs/media/](media/README.md), [docs/submission/](submission/) | Preserve run exports, measurements, pipeline media and submitted/current PDFs. |
-| [SCENARIOS](SCENARIOS.md), [JUDGING_GUIDE](JUDGING_GUIDE.md), [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md) | Map acceptance cases, rubric questions and remaining implementation/validation work. |
+| [SCENARIOS](SCENARIOS.md), [JUDGING_GUIDE](JUDGING_GUIDE.md), [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md) | Explain scenario controls, rubric questions and mission/service operation. |
 
 Run the commands in [SETUP](../SETUP.md#regression-checks) for the relevant path. Raw run outcomes are recorded separately from regression results in [EVIDENCE](EVIDENCE.md).

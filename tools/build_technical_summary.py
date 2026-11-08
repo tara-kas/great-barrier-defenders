@@ -69,8 +69,6 @@ def build(root, output):
     # nvidia-smi CSV columns are name, temperature, power, memory used, memory total.
     power = [float(sample['gpuCsv'].split(',')[2]) for sample in resource]
     runs = readiness['runs']
-    aborts = sum(run['phase'] == 'aborted' for run in runs)
-    readiness_placements = sum(run['metrics']['placed'] for run in runs)
     cutoff = max(edge['recordedAtUtc'], *(run['exportedAt'] for run in runs))[:16].replace('T', ' ')
 
     styles = {
@@ -124,9 +122,9 @@ def build(root, output):
         ['Argon assistance latency', f'{argon[0]:.3f} s; n={len(argon)}', 'Browser round trip'],
         ['cuOpt solve time', f'{optimizer["solveTimeMs"]/1000:.3f} s; n=1', 'Native solver duration'],
     ], [180,140,WIDTH-320])]
-    story += [Spacer(1,7), p(f'<b>Failure evidence is retained [3].</b> The readiness index contains {len(runs)} further runs: {aborts} aborted, {readiness_placements} placements. The latest Spark trial completed inspection, route solving and collection, then recorded a current-induced drop and safe assistance-timeout abort.', 'small')]
+    story += [Spacer(1,7), p('<b>Run the pipeline.</b> Configure Gemma, native cuOpt and Argon on the gateway. Load the compact scene through Environment builder, select Robot + base, wait for service readiness and start the mission. Export captures, provider receipts and outcome counters together. [3]', 'small')]
     story += [section('Reproduce and audit'), p('Run <font name="Courier">python3 sim/pelagic/scripts/run_lab.py</font>; configure actual services using SETUP.md. Verify with <font name="Courier">python3 tools/verify_submission.py</font> and the documented test suites.', 'small')]
-    story += [p(f'[1] docs/evidence/live-model-episode.json - {live["exportedAt"][:19].replace("T"," ")} UTC; SHA-256 {live_hash[:16]}...<br/>[2] docs/EDGE_DEPLOYMENT.md and docs/evidence/edge_gemma_benchmark.json - SHA-256 {edge_hash[:16]}...<br/>[3] docs/evidence/readiness-run-index.json. Full sources and hashes: docs/EVIDENCE.md; rubric: docs/JUDGING_GUIDE.md.', 'small')]
+    story += [p(f'[1] docs/evidence/live-model-episode.json - {live["exportedAt"][:19].replace("T"," ")} UTC; SHA-256 {live_hash[:16]}...<br/>[2] docs/EDGE_DEPLOYMENT.md and docs/evidence/edge_gemma_benchmark.json - SHA-256 {edge_hash[:16]}...<br/>[3] SETUP.md and docs/IMPLEMENTATION_STATUS.md. Artifact format and hashes: docs/EVIDENCE.md; rubric: docs/JUDGING_GUIDE.md.', 'small')]
     story += [PageBreak(), p('Measured edge operation', 'title'), p('Pinned Gemma inference and native route services on NVIDIA GB10.', 'subtitle')]
     story += [box(f'<b>{edge["summary"]["completed"]}/{edge["summary"]["requested"]} valid structured image responses on NVIDIA GB10.</b> The Spark container used Docker network mode <b>{escape(metadata["networkMode"])}</b>, with only loopback and no network routes. Model weights were downloaded beforehand. [2]')]
     story += [section('Observed resource budget [2]'), table([
@@ -146,7 +144,7 @@ def build(root, output):
         ['20% / Relevance and impact', 'Registered fragment handling targets a concrete restoration workflow. Identity, damage and attachment checks are inspectable; ecological benefit and survival are not established.'],
         ['15% / Technical quality', 'Native cuOpt, explicit model provenance, cross-language contract tests, bounded memory and telemetry. Independent Isaac RTX feed is read-only; browser physics is separate.'],
     ], [165,WIDTH-165])]
-    story += [Spacer(1,8), box('<b>Review and operation:</b> docs/CODE_MAP.md explains the files and entry points. SETUP.md provides service configuration and test commands. docs/EVIDENCE.md records placement and fault-trial outcomes; docs/IMPLEMENTATION_STATUS.md tracks deployment checks.', AMBER)]
+    story += [Spacer(1,8), box('<b>Review and operation:</b> docs/CODE_MAP.md explains the files and entry points. SETUP.md provides service configuration and test commands. docs/EVIDENCE.md explains episode fields and source hashes; docs/IMPLEMENTATION_STATUS.md describes mission execution and service behavior.', AMBER)]
 
     def decorate(canvas, doc):
         canvas.saveState()

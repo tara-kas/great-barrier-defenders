@@ -1,27 +1,36 @@
-# Operating status and validation
+# Mission operating reference
 
-## Implemented and inspectable
+## Runtime components
 
-- Current browser mission: registered loose stock, rendered camera acquisition, real Gemma integration, bounded Argon assistance, native cuOpt route solving and local safety/placement verification.
-- Freshness, replay and target-binding checks; independent eligibility and lineage registry.
-- Sensor/provider failure holds and aborts, same-ID fragment recovery logic, local obstacle/wildlife checks and bounded semantic memory.
-- Server-side authentication, explicit readiness/failure responses, episode/activity export and read-only Isaac feed.
-- Network-isolated Gemma E4B image inference measured on Spark GB10 with pinned weights and resource evidence. [Edge deployment](EDGE_DEPLOYMENT.md) records its scope.
-- Automatic bounded assistance retries, selected-fragment binding, shared camera optics and sanitized failure diagnostics.
-- One saved actual-model episode with uncertainty escalation, sensor-dropout recovery and one completed placement. [Evidence](EVIDENCE.md) contains its raw artifact and measurements.
+The browser mission in `sim/pelagic` combines the tool camera, Gemma visual assessment, an independent stock registry, local policy, native cuOpt routing and local motion/attachment checks. Argon provides contextual advice and visual checks during a held issue. The [file guide](CODE_MAP.md) maps these functions to their implementations.
 
-## Deployment checks
-
-| Priority | Concrete next step | Completion evidence |
+| Service | Configuration | Readiness signal |
 | --- | --- | --- |
-| 1 | Complete the current-disturbance recovery case after assistance transport checks. | Latest Spark trial: inspection, native route solve, collection and one current-induced drop; safe abort after Argon timeout. Completion target: same-ID recovery and verified placement in one episode. |
-| 1 | Enforce a total Argon transport deadline and release the active-request slot on expiry. | The configured 25-second socket timeout allowed a Spark request to outlast the browser timeout. A bounded wall-clock transport test and successful retry are required. |
-| 1 | Repeat nominal and negative cases across varied scene seeds, visibility and currents; include provider timeout and malformed output. | Versioned run set with successes, safe holds/aborts and failures all retained; no selection of successful runs only. |
-| 2 | Calibrate appearance/fragment detection against held-out labeled images, then choose thresholds. | Accuracy, false acceptance and confidence-calibration measurements. The existing 0.70 provider-score gate is not a calibrated probability. |
-| 2 | Complete a mission using the measured Spark Gemma service and local native cuOpt; test loss of external networking. | Local Gemma residency and image-inference measurements are now recorded; remaining evidence is a disconnected completed mission and a complete system resource/power budget. |
-| 2 | Make assistance accounting durable if serving multiple workers or requiring cross-restart limits. | Concurrent/restart tests showing episode budgets remain enforced. Current accounting is process-local. |
-| 3 | Connect physical sensing/actuation and validate contact/force limits, with a reviewed ecological protocol before field intervention. | Hardware tests and qualified ecological assessment. Browser mechanical success cannot establish biological benefit. |
+| Gemma | `GEMMA_BASE_URL`, `GEMMA_MODEL`, optional `GEMMA_API_KEY` | The model service reports the configured served model ID. |
+| Native cuOpt | `CUOPT_ADAPTER_URL`, `CUOPT_API_KEY` | A native readiness solve returns a valid route result. |
+| Argon | `GEMINI_API_KEY`, `ARGON_MODEL` | The gateway reports configuration; assistance responses carry provider and interaction metadata. |
+| Browser gateway | Local server or authenticated Modal gateway/Worker | Architecture health reports service state; the UI enables mission start when required services are ready. |
 
-The Python research mission is separately testable; its adapter path is not automatically the deployed browser path. Keep its test results and deployment claims scoped to the implementation that produced them.
+Use [SETUP](../SETUP.md) for environment configuration, [hosted deployment](../sim/pelagic/docs/ARCHITECTURE.md#integrated-authenticated-modal-deployment) for Modal, or [Spark deployment](EDGE_DEPLOYMENT.md) for local GPU services. Keep credentials on the gateway host.
 
-Retain each deployment’s source revision, provider receipts and complete episode export when running these checks.
+## Execute a mission
+
+1. Start the configured gateway and open the lab.
+2. Load the [compact scene](../sim/pelagic/configs/reef_lab_compact_recovery.json) using **Environment builder → Import JSON**.
+3. Select **Robot + base** and wait for service readiness.
+4. Start the mission. The controller selects compatible stock and inspects the recipient and actual detached fragment.
+5. Gemma returns target-bound appearance and gripper evidence. The gateway checks the registry and requests a native cuOpt route.
+6. The local controller collects, transports and places the fragment, then verifies mechanical attachment.
+7. Use **Export** to save the episode and transport activity. Review request IDs, image hashes, model/solver receipts and final counters using [EVIDENCE](EVIDENCE.md).
+
+## Assistance and service behavior
+
+An uncertain image or disturbance holds mission progression while local safety physics continues. Argon receives structured telemetry and observations and returns `rescan`, `hold` or `abort`, with bounded contextual guidance. A rescan obtains a new image; the next matching Gemma request can consume the advisory context once. Episode, target, capture and expiry checks keep the advice tied to its intended observation.
+
+Assistance permits three attempts per episode. The gateway uses a 25-second socket timeout; this applies to blocking socket operations rather than a total request wall-clock deadline. The browser bounds its request wait and the controller aborts after 90 active simulated seconds of assistance hold. An occupied gateway request slot rejects concurrent model requests. Episode budgets are process-local and reset when the gateway restarts.
+
+For service errors, inspect the fixed diagnostic code, retryability and HTTP status in the response. Check the configured endpoint, served model ID and provider health before starting another episode. Restart services between episodes, then repeat readiness checks. The [scenario guide](SCENARIOS.md) describes current, visibility, camera, grip and placement controls.
+
+## Run software checks
+
+Follow the [regression commands](../SETUP.md#regression-checks) for the browser/controller and gateway. Run `python3 tools/verify_submission.py` from the repository root to check artifact hashes, model identities and documentation links. The separate Python research stack has its own commands in [SETUP](../SETUP.md#separate-python-research-stack).

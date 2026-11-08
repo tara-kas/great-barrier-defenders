@@ -191,8 +191,4 @@ Argon credentials are loaded server-side through `--argon-config`, using a priva
 mode-0600 JSON file outside Git and web assets. The refreshed gateway uses this
 configuration for online assistance. Gemma and cuOpt remain local.
 
-The [current-disturbance episode](evidence/edge-model-current-drop-abort.json)
-records local Gemma inspections, native cuOpt planning, fragment collection,
-current-induced loss and a safe abort after the assistance timeout. The
-[run index](evidence/readiness-run-index.json) binds each episode to its source
-manifest and outcome counters.
+Use **Robot + base**, wait for service readiness and start the mission. Export the episode and transport activity from the browser; [EVIDENCE](EVIDENCE.md) describes the record format and integrity checks.

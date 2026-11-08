@@ -23,4 +23,4 @@ Respect uncommitted work and coordinate shared files. Independent work may be de
 
 Run `python3 tools/verify_submission.py` after editing submission evidence/docs. Browser/runtime changes require the Node lab suite and relevant Python gateway tests in SETUP. Python navigation changes require the agent and mission regressions. Tests must exercise the actual safety boundary, not merely repeat implementation constants.
 
-Use [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) for remaining acceptance work. Historical planning files under `docs/tasks` describe earlier intentions, not current deployment evidence.
+Use [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) for mission operation and service behavior. Historical planning and validation records live under `docs/tasks`; source manifests identify the runtime associated with each recorded episode.

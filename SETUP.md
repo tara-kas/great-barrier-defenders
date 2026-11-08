@@ -10,7 +10,7 @@ cd great-barrier-defenders
 python3 sim/pelagic/scripts/run_lab.py
 ```
 
-Open `http://127.0.0.1:8090`. For actual model use, configure the gateway before starting it, then select **Robot + base**. Unconfigured endpoints must report unavailable; a running viewer is not proof of inference.
+Open `http://127.0.0.1:8090`. For actual model use, configure the gateway before starting it, then select **Robot + base**. The mission starts after Gemma and cuOpt readiness checks succeed.
 
 ## Real model services
 
@@ -34,7 +34,7 @@ python3 sim/pelagic/scripts/run_lab.py
 
 The integrated [Modal backend](sim/pelagic/scripts/modal_lab_backend.py) wires Gemma/cuOpt directly and protects its gateway using `LAB_GATEWAY_TOKEN`. Its dependencies, GPU choices and secrets are declared in that deployment file. The [worker](sim/pelagic/sites/reef-lab/worker.mjs) proxies authenticated requests without exposing service credentials to the browser. Follow the [integrated Modal deployment guide](sim/pelagic/docs/ARCHITECTURE.md#integrated-authenticated-modal-deployment) for the hosted path; deployment provisions paid GPU resources.
 
-Check readiness, obtain an actual valid Gemma response, then run a complete mission and export the episode. These are separate checks. Use [SCENARIOS](docs/SCENARIOS.md) for acceptance cases and preserve all failure outcomes.
+Wait for service readiness, start the mission and use **Export** to save its episode and activity log. Use [SCENARIOS](docs/SCENARIOS.md) for scene configurations and disturbance controls.
 
 ## Spark edge deployment
 
