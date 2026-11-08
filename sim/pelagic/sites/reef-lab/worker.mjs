@@ -15,7 +15,7 @@ class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-async function boundedText(stream, limit) {
+async function boundedBytes(stream, limit) {
   if (!stream) throw new ApiError(400, 'Request body is required');
   const reader = stream.getReader();
   const chunks = [];
@@ -32,8 +32,10 @@ async function boundedText(stream, limit) {
   const joined = new Uint8Array(bytes);
   let offset = 0;
   for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.length; }
-  return new TextDecoder('utf-8', {fatal: true}).decode(joined);
+  return joined;
 }
+
+async function boundedText(stream, limit) { return new TextDecoder('utf-8', {fatal: true}).decode(await boundedBytes(stream, limit)); }
 
 function jpegDimensions(raw) {
   const invalid = message => { throw new ApiError(400, message); };
@@ -116,6 +118,25 @@ export function createWorker({transport = (...args) => fetch(...args), now = () 
     const url = new URL(request.url);
     const model = env.GEMINI_MODEL || DEFAULT_MODEL;
     const key = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
+    if (['/api/lab/team-state','/api/lab/team-frame'].includes(url.pathname)) {
+      const frame=url.pathname.endsWith('team-frame');
+      if(request.method!=='GET')return json({ok:false,error:'Read-only endpoint'},405);
+      if((request.headers.get('origin')&&request.headers.get('origin')!==url.origin)||request.headers.get('sec-fetch-site')==='cross-site')return json({ok:false,error:'Cross-origin mission feeds are disabled'},403);
+      if(url.search&&(!frame||[...url.searchParams.keys()].some(k=>k!=='v')||url.searchParams.getAll('v').length!==1||!/^\d{1,24}$/.test(url.searchParams.get('v'))))return json({ok:false,error:'Unsupported mission feed query'},400);
+      if(!env.LAB_ARCHITECTURE_BASE_URL)return json({ok:false,configured:false,status:'unconfigured',error:'No team mission source is configured'},frame?404:200);
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+      try{
+        const base=new URL(env.LAB_ARCHITECTURE_BASE_URL);if(base.protocol!=='https:'||base.username||base.password||base.search||base.hash)throw Error('Invalid gateway');
+        const headers={};if(env.LAB_ARCHITECTURE_TOKEN)headers.authorization=`Bearer ${env.LAB_ARCHITECTURE_TOKEN}`;
+        const response=await transport(base.href.replace(/\/$/,'')+url.pathname+url.search,{headers,signal:controller.signal,redirect:'manual'});
+        if(response.status>=300&&response.status<400)throw Error('Redirect rejected');
+        if(frame){if(!response.ok)return json({ok:false,error:'Team camera frame unavailable'},response.status===404?404:503);const mime=response.headers.get('content-type')?.split(';')[0];if(!['image/png','image/jpeg'].includes(mime))throw Error('Invalid frame type');const bytes=await boundedBytes(response.body,2*1024*1024);return new Response(bytes,{headers:{'content-type':mime,'cache-control':'no-store','x-content-type-options':'nosniff'}});}
+        if(response.status===404)return json({ok:false,configured:false,status:'unconfigured',error:'Team mission bridge is not enabled on this gateway'},200);
+        const payload=JSON.parse(await boundedText(response.body,1024*1024));
+        if(!payload||typeof payload.ok!=='boolean'||typeof payload.status!=='string'||payload.ok&&(!Array.isArray(payload.registry)||!Array.isArray(payload.decisions)))throw Error('Invalid mission feed');
+        return json(payload,response.ok?200:503);
+      }catch{return json({ok:false,status:'error',stale:true,error:'Team mission source unavailable; no sample data substituted'},503);}finally{clearTimeout(timer);}
+    }
     const architecturePaths = ['/api/lab/architecture', '/api/lab/warmup', '/api/lab/perception', '/api/lab/plan', '/api/lab/telemetry'];
     if (architecturePaths.includes(url.pathname)) {
       const health = url.pathname.endsWith('/architecture');

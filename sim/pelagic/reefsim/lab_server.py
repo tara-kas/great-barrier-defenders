@@ -19,7 +19,8 @@ import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urlsplit, parse_qs
+from reefsim.team_feed import TeamFeed, FeedError
 from urllib.request import Request, urlopen, build_opener, HTTPRedirectHandler
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -607,8 +608,9 @@ class LabHandler(SimpleHTTPRequestHandler):
     extensions_map = {**SimpleHTTPRequestHandler.extensions_map,
                       ".js": "text/javascript", ".mjs": "text/javascript"}
 
-    def __init__(self, *args, policy, architecture=None, root=ROOT, **kwargs):
+    def __init__(self, *args, policy, architecture=None, team_feed=None, root=ROOT, **kwargs):
         self.policy = policy
+        self.team_feed = team_feed or TeamFeed()
         self.architecture = architecture
         self.root = Path(root).resolve()
         super().__init__(*args, directory=str(self.root / "web"), **kwargs)
@@ -626,7 +628,7 @@ class LabHandler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def _json(self, status, payload):
-        body = json.dumps(payload, allow_nan=False).encode()
+        body = json.dumps(payload, allow_nan=False, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Cache-Control", "no-store")
@@ -658,6 +660,22 @@ class LabHandler(SimpleHTTPRequestHandler):
             self._json(200, self.policy.health())
         elif path == "/api/lab/architecture":
             self._json(200, self.architecture.health())
+        elif path in ("/api/lab/team-state", "/api/lab/team-frame"):
+            query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+            if query and (path.endswith("team-state") or set(query) != {"v"} or len(query["v"]) != 1 or not query["v"][0].isdigit()):
+                return self._json(400, {"ok":False, "error":"Team endpoints do not accept source paths"})
+            if path.endswith("team-state"):
+                return self._json(*self.team_feed.state())
+            try:
+                body, mime = self.team_feed.frame()
+                self.send_response(200)
+                self.send_header("Content-Type", mime)
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except FeedError:
+                self._json(503, {"ok":False,"error":"Team frame unavailable or unconfigured"})
         elif path.startswith("/api/"):
             self._json(404, {"ok": False, "error": "Unknown endpoint"})
         else:
@@ -709,6 +727,6 @@ class LabHandler(SimpleHTTPRequestHandler):
             self._json(400, {"ok": False, "error": "Invalid JSON request"})
 
 
-def make_server(host="127.0.0.1", port=8090, *, policy=None, architecture=None, root=ROOT):
-    handler = functools.partial(LabHandler, policy=policy or GeminiPolicy(), architecture=architecture or ArchitectureAdapters(), root=root)
+def make_server(host="127.0.0.1", port=8090, *, policy=None, architecture=None, team_feed=None, root=ROOT):
+    handler = functools.partial(LabHandler, policy=policy or GeminiPolicy(), architecture=architecture or ArchitectureAdapters(), team_feed=team_feed or TeamFeed(), root=root)
     return LabServer((host, port), handler)

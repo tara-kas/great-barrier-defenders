@@ -1,0 +1,447 @@
+{
+  "checkedAt": "2026-11-08T12:29:25.109Z",
+  "scope": "Actual hosted Gemma camera \u2192 NVIDIA cuOpt \u2192 Gemini Argon \u2192 local safety, ending in bounded safe abort; not a successful restoration.",
+  "siteVersion": 7,
+  "siteSourceCommit": "fe46617722adee4ffd8533bdd6e1a84311fa602b",
+  "exportSha256": "3a7923680e0ce69e638e885cfb3e5ab47b0b6d64049902a06be164e8bd0d7d50",
+  "seed": 42,
+  "phase": "aborted",
+  "time": 100.43333333332892,
+  "controller": "base_station",
+  "completed": false,
+  "metrics": {
+    "placed": 0,
+    "attempts": 1,
+    "drops": 0,
+    "recoveries": 0,
+    "rejectedCuts": 0,
+    "placementRetries": 0,
+    "distance": 0.9836581715806406,
+    "energy": 2.875119330074048,
+    "damage": 0,
+    "collisions": 0,
+    "decisionCount": 4,
+    "wildlifeAvoidances": 0,
+    "habitatAvoidances": 0
+  },
+  "intelligence": {
+    "architecture": "Gemma perception \u2192 telemetry \u2192 Argon reasoning / optional cuOpt route proposal \u2192 local safety controller",
+    "hardwareValidated": false,
+    "requireFullStack": true,
+    "perceptionMaxAgeSeconds": 120,
+    "planMaxAgeSeconds": 45,
+    "onboard": {
+      "status": "received",
+      "reason": "External model estimates stored separately from scenario registry ground truth.",
+      "observations": [
+        {
+          "id": "recipient-1",
+          "health": "unknown",
+          "confidence": 0,
+          "frameTime": 76.16666666666363,
+          "receivedTime": 80.53333333333005,
+          "requestId": "capture-4-3-76167",
+          "source": "gemma",
+          "model": "gemma-4-E4B-it",
+          "provider": "vllm_openai_compatible",
+          "genotypeInferred": false,
+          "confidenceCalibration": "Uncalibrated provider score; 0.70 is an engineering demo gate"
+        }
+      ],
+      "lastPacket": {
+        "requestId": "capture-4-3-76167",
+        "captureRequestId": "capture-4",
+        "targetId": "recipient-1",
+        "targetKind": "colony",
+        "fragmentVisible": null,
+        "gripperState": null,
+        "frameTime": 76.16666666666363,
+        "receivedTime": 80.53333333333005,
+        "source": "gemma",
+        "provider": "vllm_openai_compatible",
+        "model": "gemma-4-E4B-it",
+        "deployment": "modal",
+        "summary": "The coral appears to be a light, whitish-tan color, with a rough, irregular surface texture. It is encrusted with some darker, possibly brown or greyish material in crevices. The gripper is positioned directly on top of the coral structure, appearing to be a metallic, dark grey or black object. The gripper itself seems intact from the visible parts, though its exact condition cannot be fully assessed.",
+        "inputImageSha256": "451f45201ea2f5a02f51387b62f5e0025f2351e4bf563c4e9f045bcfce3739bb",
+        "latencyMs": 3686
+      }
+    },
+    "baseStation": {
+      "status": "applied",
+      "reason": "External plan passed local bounds; registry and perception gates still apply.",
+      "localValidation": {
+        "safe": true,
+        "needsLocalReplan": false,
+        "minBedClearance": 1.2928779125115881,
+        "reason": "Bounded route accepted; local terrain, habitat and wildlife reflexes remain authoritative.",
+        "guard": "Local closed-loop thrust and nonpenetration controller; external coordinates are never executed"
+      },
+      "plan": {
+        "requestId": "decision-4",
+        "frameTime": 80.53333333333005,
+        "receivedTime": 100.43333333332892,
+        "source": "argon",
+        "provider": "google_interactions",
+        "model": "gemini-4-argon",
+        "decision": "abort",
+        "reason": "No tool-camera image was supplied in this request. Onboard Gemma perception returned health 'unknown' with uncalibrated confidence 0 for recipient-1 (below the 0.70 engineering demo gate), and retryBudget is 0. Although registry ground truth lists donor-1 (healthy) and recipient-1 (bleached_alive) as compatible Pocillopora damicornis genet G1, harvesting is forbidden without passing the required full-stack visual inspection gate, requiring a safe abort.",
+        "routeMode": "direct",
+        "optimizer": {
+          "source": "cuopt",
+          "configured": true,
+          "status": "solved",
+          "solverStatus": "SUCCESS",
+          "requestId": "decision-4",
+          "routeMode": "direct",
+          "objectiveCost": 0.5539066791534424,
+          "costs": {
+            "direct": 0.5539066791534424,
+            "clearance": 0.5539066791534424
+          },
+          "model": "nvidia-cuopt",
+          "solverVersion": "26.10.0",
+          "solveTimeMs": 252
+        }
+      }
+    }
+  },
+  "finalDecision": {
+    "id": "decision-4",
+    "action": "abort",
+    "reason": "No tool-camera image was supplied in this request. Onboard Gemma perception returned health 'unknown' with uncalibrated confidence 0 for recipient-1 (below the 0.70 engineering demo gate), and retryBudget is 0. Although registry ground truth lists donor-1 (healthy) and recipient-1 (bleached_alive) as compatible Pocillopora damicornis genet G1, harvesting is forbidden without passing the required full-stack visual inspection gate, requiring a safe abort.",
+    "source": "base_station",
+    "routeMode": "direct",
+    "time": 100.43333333332892,
+    "perception": {
+      "requestId": "capture-4-3-76167",
+      "captureRequestId": "capture-4",
+      "targetId": "recipient-1",
+      "targetKind": "colony",
+      "fragmentVisible": null,
+      "gripperState": null,
+      "frameTime": 76.16666666666363,
+      "receivedTime": 80.53333333333005,
+      "source": "gemma",
+      "provider": "vllm_openai_compatible",
+      "model": "gemma-4-E4B-it",
+      "deployment": "modal",
+      "summary": "The coral appears to be a light, whitish-tan color, with a rough, irregular surface texture. It is encrusted with some darker, possibly brown or greyish material in crevices. The gripper is positioned directly on top of the coral structure, appearing to be a metallic, dark grey or black object. The gripper itself seems intact from the visible parts, though its exact condition cannot be fully assessed.",
+      "inputImageSha256": "451f45201ea2f5a02f51387b62f5e0025f2351e4bf563c4e9f045bcfce3739bb",
+      "latencyMs": 3686
+    },
+    "planning": {
+      "requestId": "decision-4",
+      "frameTime": 80.53333333333005,
+      "receivedTime": 100.43333333332892,
+      "source": "argon",
+      "provider": "google_interactions",
+      "model": "gemini-4-argon",
+      "decision": "abort",
+      "reason": "No tool-camera image was supplied in this request. Onboard Gemma perception returned health 'unknown' with uncalibrated confidence 0 for recipient-1 (below the 0.70 engineering demo gate), and retryBudget is 0. Although registry ground truth lists donor-1 (healthy) and recipient-1 (bleached_alive) as compatible Pocillopora damicornis genet G1, harvesting is forbidden without passing the required full-stack visual inspection gate, requiring a safe abort.",
+      "routeMode": "direct",
+      "optimizer": {
+        "source": "cuopt",
+        "configured": true,
+        "status": "solved",
+        "solverStatus": "SUCCESS",
+        "requestId": "decision-4",
+        "routeMode": "direct",
+        "objectiveCost": 0.5539066791534424,
+        "costs": {
+          "direct": 0.5539066791534424,
+          "clearance": 0.5539066791534424
+        },
+        "model": "nvidia-cuopt",
+        "solverVersion": "26.10.0",
+        "solveTimeMs": 252
+      }
+    }
+  },
+  "events": [
+    {
+      "time": 0,
+      "type": "info",
+      "message": "Scene ready. Known lineage gates donor\u2013recipient compatibility."
+    },
+    {
+      "time": 3.016666666666661,
+      "type": "plan",
+      "message": "Pair donor-1 \u2192 recipient-1; same registered genet G1."
+    },
+    {
+      "time": 20.166666666666803,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 20.166666666666803,
+      "type": "decision",
+      "message": "Gemma returned uncertain or incompatible visual evidence. Harvesting is forbidden. Review this observation and choose only a fresh inspection retry within budget or safe abort. Awaiting live base-station plan."
+    },
+    {
+      "time": 29.183333333332957,
+      "type": "plan",
+      "message": "Argon proposal received; external planner cannot bypass local eligibility or reflexes."
+    },
+    {
+      "time": 29.183333333332957,
+      "type": "decision",
+      "message": "base_station: retry \u2014 No rendered tool-camera image was supplied in this request, and onboard Gemma perception for recipient-1 returned unknown health with confidence 0 (below the 0.70 demo gate). Registry ground truth confirms donor-1 (healthy) and recipient-1 (bleached_alive) are compatible Pocillopora damicornis genet G1, sonar closest contact is recipient-1 at 1.10 m with low water current (0.08 m/s), and retryBudget is 3, so a fresh inspection retry is safe and within budget."
+    },
+    {
+      "time": 34.066666666666016,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 34.066666666666016,
+      "type": "decision",
+      "message": "Gemma returned uncertain or incompatible visual evidence. Harvesting is forbidden. Review this observation and choose only a fresh inspection retry within budget or safe abort. Awaiting live base-station plan."
+    },
+    {
+      "time": 46.216666666665326,
+      "type": "plan",
+      "message": "Argon proposal received; external planner cannot bypass local eligibility or reflexes."
+    },
+    {
+      "time": 46.216666666665326,
+      "type": "decision",
+      "message": "base_station: retry \u2014 No fresh tool-camera image was supplied in this request, and onboard Gemma perception for recipient-1 returned unknown health with 0 confidence. However, registry ground truth and synthetic UV perception confirm donor-1 (healthy) and recipient-1 (bleached_alive) are a compatible Pocillopora damicornis G1 pair, sonar clearance is adequate (closest contact 1.10 m), and retryBudget is 2. Retry inspection within budget using the direct route."
+    },
+    {
+      "time": 52.38333333333164,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 52.38333333333164,
+      "type": "decision",
+      "message": "Gemma returned uncertain or incompatible visual evidence. Harvesting is forbidden. Review this observation and choose only a fresh inspection retry within budget or safe abort. Awaiting live base-station plan."
+    },
+    {
+      "time": 75.16666666666369,
+      "type": "plan",
+      "message": "Argon proposal received; external planner cannot bypass local eligibility or reflexes."
+    },
+    {
+      "time": 75.16666666666369,
+      "type": "decision",
+      "message": "base_station: retry \u2014 No rendered tool-camera image was supplied in the request, and onboard Gemma perception returned unknown health with confidence 0 for recipient-1. However, authoritative registry ground truth confirms donor-1 (healthy) and recipient-1 (bleached_alive) are compatible Pocillopora damicornis of genet G1, sonar closest range is 1.10 m with no collisions, and retryBudget is 1; a fresh inspection retry is safe and within budget."
+    },
+    {
+      "time": 80.53333333333005,
+      "type": "perception",
+      "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+    },
+    {
+      "time": 80.53333333333005,
+      "type": "decision",
+      "message": "Gemma returned uncertain or incompatible visual evidence. Harvesting is forbidden. Review this observation and choose only a fresh inspection retry within budget or safe abort. Awaiting live base-station plan."
+    },
+    {
+      "time": 100.43333333332892,
+      "type": "plan",
+      "message": "Argon proposal received; external planner cannot bypass local eligibility or reflexes."
+    },
+    {
+      "time": 100.43333333332892,
+      "type": "decision",
+      "message": "base_station: abort \u2014 No tool-camera image was supplied in this request. Onboard Gemma perception returned health 'unknown' with uncalibrated confidence 0 for recipient-1 (below the 0.70 engineering demo gate), and retryBudget is 0. Although registry ground truth lists donor-1 (healthy) and recipient-1 (bleached_alive) as compatible Pocillopora damicornis genet G1, harvesting is forbidden without passing the required full-stack visual inspection gate, requiring a safe abort."
+    },
+    {
+      "time": 100.43333333332892,
+      "type": "error",
+      "message": "Controller requested a safe abort."
+    }
+  ],
+  "transportActivity": [
+    {
+      "time": 0,
+      "type": "transport",
+      "message": "Base gateway acknowledged 1 actual sensor frames. Continuous telemetry connected; images are sent only at model gates.",
+      "receivedAt": "2026-11-08T12:27:07.865Z"
+    },
+    {
+      "time": 0,
+      "type": "transport",
+      "message": "Service readiness: gemma ready \u00b7 argon ready \u00b7 cuopt not_started.",
+      "receivedAt": "2026-11-08T12:27:08.090Z"
+    },
+    {
+      "time": 0,
+      "type": "request",
+      "message": "Starting Gemma / cuOpt service warmup; waiting for verified readiness before live control.",
+      "receivedAt": "2026-11-08T12:27:08.091Z"
+    },
+    {
+      "time": 0,
+      "type": "transport",
+      "message": "Service readiness: gemma ready \u00b7 argon ready \u00b7 cuopt ready.",
+      "receivedAt": "2026-11-08T12:27:09.670Z"
+    },
+    {
+      "time": 3.2333333333333267,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T12:27:38.527Z"
+    },
+    {
+      "time": 3.983333333333324,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:03 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-1. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T12:27:39.330Z"
+    },
+    {
+      "time": 19.883333333333486,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T12:27:55.167Z"
+    },
+    {
+      "time": 20.166666666666803,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 16129ms: The image shows a robotic gripper near a large, white, coral-like structure on a sandy, rocky terrain. The gripper appears to be in good condition, positioned near the coral. Uncertainty: low recipient-1: unknown (0% provider score) Frame T+ 00:03.",
+      "receivedAt": "2026-11-08T12:27:55.461Z"
+    },
+    {
+      "time": 20.166666666666803,
+      "type": "control",
+      "message": "Gemma uncertainty sent for base review. Only retry or abort is authorized; harvest remains blocked.",
+      "receivedAt": "2026-11-08T12:27:55.464Z"
+    },
+    {
+      "time": 20.266666666666797,
+      "type": "request",
+      "message": "Sending accepted observations to Argon \u00b7 actions retry/abort \u00b7 routes direct/clearance \u00b7 cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T12:27:55.559Z"
+    },
+    {
+      "time": 29.04999999999963,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T12:28:04.336Z"
+    },
+    {
+      "time": 29.183333333332957,
+      "type": "response",
+      "message": "Argon gemini-4-argon responded in 8923ms: RETRY \u2014 No rendered tool-camera image was supplied in this request, and onboard Gemma perception for recipient-1 returned unknown health with confidence 0 (below the 0.70 demo gate). Registry ground truth confirms donor-1 (healthy) and recipient-1 (bleached_alive) are compatible Pocillopora damicornis genet G1, sonar closest contact is recipient-1 at 1.10 m with low water current (0.08 m/s), and retryBudget is 3, so a fresh inspection retry is safe and within budget. cuOpt selected direct; objective 0.5471017956733704.",
+      "receivedAt": "2026-11-08T12:28:04.484Z"
+    },
+    {
+      "time": 30.1833333333329,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:30 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-2. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T12:28:05.537Z"
+    },
+    {
+      "time": 32.049999999999464,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T12:28:07.349Z"
+    },
+    {
+      "time": 34.066666666666016,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 3828ms: The coral appears to be a light-colored, encrusting or branching structure, possibly bleached or in a stressed state. The gripper is positioned near the coral, with its jaws open or slightly engaged near the base of the structure. The gripper itself appears intact. Uncertainty: low recipient-1: unknown (0% provider score) Frame T+ 00:30.",
+      "receivedAt": "2026-11-08T12:28:09.366Z"
+    },
+    {
+      "time": 34.066666666666016,
+      "type": "control",
+      "message": "Gemma uncertainty sent for base review. Only retry or abort is authorized; harvest remains blocked.",
+      "receivedAt": "2026-11-08T12:28:09.367Z"
+    },
+    {
+      "time": 34.183333333332676,
+      "type": "request",
+      "message": "Sending accepted observations to Argon \u00b7 actions retry/abort \u00b7 routes direct/clearance \u00b7 cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T12:28:09.467Z"
+    },
+    {
+      "time": 46.216666666665326,
+      "type": "response",
+      "message": "Argon gemini-4-argon responded in 12035ms: RETRY \u2014 No fresh tool-camera image was supplied in this request, and onboard Gemma perception for recipient-1 returned unknown health with 0 confidence. However, registry ground truth and synthetic UV perception confirm donor-1 (healthy) and recipient-1 (bleached_alive) are a compatible Pocillopora damicornis G1 pair, sonar clearance is adequate (closest contact 1.10 m), and retryBudget is 2. Retry inspection within budget using the direct route. cuOpt selected direct; objective 0.550261914730072.",
+      "receivedAt": "2026-11-08T12:28:21.503Z"
+    },
+    {
+      "time": 47.233333333331935,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:47 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-3. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T12:28:22.568Z"
+    },
+    {
+      "time": 52.38333333333164,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 5100ms: The visible coral appears to be a light, whitish, and somewhat irregular structure, possibly encrusting or branching in a rough manner. The gripper is visible near the base of the coral structure, appearing to be a metallic or dark-colored component, and seems to be in contact with or very close to the coral. The condition of the coral is rough and appears somewhat eroded or calcified. The gripper condition is visible but its specific state (e.g., gripping, idle) is not definitively clear from this view, though it is positioned near the target. Uncertainty: low recipient-1: unknown (0% provider score) Frame T+ 00:47.",
+      "receivedAt": "2026-11-08T12:28:27.668Z"
+    },
+    {
+      "time": 52.38333333333164,
+      "type": "control",
+      "message": "Gemma uncertainty sent for base review. Only retry or abort is authorized; harvest remains blocked.",
+      "receivedAt": "2026-11-08T12:28:27.670Z"
+    },
+    {
+      "time": 52.449999999998305,
+      "type": "request",
+      "message": "Sending accepted observations to Argon \u00b7 actions retry/abort \u00b7 routes direct/clearance \u00b7 cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T12:28:27.738Z"
+    },
+    {
+      "time": 75.16666666666369,
+      "type": "response",
+      "message": "Argon gemini-4-argon responded in 22721ms: RETRY \u2014 No rendered tool-camera image was supplied in the request, and onboard Gemma perception returned unknown health with confidence 0 for recipient-1. However, authoritative registry ground truth confirms donor-1 (healthy) and recipient-1 (bleached_alive) are compatible Pocillopora damicornis of genet G1, sonar closest range is 1.10 m with no collisions, and retryBudget is 1; a fresh inspection retry is safe and within budget. cuOpt selected direct; objective 0.5506477355957031.",
+      "receivedAt": "2026-11-08T12:28:50.460Z"
+    },
+    {
+      "time": 76.16666666666363,
+      "type": "request",
+      "message": "Sending tool frame T+ 01:16 (768\u00d7576; White RGB inspection) to Gemma \u00b7 target recipient-1 \u00b7 capture capture-4. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T12:28:51.524Z"
+    },
+    {
+      "time": 80.41666666666339,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T12:28:55.696Z"
+    },
+    {
+      "time": 80.53333333333005,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 4300ms: The coral appears to be a light, whitish-tan color, with a rough, irregular surface texture. It is encrusted with some darker, possibly brown or greyish material in crevices. The gripper is positioned directly on top of the coral structure, appearing to be a metallic, dark grey or black object. The gripper itself seems intact from the visible parts, though its exact condition cannot be fully assessed. Uncertainty: low recipient-1: unknown (0% provider score) Frame T+ 01:16.",
+      "receivedAt": "2026-11-08T12:28:55.826Z"
+    },
+    {
+      "time": 80.53333333333005,
+      "type": "control",
+      "message": "Gemma uncertainty sent for base review. Only retry or abort is authorized; harvest remains blocked.",
+      "receivedAt": "2026-11-08T12:28:55.829Z"
+    },
+    {
+      "time": 80.58333333333005,
+      "type": "request",
+      "message": "Sending accepted observations to Argon \u00b7 actions abort \u00b7 routes direct/clearance \u00b7 cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T12:28:55.882Z"
+    },
+    {
+      "time": 100.43333333332892,
+      "type": "response",
+      "message": "Argon gemini-4-argon responded in 19838ms: ABORT \u2014 No tool-camera image was supplied in this request. Onboard Gemma perception returned health 'unknown' with uncalibrated confidence 0 for recipient-1 (below the 0.70 engineering demo gate), and retryBudget is 0. Although registry ground truth lists donor-1 (healthy) and recipient-1 (bleached_alive) as compatible Pocillopora damicornis genet G1, harvesting is forbidden without passing the required full-stack visual inspection gate, requiring a safe abort. cuOpt selected direct; objective 0.5539066791534424.",
+      "receivedAt": "2026-11-08T12:29:15.721Z"
+    }
+  ],
+  "observedUplink": {
+    "acknowledgedFrames": 332,
+    "skippedFrames": 162,
+    "queuedFrames": 0,
+    "localSamples": 494
+  },
+  "limitations": [
+    "All four Gemma health estimates were unknown with provider confidence zero.",
+    "Three Argon-requested fresh inspections preceded a fourth plan requesting abort.",
+    "No harvesting, placement or live drop recovery occurred.",
+    "Gemma runs on remote Modal GPU, not physical onboard hardware.",
+    "Argon receives structured Gemma observations and telemetry, not the camera JPEG.",
+    "Synthetic sonar, UV exposure and registry data do not validate real-world perception."
+  ]
+}

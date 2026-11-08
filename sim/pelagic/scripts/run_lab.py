@@ -9,14 +9,16 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from reefsim.lab_server import make_server
+from reefsim.team_feed import TeamFeed
 
 
 def main():
     parser = argparse.ArgumentParser(description="Reef Rescue AUV editable simulation lab")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8090)
+    parser.add_argument("--team-run-dir", type=Path, help="Read canonical team registry/decision/frame files from this directory")
     args = parser.parse_args()
-    server = make_server(args.host, args.port)
+    server = make_server(args.host, args.port, team_feed=TeamFeed(args.team_run_dir))
     print(f"Reef Rescue AUV lab: http://{args.host}:{server.server_port}/lab/", flush=True)
     print("Local browser demo · Gemma perception / base-station Argon + optional cuOpt adapters · local safety remains independent", flush=True)
     try:

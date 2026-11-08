@@ -30,15 +30,35 @@ The robot carries a brighter local white spotlight for manipulation and recovery
 
 The explicit **Allow partial mode without cuOpt** checkbox is the only way to select the reduced stack. Full-stack plans require a successful, request-matched cuOpt solve; a local route or missing solver must not be labelled a cuOpt result. Service readiness is distinct from successful visual inference, successful planning and measured deployment on physical robot hardware.
 
-Each Gemma frame is associated with the engine's current capture request and target. Late replies for superseded targets or planning gates are discarded. Engine-driven reacquisition and the rescan control request fresh views when visual evidence expires. HTTP waits do not freeze the local physics or reflex controller. Errors remain visible and offer explicit retry or local local fallback; no unreported model substitution occurs.
+Each Gemma frame is associated with the engine's current capture request and target. Late replies for superseded targets or planning gates are discarded. Engine-driven reacquisition and the rescan control request fresh views when visual evidence expires. HTTP waits do not freeze the local physics or reflex controller. Errors remain visible and offer explicit retry or local fallback; no unreported model substitution occurs.
 
-**Current verification boundary:** real Modal service warmup is ongoing. The complete live camera → Gemma → Argon → cuOpt → robot execution loop has not yet been verified end to end. The separately recorded Argon check below and offline contract tests do not establish that full pipeline.
+**Current verification boundary (8 November 2026): the complete live uncertainty chain is verified.** four fresh white-light Gemma captures returned `unknown`/0 confidence; four actual cuOpt solves and Argon plans requested three inspections, then a safe abort at **100.433 simulated seconds**. No harvesting, placements or collisions occurred. Telemetry acknowledged **332 frames**, with **162 skipped**. The final request-matched `decision-4` solve used cuOpt **26.10.0**, reported `SUCCESS` in **252 ms** and objective **0.55390667915**. Argon consumed structured Gemma observations and telemetry, not the JPEG. See [saved live safe-abort evidence](evidence/live_stack_safe_abort.json). **Accepted health recognition, successful live restoration and live fragment-drop recovery remain unverified.** Remote Modal perception is not onboard robot hardware.
 
 ## Persistent observation memory and activity evidence
 
 Accepted Gemma health estimates are saved in browser-local semantic memory, bounded to 128 records with a seven-day expiry. Memory is bound to the exact scene fingerprint, including seed, colonies and obstacles. The architecture panel supports inspection, clearing, export and same-scene import. Records retain model/provider/request provenance and are explicitly historical; no image bytes or credentials are stored. Restored records never satisfy live perception, freshness or registry gates. Up to four relevant historical records may be supplied to Argon as context, marked `usableForControl: false`.
 
 The activity log records actual request starts and awaiting-response states: target/capture identity, camera time, model stage and allowed action/route context. Successful responses add the model name, client-observed latency, concise returned summary or decision reason, and cuOpt route/objective when present. Service warmup transitions, telemetry connection acknowledgements and failures are recorded separately. This is a bounded operational trace, not hidden chain-of-thought. It contains neither raw image bytes nor API keys. Episode export includes the retained transport activity alongside the engine's own event trace.
+
+## Integrated Mission Control evidence
+
+The **Mission evidence** workspace embeds Aryan Patel's dashboard capabilities in the reef lab: semantic map pins, health filters/counts, colony inspection, selectable decision history, evidence/outcome details, source refresh and camera/detection display. Browser map selection highlights the same colony in the 3D scene. Historical decision selection remains stable as new events arrive; following the latest decision is explicit. Pausing the evidence view does not pause vehicle control or the simulation. The original standalone `dashboard/` remains available. Browser QA verified the recorded source's 24 colonies and 10 decisions, health filters, colony selection, retained decision history and independent view pause. The live team source correctly showed unconfigured status without substituting sample data. The recording remains synthetic pre-mapped/reduced-physics evidence with one treated recipient and one dislodgement; no camera frame was saved.
+
+Choose the evidence source deliberately:
+
+- **Lab** shows the current browser registry and actual retained events/decisions. Registry health is known scenario data; no confidence score or camera detection box is invented. A mechanically verified placement is `TREATED`, never biological `RECOVERED`.
+- **Recorded team mission** loads bundled actual `mission.runner` / team FSM outputs: **24 colonies, 10 decisions, one treated recipient and one dislodgement**. This is a previously recorded reduced-physics run with synthetic pre-mapped perception, not the current browser mission or live Gemma. No camera frame was saved; the panel must not substitute an illustrative camera image. The underlying asset is `web/lab/assets/team-mission-recorded.json`.
+- **Team mission** reads a configured run directory through the read-only backend bridge. It never commands the browser robot, replaces its world or starts the team FSM. Missing configuration shows an explicit unavailable source; no recorded demo is silently substituted.
+
+To observe current team output, point the local lab server at the directory written by `mission.runner.LiveOutputs`:
+
+```sh
+TEAM_RUN_DIR=/absolute/path/to/team-run python3 scripts/run_lab.py
+```
+
+The directory must contain `registry.json` and `decisions.jsonl` in the frozen team contracts. An optional `frame.png`, `frame.jpg` or `frame.jpeg` supplies the camera view. Optional `source.json` declares the frame origin explicitly, for example `{"frameSynthetic":true}` for a simulated image; absent metadata leaves the origin unknown. Use atomic replacement when updating files. The canonical dashboard readers parse the data; no client-selected filesystem paths are accepted.
+
+`GET /api/lab/team-state` returns bounded registry, optional detections, decisions, source modification times and a same-origin frame URL. `GET /api/lab/team-frame` serves the optional PNG/JPEG. The panel polls approximately every two seconds while visible and unpaused. Files older than 30 seconds are labelled stale. Missing, malformed or changing data retains the last good view with a visible error; a missing frame does not discard valid registry/decision data. Text/frame files are limited to 2 MiB each, state output to 1 MiB; registry, detection and decision counts report truncation. The bridge is read-only and rejects symlinks/source traversal. A static deployment can show the bundled recording; a live team source requires the configured backend.
 
 ## Legacy Gemini supervisory mode
 
@@ -86,15 +106,15 @@ The UI counts frames only after a matching server acknowledgement and shows the 
 
 Browser results describe this browser model and the tested scenarios. The reduced three-degree-of-freedom translational dynamics and yaw presentation do **not** demonstrate Isaac PhysX parity, full six-degree-of-freedom fluid dynamics, realistic cutter forces or fracture mechanics, adhesive chemistry, contact-force validation, biological fusion, survival, or recovery. The browser simulation is not an ultra-realistic physical model. Coral imagery uses specimen scans with artistic living-tissue materials; it is not a reconstructed surveyed reef. The lab is intended for interactive case presentation and controller/recovery exploration. High-fidelity physical validation must still be performed in the authoritative Isaac environment and, ultimately, against measured hardware/field data. Finite scenario tests do not cover every possible setback.
 
-Sonar is simulated geometric range sensing, not a calibrated acoustic propagation model. It cannot establish species, health or genotype. Camera and sonar inputs expose sensor-limited observations to the supervisory model; they do not establish real-world sensor accuracy. A live Gemini Argon planning call was verified against actual seed-42 browser telemetry: it returned a bounded proceed decision and clearance route in 16.7 seconds. This request used synthetic sensor/registry evidence without camera input or Gemma perception; it does not validate the full pipeline. See [recorded evidence](ARGON_LIVE_CHECK.json). Multimodal payload checks still use a JPEG fixture with mocked provider transport; no live Gemma camera call or cuOpt solve has been verified.
+Sonar is simulated geometric range sensing, not a calibrated acoustic propagation model. It cannot establish species, health or genotype. Camera and sonar inputs expose sensor-limited observations to the supervisory model; they do not establish real-world sensor accuracy. A live Gemini Argon planning call was verified against actual seed-42 browser telemetry: it returned a bounded proceed decision and clearance route in 16.7 seconds. This request used synthetic sensor/registry evidence without camera input or Gemma perception; it does not validate the full pipeline. See [recorded evidence](ARGON_LIVE_CHECK.json). Offline multimodal contract tests use a JPEG fixture with mocked provider transport. Separately, actual Gemma camera calls and a native cuOpt warmup solve have now run: Gemma returned unknown/zero-confidence for both UV and white-light RGB views, so health approval remained blocked. The subsequent complete live uncertainty loop is verified in the [saved live safe-abort evidence](evidence/live_stack_safe_abort.json): three retries followed by safe abort. It establishes conservative connected behavior, not successful restoration.
 
 Run the policy/server checks without billed API calls:
 
 ```sh
 python3 -m unittest discover -s tests -p test_lab_server.py -v
-node --test tests/lab-simulation.test.mjs
-node --test tests/lab-worker.test.mjs
-node --test tests/lab-telemetry.test.mjs
+node --test tests/lab-*.test.mjs
+python3 -m unittest discover -s tests -p test_cuopt_route_adapter.py -v
+python3 -m unittest discover -s tests -p test_team_feed.py -v
 ```
 
 Telemetry rate-limit responses retain at most five unacknowledged frames and retry after at least 1.2 seconds (up to five retries). Older unsent samples are counted as skipped; no receipt is claimed until the gateway acknowledges a matching batch. Persistent rejection or ambiguous network failure disconnects visibly rather than resending potentially acknowledged frames.

@@ -221,3 +221,26 @@ test('configured cuOpt cannot be omitted, mismatched, or replaced with an unsolv
 test('full-stack recovery handles hydrodynamic grip failure without moving into an unsafe current hold',()=>{
  const sim=new ReefLab({controller:'base_station'});let injected=false;const {state,maxBytes}=runBaseFixture(sim,s=>{if(!injected&&s.phase==='transport'){injected=true;s.command({action:'inject_fault',kind:'current_surge'});}});assert.equal(state.completed,true);assert.ok(state.grip.lastLoss);assert.equal(state.metrics.drops,1);assert.equal(state.metrics.recoveries,1);assert.equal(state.fragments.find(f=>f.id===state.grip.lastLoss.fragmentId).state,'placed');assert.equal(state.decision.planning.optimizer.solverStatus,'SUCCESS');assert.ok(maxBytes<32768);
 });
+
+test('uncertain real perception can request bounded base review without authorizing harvest',()=>{
+ const sim=new ReefLab({controller:'base_station',missionGoal:1});sim.command({action:'run'});
+ for(let attempt=0;attempt<4;attempt++){
+  until(sim,s=>s.perceptionRequest?.ready);const capture=sim.perceptionRequest;
+  sim.command({action:'ingest_perception',packet:externalPerception(sim,capture.targetId,'unknown')});
+  sim.command({action:'review_uncertainty'});const pending=sim.pendingDecision;
+  assert.equal(pending.kind,'uncertain');assert.equal(sim.perceptionRequest,null);
+  assert.deepEqual(pending.allowedActions,attempt<3?['retry','abort']:['abort']);
+  sim.step(.2);assert.equal(sim.pendingDecision.id,pending.id);
+  assert.throws(()=>sim.command({action:'apply_decision',id:pending.id,decision:'proceed',reason:'Forbidden',source:'base_station'}));
+  const packet=externalPlan(sim,{decision:attempt<3?'retry':'abort'});
+  sim.command({action:'ingest_plan',packet});sim.command({action:'apply_decision',id:packet.requestId,decision:packet.decision,reason:packet.reason,routeMode:packet.routeMode,source:'base_station',evidence:{planning:packet}});
+  assert.equal(sim.metrics.placed,0);assert.equal(sim.robot.holding,null);assert.ok(sim.fragments.every(f=>f.state==='attached'));
+  if(attempt<3){assert.equal(sim.phase,'inspect_recipient');assert.notEqual(sim.perceptionRequest.id,capture.id);}
+ }
+ assert.equal(sim.phase,'aborted');assert.equal(sim.metrics.decisionCount,4);assert.equal(sim.running,false);
+});
+test('manual rescan during uncertainty review reacquires colony views instead of treating an attached cutting as lost',()=>{
+ const sim=new ReefLab({controller:'base_station'});sim.command({action:'run'});until(sim,s=>s.perceptionRequest?.ready);const c=sim.perceptionRequest;
+ sim.command({action:'ingest_perception',packet:externalPerception(sim,c.targetId,'unknown')});sim.command({action:'review_uncertainty'});sim.command({action:'request_rescan'});
+ assert.equal(sim.phase,'inspect_recipient');assert.equal(sim.perceptionRequest.targetKind,'colony');assert.equal(sim.rescanContext.kind,'inspect');assert.equal(sim.pendingDecision,null);
+});

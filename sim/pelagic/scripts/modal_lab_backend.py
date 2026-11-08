@@ -8,13 +8,17 @@ from pathlib import Path
 import modal
 
 ROOT = Path(__file__).resolve().parents[1]
+TEAM_DASHBOARD_CANDIDATES = (ROOT / "great-barrier-defenders/dashboard/server.py", ROOT.parent.parent / "dashboard/server.py", Path("/root/dashboard/server.py"))
+TEAM_DASHBOARD_SOURCE = next((path for path in TEAM_DASHBOARD_CANDIDATES if path.is_file()), TEAM_DASHBOARD_CANDIDATES[-1])
 APP_NAME = "reef-rescue-lab"
 HF_REPO = os.environ.get("GEMMA_HF_REPO", "google/gemma-4-E4B-it")
 MODEL_NAME = "gemma-4-E4B-it"
 app = modal.App(APP_NAME)
 cache = modal.Volume.from_name("reef-rescue-gemma-cache", create_if_missing=True)
 base = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi==0.135.1")
-source = base.add_local_dir(ROOT / "reefsim", "/root/reefsim").add_local_file(ROOT / "scripts/cuopt_route_adapter.py", "/root/cuopt_route_adapter.py")
+source = (base.add_local_dir(ROOT / "reefsim", "/root/reefsim")
+    .add_local_file(ROOT / "scripts/cuopt_route_adapter.py", "/root/cuopt_route_adapter.py")
+    .add_local_file(TEAM_DASHBOARD_SOURCE, "/root/dashboard/server.py"))
 gemma_image = (modal.Image.from_registry("nvidia/cuda:12.9.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([]).pip_install("vllm==0.21.0").pip_install("transformers==5.10.1")
     .env({"HF_HOME": "/model-cache", "HF_HUB_DISABLE_TELEMETRY": "1"}))
@@ -87,10 +91,12 @@ class CuOptRuntime:
 def gateway():
     import asyncio, hmac, json, threading, time
     from fastapi import FastAPI, Request
-    from fastapi.responses import JSONResponse
+    from fastapi.responses import JSONResponse, Response
+    from reefsim.team_feed import TeamFeed, FeedError
     from reefsim.lab_server import ArchitectureAdapters, LabError, MAX_BODY
     api = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     gemma, cuopt = GemmaRuntime(), CuOptRuntime()
+    team_feed = TeamFeed()
     def generate(payload):
         try:
             return gemma.generate.remote(payload)
@@ -141,6 +147,21 @@ def gateway():
     @api.get("/api/lab/health")
     async def get_health():
         return await asyncio.to_thread(health)
+    @api.get("/api/lab/team-state")
+    async def get_team_state(request: Request):
+        if request.query_params:
+            return JSONResponse({"ok":False,"error":"Team source paths are server configured"}, status_code=400)
+        status, payload = await asyncio.to_thread(team_feed.state)
+        return JSONResponse(payload, status_code=status)
+    @api.get("/api/lab/team-frame")
+    async def get_team_frame(request: Request):
+        if request.query_params and (set(request.query_params) != {"v"} or not request.query_params["v"].isdigit()):
+            return JSONResponse({"ok":False,"error":"Team source paths are server configured"}, status_code=400)
+        try:
+            body, mime = await asyncio.to_thread(team_feed.frame)
+            return Response(body, media_type=mime)
+        except FeedError:
+            return JSONResponse({"ok":False,"error":"Team frame unavailable or unconfigured"}, status_code=503)
     @api.post("/api/lab/{operation}")
     async def operate(operation: str, request: Request):
         if operation not in ("warmup", "perception", "plan", "telemetry"):

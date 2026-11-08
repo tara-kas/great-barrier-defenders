@@ -179,3 +179,17 @@ test('perception and planning cannot interchange provider identities at the gate
   const response=await worker.fetch(new Request('https://lab.example/api/lab/architecture'),{LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'test-only'});
   assert.equal(response.status,502);assert.equal(calls,1);
  });
+
+test('team mission bridge is read-only, bounded and keeps real source provenance',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'test-only'};let calls=0;
+ const worker=createWorker({transport:async(url,options)=>{calls++;assert.equal(options.headers.authorization,'Bearer test-only');assert.equal(options.redirect,'manual');return new Response(JSON.stringify({ok:true,status:'ready',registry:[],decisions:[],frame_synthetic:null,provenance:{source:'team_run_files'}}));}});
+ const result=await worker.fetch(new Request('https://lab.example/api/lab/team-state'),env);assert.equal(result.status,200);assert.equal((await result.json()).frame_synthetic,null);
+ assert.equal((await worker.fetch(new Request('https://lab.example/api/lab/team-state?path=/private'),env)).status,400);
+ assert.equal((await worker.fetch(new Request('https://lab.example/api/lab/team-state',{method:'POST'}),env)).status,405);
+ assert.equal((await worker.fetch(new Request('https://lab.example/api/lab/team-frame?v=2',{headers:{origin:'https://foreign.example'}}),env)).status,403);assert.equal(calls,1);
+});
+test('team frame proxy rejects redirects, wrong MIME and oversized content',async()=>{
+ const env={LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'};const request=()=>new Request('https://lab.example/api/lab/team-frame?v=22');
+ for(const response of [new Response(null,{status:302,headers:{location:'https://other.example'}}),new Response('<html>',{headers:{'content-type':'text/html'}}),new Response(new Uint8Array(2*1024*1024+1),{headers:{'content-type':'image/png'}})])assert.equal((await createWorker({transport:async()=>response}).fetch(request(),env)).status,503);
+ const bytes=new Uint8Array([137,80,78,71]);const good=await createWorker({transport:async()=>new Response(bytes,{headers:{'content-type':'image/png'}})}).fetch(request(),env);assert.equal(good.status,200);assert.equal(good.headers.get('cache-control'),'no-store');assert.deepEqual(new Uint8Array(await good.arrayBuffer()),bytes);
+});
