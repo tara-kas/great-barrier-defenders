@@ -146,7 +146,7 @@ test('architecture proxy uses fixed configured gateway and rejects unsafe origin
     calls++;
     assert.equal(url, 'https://gateway.example/api/lab/plan');
     assert.equal(options.headers.authorization, 'Bearer gateway-test-only');
-    assert.equal(options.redirect, 'error');
+    assert.equal(options.redirect, 'manual');
     return Response.json({id:'d-1',source:'argon',decision:'proceed',model:'gemini-4-argon'});
   }});
   const env = {LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'gateway-test-only'};
@@ -155,3 +155,27 @@ test('architecture proxy uses fixed configured gateway and rejects unsafe origin
   assert.equal((await worker.fetch(requestPlan('https://attacker.example'), env)).status,403);
   assert.equal(calls,1);
 });
+
+test('warmup crosses the fixed authenticated gateway without claiming a ready model', async () => {
+  const worker=createWorker({transport:async(url,options)=>{
+    assert.equal(url,'https://gateway.example/api/lab/warmup');
+    assert.equal(options.headers.authorization,'Bearer test-gateway');
+    assert.deepEqual(JSON.parse(options.body),{});
+    return Response.json({ok:true,status:'warming'},{status:202});
+  }});
+  const response=await worker.fetch(new Request('https://reef.example/api/lab/warmup',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),{LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'test-gateway'});
+  assert.equal(response.status,202);assert.equal((await response.json()).status,'warming');
+});
+
+test('perception and planning cannot interchange provider identities at the gateway',async()=>{
+  const worker=createWorker({transport:async()=>Response.json({source:'argon'})});
+  const response=await worker.fetch(new Request('https://reef.example/api/lab/perception',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),{LAB_ARCHITECTURE_BASE_URL:'https://gateway.example'});
+  assert.equal(response.status,502);
+});
+
+ test('gateway redirects are rejected without forwarding credentials', async () => {
+  let calls=0;
+  const worker=createWorker({transport:async()=>{calls++;return new Response(null,{status:302,headers:{location:'https://different.example/'}});}});
+  const response=await worker.fetch(new Request('https://lab.example/api/lab/architecture'),{LAB_ARCHITECTURE_BASE_URL:'https://gateway.example',LAB_ARCHITECTURE_TOKEN:'test-only'});
+  assert.equal(response.status,502);assert.equal(calls,1);
+ });

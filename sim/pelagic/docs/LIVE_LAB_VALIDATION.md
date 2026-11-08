@@ -2,10 +2,11 @@
 
 Checked 8 November 2026. This evidence describes the browser laboratory, not the Isaac Sim solver or field deployment.
 
-- 25 Python backend/API tests pass, including actual Node recorder frames posted to the real local HTTP server. Browser QA separately verified a connected uplink with 45 frames acknowledged and retained by the base station, zero billed model calls, and explicit unconfigured model services.
-- 72 Node checks pass across the engine, telemetry recorder and optional Worker. The combined engine/telemetry suite has 60 checks covering the existing 45 simulation regressions plus the robot/base contracts, inspection holds, replay/freshness checks, local plan validation and source separation.
-- The offline architecture fixture completes four placements with explicitly mocked Gemma/Argon packets. This is contract integration coverage, not a live model or hardware test.
-- A live `gemini-4-argon` adapter request on actual seed-42 simulation telemetry returned `proceed` with the `clearance` route in 16,693 ms. It explicitly received synthetic sensor/registry evidence without a camera or Gemma result. See [the saved result](ARGON_LIVE_CHECK.json). No live Gemma or cuOpt execution has been verified.
+- **119 automated checks pass:** 86 Node checks across engine, telemetry, semantic memory, cross-language pipeline and Worker; 29 Python backend/API tests; four native-cuOpt protocol tests using explicit solver doubles. Tests do not establish live inference or calibrated physics.
+- The cross-language pipeline drives the actual Python adapters from the browser engine with clearly mocked Gemma, Argon and cuOpt transports: nine matched captures, five plans, one drop/recovery and four verified placements. Target binding, stale-frame rejection, physical rescans and full-stack route provenance are enforced.
+- The owner-private hosted Site now serves its authenticated Worker gateway and static assets together. Browser QA verified the real Modal architecture response, actual telemetry receipt, the expandable tool/forward PiP and approximately 60 FPS on the tested desktop viewport.
+- NVIDIA cuOpt 26.10 completed a real GPU warmup solve on Modal. Actual Gemma inference on a robot image returned an uncertain observation and correctly held; see [the saved trace](evidence/gemma_uv_uncertainty.json). The complete live camera-to-action episode is still being checked. Readiness and actual inference are separate UI states.
+- A previous live `gemini-4-argon` adapter request on actual seed-42 simulation telemetry returned `proceed` with the `clearance` route in 16,693 ms. It received synthetic sensor/registry evidence without a camera or Gemma result. See [the saved result](ARGON_LIVE_CHECK.json).
 - Browser inspection confirms the original interface design with Reef Rescue AUV naming, dense Smithsonian specimen geometry, shared mixed topology, populated outer seabed, animated wildlife, connected gripper, manual pilot, randomized seeds, two route choices and the separate Robot & base panel.
 - The current-wave regression records a modeled 5.31 N load exceeding the 5 N grip threshold, the actual held fragment dropping, same-ID recovery, and four verified placements. These are engineering proxies, not calibrated contact forces.
 - The final regional layout passed a 1,000-seed generation test without sampling exceptions; this checks valid scene construction, not 1,000 completed missions. Five peak telemetry frames measured 53,108 bytes, below the uplink batch limit.
@@ -19,7 +20,7 @@ The mission contact point is the transformed centroid of triangle 98258 on the p
 
 Fish, crabs and a turtle have deterministic trajectories; their positions generate range contacts and affect robot motion. They are animated proxies, not behavioral ecology models. Sonar is geometric range sensing with simple rock occlusion, not a simulation of acoustic beam patterns, multipath or sediment scattering.
 
-The tool-camera inspector renders a separate 768×576 camera into an offscreen target. Gemini requests include that JPEG and the structured sonar/mission packet; the response records the image hash. The separate Argon telemetry-only live check is described above; camera-model verification remains outstanding. Hosted static mode runs the scripted controller. The optional local server or Worker requires a separately configured server-side key.
+The tool-camera inspector renders a separate 768×576 camera into an offscreen target. The always-visible PiP uses a bounded 384×288 view at 5 Hz; the expanded inspector updates at 2 Hz. Tool and forward cameras use independent robot optics and exclude spectator overlays. Actual model captures retain image hashes and target/capture identities. Persistent scene-specific memory stores historical Gemma observations, with seven-day expiry and explicit import/export/clear; it never authorizes a fresh action. Modal perception is remote GPU inference, not an onboard hardware measurement.
 
 ## Reproduce
 
@@ -27,8 +28,9 @@ From `sim/pelagic` in the team repository:
 
 ```sh
 python3 scripts/run_lab.py
-node --test tests/lab-simulation.test.mjs tests/lab-worker.test.mjs tests/lab-telemetry.test.mjs
+node --test tests/lab-*.test.mjs
 python3 -m unittest discover -s tests -p test_lab_server.py -v
+python3 -m unittest discover -s tests -p test_cuopt_route_adapter.py -v
 ```
 
 Open http://127.0.0.1:8090/lab/. Use **Robustness tests → Run stress suite**, then export its per-run evidence. Use **Environment builder** to edit a paused scene; editing resets the episode so outcomes do not survive an environment change.

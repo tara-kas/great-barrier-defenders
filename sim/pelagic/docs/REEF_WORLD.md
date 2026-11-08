@@ -24,3 +24,15 @@ NOAA distinguishes rigid stony-coral skeletons from flexible soft corals: [coral
 ## Remaining physical validation
 
 Validate six-degree-of-freedom vehicle response, calibrated hydrodynamic loads, thruster allocation, grasp slip/contact, cutting/fracture, soft-tissue response and sediment motion in the intended Isaac/hardware workflow. Browser shaders cannot establish these properties. Keep load, stiffness, friction and flow coefficients labelled as engineering approximations until measured validation exists.
+
+## Robot optics and local illumination
+
+The spectator viewport and robot optics use the same reef, vehicle and fragment state. The fixed forward-hull camera and the independently aimed tool camera have distinct poses. An always-visible 384 × 288 panel updates at up to 5 Hz; its enlarged 768 × 576 view updates at up to 2 Hz. Model inspection uses a fresh 768 × 576 tool-camera capture bound to the current target and capture request. These are real renders of this simulated scene, not recorded or fabricated replacement images.
+
+Current arrows, region labels, route guides, sonar graphics and selection rings are spectator overlays. They are hidden from the small camera panel, enlarged optic view and model input. The actual simulated water, particles, coral geometry, tool and illumination remain in the camera render.
+
+The white flashlight is a spotlight attached to the robot, aimed toward its working area. During recipient/donor inspection, a stronger violet pilot footprint and bounded marker fluorescence make the inspection visible. These changes act locally and do not brighten the entire scene or change the colony's health. UV excitation is invisible; the displayed cone is a visible pilot-light proxy, and the fluorescence is an artistic, exposure-gated marker for known scenario metadata. It is not a calibrated spectral simulation or evidence of genetic compatibility. Strong lighting should be checked in the close-up camera before recording; a source-code review cannot establish that every framing avoids highlight loss.
+
+Preview rendering is rate-capped, uses reusable image/render buffers, and reuses the main frame's shadow maps. The enlarged view replaces small-preview refreshes while its dialog is open. These controls limit added work without asserting a universal GPU frame-rate guarantee.
+
+The UI additionally exposes historical browser-local model observations and a bounded log of actual model requests, responses and telemetry acknowledgements. Their provenance remains separate from physical scene truth. Real Modal model warmup is ongoing, and the complete live Gemma/Argon/cuOpt loop is still awaiting end-to-end verification.

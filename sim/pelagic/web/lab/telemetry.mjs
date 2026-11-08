@@ -19,7 +19,7 @@ function frame(snapshot) {
   const decision = snapshot.decision || {};
   const intelligence=snapshot.intelligence||{},onboard=intelligence.onboard||{},base=intelligence.baseStation||{};
   const estimate=value=>({id:text(value.id),health:text(value.health),confidence:number(value.confidence),frameTime:number(value.frameTime),receivedTime:number(value.receivedTime),source:text(value.source),model:text(value.model),provider:text(value.provider),requestId:text(value.requestId),genotypeInferred:false,confidenceCalibration:text(value.confidenceCalibration)});
-  const provenance=value=>value?{requestId:text(value.requestId),source:text(value.source),provider:text(value.provider),model:text(value.model),deployment:text(value.deployment),frameTime:number(value.frameTime),receivedTime:number(value.receivedTime),latencyMs:number(value.latencyMs),inputImageSha256:text(value.inputImageSha256)}:null;
+  const provenance=value=>value?{requestId:text(value.requestId),captureRequestId:text(value.captureRequestId),targetId:text(value.targetId),targetKind:text(value.targetKind),fragmentVisible:typeof value.fragmentVisible==='boolean'?value.fragmentVisible:null,gripperState:text(value.gripperState),source:text(value.source),provider:text(value.provider),model:text(value.model),deployment:text(value.deployment),frameTime:number(value.frameTime),receivedTime:number(value.receivedTime),latencyMs:number(value.latencyMs),inputImageSha256:text(value.inputImageSha256)}:null;
   const flow = snapshot.water?.vector ?? snapshot.water?.currentVector ?? snapshot.water?.current_vector;
   const contacts = Array.isArray(sonar.contacts) ? sonar.contacts : [];
   const rawFusion=snapshot.sensors?.fusion??snapshot.fusion??snapshot.sensorFusion??sonar.fusion??null;
@@ -48,13 +48,14 @@ function frame(snapshot) {
         points: Array.isArray(item.points) ? item.points.slice(0, 24).map(vector) : [],
       })) : []},
     intelligence: {
-      architecture:text(intelligence.architecture),hardwareValidated:false,
+      architecture:text(intelligence.architecture),hardwareValidated:false,requireFullStack:intelligence.requireFullStack===true,
       onboardPerception:{status:text(onboard.status),reason:text(onboard.reason),provenance:provenance(onboard.lastPacket),externalInferenceReceived:!!onboard.lastPacket,
         observations:Array.isArray(onboard.observations)?onboard.observations.slice(-24).map(estimate):[]},
       baseStation:{status:text(base.status),reason:text(base.reason),provenance:provenance(base.plan),externalPlanReceived:!!base.plan,
         decision:text(base.plan?.decision),routeMode:text(base.plan?.routeMode),optimizer:bounded(base.plan?.optimizer),localValidation:bounded(base.localValidation)},
       freshnessPolicy:{perceptionMaxAgeSeconds:number(intelligence.perceptionMaxAgeSeconds),planMaxAgeSeconds:number(intelligence.planMaxAgeSeconds)},
     },
+    perceptionRequest:bounded(snapshot.perceptionRequest),rescan:bounded(snapshot.rescan),
     registryGroundTruth: snapshot.registryGroundTruth?{source:'scenario_registry_ground_truth',notModelOutput:true,genotypeSource:text(snapshot.registryGroundTruth.genotypeSource),
       pair:(snapshot.registryGroundTruth.pair||[]).slice(0,2).map(c=>({id:text(c.id),health:text(c.health),species:text(c.species),genet:text(c.genet)}))}:null,
     syntheticInspection:{source:text(snapshot.perception?.source),stage:text(snapshot.perception?.stage),targetId:text(snapshot.perception?.targetId),exposure:number(snapshot.perception?.exposure),

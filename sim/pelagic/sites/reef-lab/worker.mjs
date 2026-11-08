@@ -107,7 +107,7 @@ function validate(data) {
   return {data, telemetry, image};
 }
 
-export function createWorker({transport = fetch, now = () => Date.now()} = {}) {
+export function createWorker({transport = (...args) => fetch(...args), now = () => Date.now()} = {}) {
   // This bounds an individual isolate; public deployments need authenticated,
   // account-level quotas at the gateway (not an assumption of global state).
   let active = false;
@@ -116,7 +116,7 @@ export function createWorker({transport = fetch, now = () => Date.now()} = {}) {
     const url = new URL(request.url);
     const model = env.GEMINI_MODEL || DEFAULT_MODEL;
     const key = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
-    const architecturePaths = ['/api/lab/architecture', '/api/lab/perception', '/api/lab/plan', '/api/lab/telemetry'];
+    const architecturePaths = ['/api/lab/architecture', '/api/lab/warmup', '/api/lab/perception', '/api/lab/plan', '/api/lab/telemetry'];
     if (architecturePaths.includes(url.pathname)) {
       const health = url.pathname.endsWith('/architecture');
       if (request.method !== (health ? 'GET' : 'POST')) return json({ok:false,error:'Unsupported method'},405);
@@ -141,13 +141,24 @@ export function createWorker({transport = fetch, now = () => Date.now()} = {}) {
           body = await boundedText(request.body, MAX_BODY);
           JSON.parse(body);
         }
-        const response = await transport(base.href.replace(/\/$/, '') + url.pathname, {method:request.method,headers,body,signal:controller.signal,redirect:'error'});
+        // Workers supports manual/follow redirects, not the browser's error mode.
+        // Reject redirects explicitly so a service token never follows a new host.
+        const response = await transport(base.href.replace(/\/$/, '') + url.pathname, {method:request.method,headers,body,signal:controller.signal,redirect:'manual'});
+        if (response.status >= 300 && response.status < 400) throw new Error('Gateway redirect rejected');
         const payload = JSON.parse(await boundedText(response.body, MAX_RESPONSE));
         if (!response.ok) return json({ok:false,error:'Architecture service refused the request; local safety remains active'},[400,403,415,429,502,503].includes(response.status)?response.status:502);
-        const valid = health ? Boolean(payload?.components) : url.pathname.endsWith('/telemetry') ? Number.isInteger(payload?.acceptedFrames) && payload.acceptedFrames>=1 && payload.acceptedFrames<=5 : ['gemma','argon'].includes(payload?.source);
+        const valid = health ? Boolean(payload?.components)
+          : url.pathname.endsWith('/warmup') ? payload?.ok === true && ['warming','ready','started'].includes(payload?.status)
+          : url.pathname.endsWith('/telemetry') ? Number.isInteger(payload?.acceptedFrames) && payload.acceptedFrames>=1 && payload.acceptedFrames<=5
+          : payload?.source === (url.pathname.endsWith('/perception') ? 'gemma' : 'argon');
         if (!payload || typeof payload !== 'object' || !valid) throw new Error('Invalid gateway response');
-        return json(payload);
-      } catch { return json({ok:false,error:'Architecture gateway failed; no synthetic model replacement used'},502); }
+        return json(payload, response.status === 202 ? 202 : 200);
+      } catch (error) {
+        // Only fixed diagnostic classes; never log request bodies or credentials.
+        const failure = error?.name === 'AbortError' ? 'timeout' : /illegal invocation|incorrect.*this/i.test(error?.message || '') ? 'fetch_binding' : error instanceof SyntaxError ? 'invalid_json' : 'transport_or_contract';
+        console.error('Architecture gateway failure', failure);
+        return json({ok:false,error:'Architecture gateway failed; no synthetic model replacement used',failure},502);
+      }
       finally { clearTimeout(timer); }
     }
     if (url.pathname === '/api/lab/health' && request.method === 'GET') {

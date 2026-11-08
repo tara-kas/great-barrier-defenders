@@ -6,7 +6,7 @@ Run the editable browser demonstration from the repository root:
 python3 scripts/run_lab.py
 ```
 
-Open **http://127.0.0.1:8090/lab/**. Python 3.10+ and a browser with WebGL2 are required. Three.js and reef assets are bundled; scripted control needs no cloud API, npm installation, Isaac runtime, or network download. The existing Isaac console and recorded demonstrations are unchanged.
+Open **http://127.0.0.1:8090/lab/**. Python 3.10+ and a browser with WebGL2 are required. Three.js and reef assets are bundled; local fallback needs no cloud API, npm installation, Isaac runtime, or network download. The existing Isaac console and recorded demonstrations are unchanged.
 
 The browser lab owns a separate deterministic simulation. Its selectable cameras, scene editor, water controls, failure injection, event trail and outcome metrics expose an engineering demonstration of the restoration lifecycle. Pause before editing colonies and obstacles. Export scenes to retain configurations; reset creates a fresh episode. Dropped fragments, rejected cuts and failed placement must be handled before a placement can count as successful. The mission retains registered species/genet eligibility and never presents dead coral as a living recipient.
 
@@ -16,6 +16,30 @@ The current requested architecture separates Gemma camera perception from Gemini
 
 The [complete backlog](LIVE_DEMO_TODO.md) retains every scene, physics, optics, memory and judging requirement. The [one-minute plan](ONE_MINUTE_DEMO.md) maps visible evidence to the five judging criteria.
 
+## Live robot optics and inspection lights
+
+The always-visible robot-camera panel renders an independent **tool optic or forward hull optic** from the same simulation state as the main viewport. These are two camera poses on RESTORE-02, not two separately simulated vehicles. The small view is 384 × 288 at up to 5 updates per wall-clock second. Enlarge it for a timestamped 768 × 576 view updated at up to 2 Hz. The small preview stops refreshing behind the enlarged dialog to avoid rendering both previews unnecessarily. Hidden browser tabs do not render the previews.
+
+Camera targets and pixel buffers are reused by resolution, and preview renders reuse the current main-frame shadow maps. This bounds preview work; it does not guarantee a frame rate on every GPU. A model request always renders a **fresh, separate 768 × 576 tool-camera JPEG** with its actual simulation timestamp and requested target. It never substitutes a cached small preview, a spectator screenshot or a text description for camera pixels. Region labels, current arrows, route lines, sonar markers and selection rings are excluded from all robot-camera captures. Opening or enlarging the inspector does not itself send a model request.
+
+The robot carries a brighter local white spotlight for manipulation and recovery, and a visible violet pilot footprint during recipient/donor inspection. Scene-wide exposure and health classifications are unchanged. UV excitation itself is invisible: the visible violet cone and bounded target-only fluorescence are illustrative inspection cues. Marker brightness follows synthetic exposure and known scenario metadata; it is not a spectral measurement or a way to infer genotype. Inspection uses a visible paired acquisition sequence: the violet pilot and simulated marker run while synthetic exposure accumulates; once the engine declares the capture request ready, that same scene switches to neutral white RGB illumination aimed at the actual inspection target. The fluorescence material is restored before RGB acquisition. The PIP, enlarged inspector, spectator view and Gemma frame all share this lamp state; there is no hidden per-model relighting or health recolouring. White inspection intensity is bounded with range compensation to reduce close-surface clipping. PIP and inspector captions identify UV exposure versus white RGB inspection. Lamp power and attenuation remain uncalibrated rendering parameters, and close-up visual review is still required before a recorded demonstration.
+
+## Connecting the complete model loop
+
+**Model-guided autonomy** connects automatically on page load and defaults to the full Gemma → Argon → cuOpt pipeline. The UI distinguishes an unconfigured adapter, a configured service that has not started, a warming service, a ready service and an actual received response. Connecting requests service warmup, polls readiness and enables the telemetry uplink. Live control runs at 1× simulation speed. Initial startup never runs the mission automatically: Start remains unavailable until the required services are ready or the user explicitly selects the local fallback offered for unavailable/warming services. A later reconnection resumes only if the mission was running before that request. No permanent alternate controller chooser is shown. The fallback is visibly labelled “Local fallback · model unavailable”.
+
+The explicit **Allow partial mode without cuOpt** checkbox is the only way to select the reduced stack. Full-stack plans require a successful, request-matched cuOpt solve; a local route or missing solver must not be labelled a cuOpt result. Service readiness is distinct from successful visual inference, successful planning and measured deployment on physical robot hardware.
+
+Each Gemma frame is associated with the engine's current capture request and target. Late replies for superseded targets or planning gates are discarded. Engine-driven reacquisition and the rescan control request fresh views when visual evidence expires. HTTP waits do not freeze the local physics or reflex controller. Errors remain visible and offer explicit retry or local local fallback; no unreported model substitution occurs.
+
+**Current verification boundary:** real Modal service warmup is ongoing. The complete live camera → Gemma → Argon → cuOpt → robot execution loop has not yet been verified end to end. The separately recorded Argon check below and offline contract tests do not establish that full pipeline.
+
+## Persistent observation memory and activity evidence
+
+Accepted Gemma health estimates are saved in browser-local semantic memory, bounded to 128 records with a seven-day expiry. Memory is bound to the exact scene fingerprint, including seed, colonies and obstacles. The architecture panel supports inspection, clearing, export and same-scene import. Records retain model/provider/request provenance and are explicitly historical; no image bytes or credentials are stored. Restored records never satisfy live perception, freshness or registry gates. Up to four relevant historical records may be supplied to Argon as context, marked `usableForControl: false`.
+
+The activity log records actual request starts and awaiting-response states: target/capture identity, camera time, model stage and allowed action/route context. Successful responses add the model name, client-observed latency, concise returned summary or decision reason, and cuOpt route/objective when present. Service warmup transitions, telemetry connection acknowledgements and failures are recorded separately. This is a bounded operational trace, not hidden chain-of-thought. It contains neither raw image bytes nor API keys. Episode export includes the retained transport activity alongside the engine's own event trace.
+
 ## Legacy Gemini supervisory mode
 
 Provide `GEMINI_API_KEY` or `GOOGLE_API_KEY` in the **server's environment**, then restart the server. Optional `GEMINI_MODEL` selects a different compatible Gemini model; the default is `gemini-3.5-flash-lite`. The browser never receives the key. Selecting Gemini deliberately enables remote decisions: **the rendered robot tool-camera image and structured sonar/mission telemetry are sent to Google**. The camera image is captured separately from the spectator view. This is a multimodal supervisory controller; it is not a continuous low-level VLM motion policy.
@@ -24,7 +48,7 @@ At inspection and recovery gates, the browser supplies a decision ID, observatio
 
 Requests use Google's [Interactions API](https://ai.google.dev/gemini-api/docs/interactions-overview), [inline image input](https://ai.google.dev/gemini-api/docs/image-understanding), [structured JSON output](https://ai.google.dev/gemini-api/docs/structured-output) and the documented [Gemini 3.5 Flash-Lite model](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite), checked November 8, 2026. Requests specify `store: false`, `stream: false`, minimal thinking and 512 maximum output tokens. `store: false` controls retrievable interaction history, not all provider data policies. There is one request in flight, a 25-second socket timeout, a one-second minimum interval, a 30-request/minute process limit, and no application retry. A socket timeout is not a strict total-operation deadline. The optional Worker uses the same contract with a 25-second fetch abort and per-isolate limits; those limits are not global account quotas.
 
-Missing keys, unavailable models, rate limits, invalid output and network errors are visible errors. They do not substitute a scripted decision or another model. Resume with an explicit retry or deliberately switch to scripted control. Merely configuring a key does not establish that the key, billing or model access works. Tests use a mock provider transport; live provider access requires a real successful call.
+Missing keys, unavailable models, rate limits, invalid output and network errors are visible errors. They do not substitute a local-controller decision or another model. Resume with an explicit retry or deliberately switch to local fallback. Merely configuring a key does not establish that the key, billing or model access works. Tests use a mock provider transport; live provider access requires a real successful call.
 
 ## HTTP contract
 
@@ -42,7 +66,7 @@ A successful response contains `{id, decision, reason, routeMode, source:"gemini
 
 The image evidence records exactly which input bytes were sent; image fields are null for telemetry-only calls. The hash proves input identity, not correct visual reasoning. Invalid requests return 400, cross-origin requests 403, unsupported content types 415, rate/concurrency limits 429, provider failures 502, and missing credentials 503. Errors contain `{ok:false,error}`. Responses never include API keys, image bytes or provider error bodies.
 
-The default host is loopback. This development server is not a multi-user deployment backend. If deployed beyond the local machine, use an authenticated application gateway with per-user quotas and a server-side secret store. Static hosting can run scripted browser mode; Gemini needs this API or an equivalent protected backend. The local server only serves `web/` and `assets/`; repository internals and directory listings are excluded.
+The default host is loopback. This development server is not a multi-user deployment backend. If deployed beyond the local machine, use an authenticated application gateway with per-user quotas and a server-side secret store. Static hosting can run local fallback browser mode; Gemini needs this API or an equivalent protected backend. The local server only serves `web/` and `assets/`; repository internals and directory listings are excluded.
 
 ## Manual, randomized and mixed environments
 
@@ -50,7 +74,13 @@ Manual pilot commands, seeded scene randomization, mixed coral/rock topology, va
 
 The browser's `TelemetryRecorder` samples supplied snapshots at up to **5 Hz of simulation time**, retaining at most **3,000 frames** (approximately ten minutes at that rate). It does not interpolate missing samples or invent measurements. The stream records pose/velocity, pilot state, current vector, applied force components, closest sonar contacts, sensor-fusion summaries, route alternatives/current waypoints, phase, metrics and whitelisted decision evidence. Contact details are limited to the nearest 12 supplied sonar contacts, and path arrays are bounded. Counts report omitted contacts. Moving simulation time backwards clears the previous episode; the summary records resets and frames discarded by the rolling limit.
 
-`sample(snapshot)`, `summary()`, `exportJSONL()` and `clear()` operate entirely in browser memory. JSONL export produces one JSON object per line with schema `reef-rescue-telemetry/v1`; it does not upload data, contain raw camera images, or store credentials. The displayed live stream and download are observations from this simulator, not hardware telemetry. Force values come from the reduced model, sonar contacts from synthetic scene geometry, and species/genet/health eligibility from the known registry. A fusion confidence value is a simulator heuristic, not a calibrated Gemini visual confidence. Actual Gemini decisions are separately marked `source:"gemini"` with their input evidence; scripted decisions must retain their own source label.
+`sample(snapshot)`, `summary()`, `exportJSONL()` and `clear()` operate entirely in browser memory. JSONL export produces one JSON object per line with schema `reef-rescue-telemetry/v1`; it does not upload data, contain raw camera images, or store credentials. The displayed live stream and download are observations from this simulator, not hardware telemetry. Force values come from the reduced model, sonar contacts from synthetic scene geometry, and species/genet/health eligibility from the known registry. A fusion confidence value is a simulator heuristic, not a calibrated Gemini visual confidence. Actual Gemini decisions are separately marked `source:"gemini"` with their input evidence; local-controller decisions must retain their own source label.
+
+## Continuous telemetry uplink
+
+The local recorder remains independent of networking. **Connect telemetry to base** sends its actual sensor frames to the base gateway; selecting a configured Robot + base stack connects this uplink automatically. Frames are sent in non-overlapping batches no more often than every 1.1 wall-clock seconds, with at most five frames and a client-side 60 KiB payload bound per batch. The server's limit is 64 KiB. Larger batches retain fewer frames for the next attempt; a bounded queue reports samples skipped under fast playback or network backpressure.
+
+The UI counts frames only after a matching server acknowledgement and shows the queue, skipped count and latest acknowledged simulation time. Disconnecting or a network failure leaves local physics and recording running. Reconnection is explicit after an error, and a reset to earlier simulation time starts a new stream identity. The uplink carries bounded telemetry, not camera image bytes, and receiving telemetry does not itself prove that a model has interpreted it.
 
 ## What the demonstration establishes
 
@@ -66,3 +96,5 @@ node --test tests/lab-simulation.test.mjs
 node --test tests/lab-worker.test.mjs
 node --test tests/lab-telemetry.test.mjs
 ```
+
+Telemetry rate-limit responses retain at most five unacknowledged frames and retry after at least 1.2 seconds (up to five retries). Older unsent samples are counted as skipped; no receipt is claimed until the gateway acknowledges a matching batch. Persistent rejection or ambiguous network failure disconnects visibly rather than resending potentially acknowledged frames.

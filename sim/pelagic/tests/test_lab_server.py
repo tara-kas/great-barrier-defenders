@@ -222,6 +222,8 @@ class ArchitectureAdapterTests(unittest.TestCase):
         payload = json.loads(request.data)
         self.assertIn(JPEG_B64, payload["messages"][0]["content"][0]["image_url"]["url"])
         self.assertNotIn("SECRET_HEALTH_LABEL", json.dumps(payload))
+        self.assertEqual(payload["chat_template_kwargs"], {"enable_thinking":False})
+        self.assertEqual(payload["temperature"],0)
         self.assertEqual(result["source"], "gemma")
         self.assertEqual(result["frameTime"], 12.5)
         self.assertEqual(result["observations"], estimate["observations"])
@@ -258,15 +260,57 @@ class ArchitectureAdapterTests(unittest.TestCase):
         transport.assert_not_called()
 
     def test_declared_cuopt_gateway_result_forwarded_as_evidence(self):
-        optimizer = {"id":"decision-1","source":"cuopt","routeMode":"direct","costs":{"direct":2},"status":"solved"}
+        optimizer = {"id":"decision-1","source":"cuopt","routeMode":"direct","costs":{"direct":2},"status":"solved","requestId":"decision-1","configured":True,"objectiveCost":2,"solverStatus":"SUCCESS"}
         gateway = Mock(return_value=io.BytesIO(json.dumps(optimizer).encode()))
-        argon_transport = Mock(return_value=provider_response())
+        argon_transport = Mock(return_value=provider_response(json.dumps({"decision":"proceed","reason":"Solver selected the declared route","routeMode":"direct"})))
         adapters = ArchitectureAdapters(env={"CUOPT_ADAPTER_URL":"https://cuopt.example/solve"}, transport=gateway,
             argon=GeminiPolicy(api_key="test", model="gemini-4-argon", transport=argon_transport))
         result = adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":"direct","points":[[0,0,0],[1,0,0]]}]}}))
         self.assertEqual(result["optimizer"]["source"], "cuopt")
         self.assertEqual(adapters.status["cuopt"], "verified_response")
         self.assertIn('"optimizer"', json.loads(argon_transport.call_args.args[0].data)["input"][0]["text"])
+
+    def test_fragment_target_and_retry_provenance(self):
+        estimate = {"summary":"Fragment visible on seabed", "uncertainty":"Uncalibrated", "observations":[], "fragmentVisible":True, "gripperState":"empty"}
+        infer = Mock(return_value={"choices":[{"message":{"content":json.dumps(estimate)}}]})
+        adapters = ArchitectureAdapters(env={}, gemma_infer=infer)
+        observation = {"phase":"inspect_fragment", "cameraTargetId":"fragment-a", "perceptionRequest":{"id":"capture-1", "targetId":"fragment-a", "targetKind":"fragment", "frameTimeMin":12}}
+        result = adapters.perceive({"id":"capture-1-retry-2", "observation":observation, "image":camera_image()})
+        self.assertEqual(result["captureRequestId"], "capture-1")
+        self.assertEqual(result["requestId"], "capture-1-retry-2")
+        self.assertEqual(result["targetKind"], "fragment")
+        self.assertTrue(result["fragmentVisible"])
+        infer.reset_mock()
+        with self.assertRaises(LabError):
+            adapters.perceive({"id":"old", "observation":observation, "image":camera_image(time=11)})
+        infer.assert_not_called()
+
+    def test_full_stack_requires_perception_and_solver_before_model_call(self):
+        argon = Mock(api_key="test")
+        adapters = ArchitectureAdapters(env={}, argon=argon)
+        with self.assertRaises(LabError) as error:
+            adapters.plan(decision_request(requireFullStack=True, observation={"time":1}))
+        self.assertEqual(error.exception.status,503)
+        argon.decide.assert_not_called()
+
+    def test_failed_or_nonfinite_solver_cannot_reach_argon(self):
+        for optimizer in ({"source":"cuopt","id":"decision-1","routeMode":"direct","status":"TIMEOUT"},
+                          {"source":"cuopt","id":"decision-1","requestId":"decision-1","routeMode":"direct","status":"solved","configured":True,"solverStatus":"SUCCESS","objectiveCost":float("nan"),"costs":{"direct":float("nan")}}):
+            argon = Mock(api_key="test")
+            adapters = ArchitectureAdapters(env={}, argon=argon, cuopt_solve=Mock(return_value=optimizer))
+            with self.assertRaises(LabError) as error:
+                adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":"direct","points":[[0,0,0],[1,0,0]]}]}}))
+            self.assertEqual(error.exception.status,502)
+            argon.decide.assert_not_called()
+
+    def test_argon_cannot_override_real_solver_choice(self):
+        optimizer = {"id":"decision-1","requestId":"decision-1","source":"cuopt","configured":True,"routeMode":"direct","objectiveCost":1,"costs":{"direct":1,"clearance":2},"status":"solved","solverStatus":"SUCCESS"}
+        argon = Mock(api_key="test")
+        argon.decide.return_value = {"decision":"proceed","routeMode":"clearance"}
+        adapters = ArchitectureAdapters(env={}, argon=argon, cuopt_solve=Mock(return_value=optimizer))
+        with self.assertRaises(LabError) as error:
+            adapters.plan(decision_request(observation={"time":1,"route":{"alternatives":[{"id":name,"points":[[0,0,0],[1,0,0]]} for name in ("direct","clearance")]}}))
+        self.assertEqual(error.exception.status,502)
 
 
 class LabHTTPTests(unittest.TestCase):
@@ -316,6 +360,8 @@ process.stdout.write(JSON.stringify({streamId:'node-contract-test',sequence:0,fr
         self.assertIn("registryGroundTruth",frame)
         self.assertIn("syntheticInspection",frame)
         self.assertIn("simulationParameters",frame)
+        self.assertIn("perceptionRequest",frame)
+        self.assertIn("rescan",frame)
         self.assertIn("regions",frame)
         self.assertIsInstance(frame["regions"],list)
         self.assertEqual(frame["numericPrecisionDecimals"],6)

@@ -285,8 +285,8 @@ export class ReefScene {
     this.cutter=box([.075,.005,.035],[.035,-.018,.02],metal,this.tool);
     const cableCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(-.05,.18,.04),new THREE.Vector3(-.08,.3,.08),new THREE.Vector3(0,.34,.08),new THREE.Vector3(.04,.18,.04)]);
     this.add(new THREE.TubeGeometry(cableCurve,20,.008,6,false),dark,this.tool);
-    this.toolCamera=new THREE.PerspectiveCamera(58,4/3,.015,35);
-    const beamMat=new THREE.MeshBasicMaterial({color:0x976bff,transparent:true,opacity:.035,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});this.materials.add(beamMat);this.uvBeam=this.add(new THREE.ConeGeometry(1,1,24,1,true),beamMat);this.uvBeam.castShadow=false;this.uvBeam.receiveShadow=false;this.uvBeam.visible=false;
+    this.toolCamera=new THREE.PerspectiveCamera(58,4/3,.015,35);this.forwardCamera=new THREE.PerspectiveCamera(64,4/3,.02,45);
+    const beamMat=new THREE.MeshBasicMaterial({color:0x976bff,transparent:true,opacity:.065,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});this.materials.add(beamMat);this.uvBeam=this.add(new THREE.ConeGeometry(1,1,24,1,true),beamMat);this.uvBeam.castShadow=false;this.uvBeam.receiveShadow=false;this.uvBeam.visible=false;
     this.lamp=new THREE.SpotLight(0xc0ecff,3,4,Math.PI/4,.65,1.5);this.lamp.castShadow=false;this.scene.add(this.lamp);this.scene.add(this.lamp.target);
     this.umbilicalMat=new THREE.LineBasicMaterial({color:0xacc2aa,transparent:true,opacity:.35});this.materials.add(this.umbilicalMat);
   }
@@ -348,22 +348,36 @@ export class ReefScene {
     else if(this.cameraMode==='top'){aim.set(0,1.3,0);const fit=7.2/(Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))*Math.min(1,this.camera.aspect));desired.set(0,Math.max(18,3.5+fit),.001);}
     else{desired.set(Math.sin(this.azimuth)*Math.cos(this.elevation)*this.distance,Math.sin(this.elevation)*this.distance,Math.cos(this.azimuth)*Math.cos(this.elevation)*this.distance).add(this.target);}
     if(!this.cameraInitialized||this.cameraMode==='pilot'){this.camera.position.copy(desired);this.lookAt=aim.clone();this.cameraInitialized=true;}else{this.camera.position.lerp(desired,smoothing);this.lookAt.lerp(aim,smoothing);}
-    this.camera.up.set(0,this.cameraMode==='top'?0:1,this.cameraMode==='top'?-1:0);this.camera.lookAt(this.lookAt);this.toolCamera.position.copy(gripper).addScaledVector(right,.38).addScaledVector(forward,-.46).add(new THREE.Vector3(0,.3,0));this.toolCamera.lookAt(gripper.clone().add(new THREE.Vector3(0,.015,0)));this.renderer.render(this.scene,this.camera);
+    this.camera.up.set(0,this.cameraMode==='top'?0:1,this.cameraMode==='top'?-1:0);this.camera.lookAt(this.lookAt);this.toolCamera.position.copy(gripper).addScaledVector(right,.38).addScaledVector(forward,-.46).add(new THREE.Vector3(0,.3,0));this.toolCamera.lookAt(gripper.clone().add(new THREE.Vector3(0,.015,0)));this.forwardCamera.position.copy(p).addScaledVector(forward,.7).add(new THREE.Vector3(0,.08,0));this.forwardCamera.lookAt(this.forwardCamera.position.clone().addScaledVector(forward,4).add(new THREE.Vector3(0,-.45,0)));this.renderer.render(this.scene,this.camera);
   }
   updateInspectionLight(state,body,gripper,forward) {
-    const inspecting=['inspect_recipient','inspect_donor'].includes(state.phase),id=inspecting?(state.perception?.targetId||(state.phase==='inspect_recipient'?state.targetId:state.donorId)):null;
+    const inspecting=['inspect_recipient','inspect_donor'].includes(state.phase),request=state.perceptionRequest;
+    const id=inspecting?(request?.targetId||state.perception?.targetId||(state.phase==='inspect_recipient'?state.targetId:state.donorId)):null;
     const colony=(state.colonies||[]).find(c=>c.id===id),entry=this.colonies.get(id),live=colony&&colony.health!=='dead';
-    if(this.uvActive&&(!live||this.uvActive.id!==id||this.uvActive.mesh!==entry?.mesh)){this.uvActive.mesh.material=this.uvActive.base;this.uvActive.material.dispose();this.uvActive=null;}
-    this.uvBeam.visible=!!(inspecting&&live);
-    if(inspecting&&live&&entry){
-      const target=vec(coralContactPoint(colony)),origin=body.clone().addScaledVector(forward,.27).add(new THREE.Vector3(0,-.11,0)),distance=origin.distanceTo(target);
-      this.lamp.position.copy(origin);this.lamp.target.position.copy(target);this.lamp.color.set(0x9667ff);this.lamp.angle=Math.PI*50/180;this.lamp.penumbra=.48;this.lamp.intensity=12;this.lamp.distance=3.5;
+    // Acquisition is visible to every camera: excite the marker, then extinguish UV
+    // and acquire RGB under neutral white light. Never relight only a model capture.
+    const requestKey=request?.id||`${state.phase}:${id}`;
+    if(this.illuminationRequest!==requestKey){this.illuminationRequest=requestKey;this.rgbAcquisition=false;}
+    if(request?.ready||!request&&Number(state.perception?.exposure||0)>=1)this.rgbAcquisition=true;
+    const uvOn=!!(inspecting&&live&&entry&&!this.rgbAcquisition);
+    if(this.uvActive&&(!uvOn||this.uvActive.id!==id||this.uvActive.mesh!==entry?.mesh)){this.uvActive.mesh.material=this.uvActive.base;this.uvActive.material.dispose();this.uvActive=null;}
+    this.uvBeam.visible=false;
+    const origin=body.clone().addScaledVector(forward,.27).add(new THREE.Vector3(0,-.11,0));
+    const target=request?.targetPosition?vec(request.targetPosition):colony?vec(coralContactPoint(colony)):gripper.clone().add(new THREE.Vector3(0,-.06,0));
+    const distance=origin.distanceTo(target);this.lamp.position.copy(origin);this.lamp.target.position.copy(target);
+    if(uvOn){
+      this.lampMode='uv_exposure';this.lamp.color.set(0x9667ff);this.lamp.angle=Math.PI*50/180;this.lamp.penumbra=.48;this.lamp.intensity=26;this.lamp.distance=3.5;
       this.uvBeam.visible=distance<=3.5;this.uvBeam.position.copy(origin).add(target).multiplyScalar(.5);this.uvBeam.scale.set(Math.min(.8,distance*.7),distance,Math.min(.8,distance*.7));this.uvBeam.quaternion.setFromUnitVectors(UP,origin.clone().sub(target).normalize());
       if(!this.uvActive){const base=entry.mesh.material,material=base.clone();material.emissiveMap=base.map;material.emissive.set(hash(colony.genet||'G1')%2?0x83bd91:0xc78d9f);entry.mesh.material=material;this.uvActive={id,mesh:entry.mesh,base,material};}
-      // Scenario-marker fluorescence only, gated by the engine's measured synthetic exposure.
       const exposure=Number(state.perception?.exposure??state.phaseProgress??0),visible=distance<=3.5&&state.water?.visibility>1;
-      this.uvActive.material.emissiveIntensity=visible?.24*Math.min(1,Math.max(0,exposure)):0;
-    }else{this.lamp.position.copy(gripper).add(new THREE.Vector3(0,.12,0));this.lamp.target.position.copy(gripper).add(new THREE.Vector3(0,-.5,-.1));this.lamp.color.set(0xdbf5ff);this.lamp.angle=Math.PI/4;this.lamp.penumbra=.65;this.lamp.intensity=2;this.lamp.distance=4;}
+      this.uvActive.material.emissiveIntensity=visible?.4*Math.min(1,Math.max(0,exposure)):0;
+    }else{
+      const acquiring=!!(request||inspecting);this.lampMode=acquiring?'white_inspection':'white_navigation';
+      this.lamp.color.set(0xffffff);this.lamp.angle=Math.PI/4;this.lamp.penumbra=.65;this.lamp.distance=5;
+      // Bounded range compensation reduces close-surface clipping; all reflectance
+      // and global exposure stay unchanged. These optics are not calibrated hardware.
+      this.lamp.intensity=acquiring?THREE.MathUtils.clamp(5*Math.pow(Math.max(.25,distance),1.5),2,8):10;
+    }
   }
   syncCurrents(state){
     if(!this.currentLines){const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(64*18),3));const material=new THREE.LineBasicMaterial({color:0xc5fff0,transparent:true,opacity:.82,depthWrite:false,depthTest:false,fog:false,toneMapped:false});this.currentLines=new THREE.LineSegments(geometry,material);this.currentLines.renderOrder=500;this.currentGroup.add(this.currentLines);}
@@ -395,16 +409,20 @@ export class ReefScene {
     if(!this.sonarContacts){const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(256*3),3));geo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(256*3),3));const mat=new THREE.PointsMaterial({vertexColors:true,size:.065,transparent:true,opacity:.8,depthWrite:false});this.sonarContacts=new THREE.Points(geo,mat);this.sonarGroup.add(this.sonarContacts);}
     const contacts=(state.sonar?.contacts||[]).slice(0,256),positions=this.sonarContacts.geometry.attributes.position;contacts.forEach((contact,i)=>{const p=vec(contact.position);positions.setXYZ(i,p.x,p.y,p.z);const color=new THREE.Color(['fish','crab','turtle','wildlife'].includes(contact.type)?0xecc681:contact.type==='coral'?0x75d1b3:contact.type==='terrain'?0xa4ab9c:0xc8d8e5);this.sonarContacts.geometry.attributes.color.setXYZ(i,color.r,color.g,color.b);});this.sonarContacts.geometry.attributes.color.needsUpdate=true;positions.needsUpdate=true;this.sonarContacts.geometry.setDrawRange(0,contacts.length);
   }
-  captureObservation() {
+  cameraFrame(width=768,height=576,options={}) {
     if(!this.ready||!this.snapshot)throw new Error('Robot camera is not ready');
-    const target=new THREE.WebGLRenderTarget(768,576,{depthBuffer:true});target.texture.colorSpace=THREE.SRGBColorSpace;
-    const previous=this.renderer.getRenderTarget(),routeVisible=this.routeGroup.visible,sonarVisible=this.sonarGroup.visible,currentVisible=this.currentGroup.visible,regionVisible=this.regionGroup.visible;
-    try{this.routeGroup.visible=false;this.sonarGroup.visible=false;this.currentGroup.visible=false;this.regionGroup.visible=false;this.renderer.setRenderTarget(target);this.renderer.render(this.scene,this.toolCamera);const pixels=new Uint8Array(768*576*4);this.renderer.readRenderTargetPixels(target,0,0,768,576,pixels);const canvas=document.createElement('canvas');canvas.width=768;canvas.height=576;const ctx=canvas.getContext('2d'),image=ctx.createImageData(768,576);for(let y=0;y<576;y++)image.data.set(pixels.subarray(y*768*4,(y+1)*768*4),(575-y)*768*4);ctx.putImageData(image,0,0);return{mimeType:'image/jpeg',data:canvas.toDataURL('image/jpeg',.83).split(',')[1],camera:'tool',time:this.snapshot.time};}
-    finally{this.renderer.setRenderTarget(previous);this.routeGroup.visible=routeVisible;this.sonarGroup.visible=sonarVisible;this.currentGroup.visible=currentVisible;this.regionGroup.visible=regionVisible;target.dispose();}
+    const camera=options.camera==='forward'?this.forwardCamera.clone():this.toolCamera.clone();if(options.camera!=='forward'&&Array.isArray(options.targetPosition))camera.lookAt(vec(options.targetPosition));camera.aspect=width/height;camera.updateProjectionMatrix();
+    this.cameraBuffers??=new Map();const key=`${width}x${height}`;let buffer=this.cameraBuffers.get(key);
+    if(!buffer){const target=new THREE.WebGLRenderTarget(width,height,{depthBuffer:true});target.texture.colorSpace=THREE.SRGBColorSpace;const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');buffer={target,canvas,context,pixels:new Uint8Array(width*height*4),image:context.createImageData(width,height)};this.cameraBuffers.set(key,buffer);}
+    const previous=this.renderer.getRenderTarget(),autoShadow=this.renderer.shadowMap.autoUpdate,overlays=[this.routeGroup,this.sonarGroup,this.currentGroup,this.regionGroup,this.selection,this.targetMarker,this.donorMarker].filter(Boolean),visibility=overlays.map(o=>o.visible);
+    try{overlays.forEach(o=>o.visible=false);this.renderer.shadowMap.autoUpdate=false;this.renderer.setRenderTarget(buffer.target);this.renderer.render(this.scene,camera);this.renderer.readRenderTargetPixels(buffer.target,0,0,width,height,buffer.pixels);for(let y=0;y<height;y++)buffer.image.data.set(buffer.pixels.subarray(y*width*4,(y+1)*width*4),(height-1-y)*width*4);buffer.context.putImageData(buffer.image,0,0);return{canvas:buffer.canvas,camera:options.camera==='forward'?'forward':'tool',time:this.snapshot.time};}
+    finally{this.renderer.setRenderTarget(previous);this.renderer.shadowMap.autoUpdate=autoShadow;overlays.forEach((o,i)=>o.visible=visibility[i]);}
   }
+  renderPreview(canvas,options={}){const frame=this.cameraFrame(canvas.width,canvas.height,options);canvas.getContext('2d').drawImage(frame.canvas,0,0);return{camera:frame.camera,time:frame.time};}
+  captureObservation(options={}) {const frame=this.cameraFrame(768,576,options);return{mimeType:'image/jpeg',data:frame.canvas.toDataURL('image/jpeg',.83).split(',')[1],camera:frame.camera,time:frame.time};}
   setCamera(mode) { if(!['orbit','follow','top','wrist','pilot'].includes(mode))throw new Error('Unknown camera mode');this.cameraMode=mode; }
   setQuality(quality) {this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,quality==='high'?2:1));this.renderer.shadowMap.enabled=quality==='high';this.resize();}
   setSelected(id) {this.selected=id;}
   capture() {return this.canvas.toDataURL('image/png');}
-  dispose() {this.disposed=true;this.resizeObserver.disconnect();for(const[type,fn,opts]of this.handlers)this.canvas.removeEventListener(type,fn,opts);this.scene.traverse(o=>{if(o.isMesh||o.isLine||o.isPoints){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});for(const t of this.textures.values())t.dispose();for(const g of this.geometries)g.dispose();for(const m of this.materials)m.dispose();this.renderer.dispose();}
+  dispose() {this.disposed=true;for(const buffer of this.cameraBuffers?.values()||[])buffer.target.dispose();this.resizeObserver.disconnect();for(const[type,fn,opts]of this.handlers)this.canvas.removeEventListener(type,fn,opts);this.scene.traverse(o=>{if(o.isMesh||o.isLine||o.isPoints){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});for(const t of this.textures.values())t.dispose();for(const g of this.geometries)g.dispose();for(const m of this.materials)m.dispose();this.renderer.dispose();}
 }
