@@ -1,7 +1,12 @@
-# docs
+# Documentation index
 
-Hackathon deliverables:
-- One-page technical summary (PDF): user/problem, key features, system architecture, where each model runs (hardware + latency), limits, critical failure mode, safety.
-- README assets (diagrams, screenshots) referenced from the repo root README.
+- [System overview](../README.md) — scenario, active models, flow and measured result.
+- [Architecture](ARCHITECTURE.md) — model-to-source map and runtime boundaries.
+- [Setup](../SETUP.md) — local viewer, endpoint configuration and tests.
+- [Scenarios](SCENARIOS.md) — nominal mission and failure-case verification.
+- [Judging guide](JUDGING_GUIDE.md) — rubric mapping and reviewer questions.
+- [Evidence](EVIDENCE.md) — immutable raw episode, result summary and submission PDFs.
+- [Implementation status](IMPLEMENTATION_STATUS.md) — completed capabilities and remaining acceptance work.
+- [Agent instructions](../AGENTS.md) — review and editing invariants.
 
-Owner: TBD (see CLAUDE.md section 10).
+The files `plan.md`, `simulation-gemini.md` and `tasks/` are historical design records. Use the current source and evidence above to determine what is implemented.

@@ -1,4 +1,4 @@
-google-genai>=2.3.0
+google-genai>=2.33.0
 pytest
 python-dotenv
 numpy
@@ -6,3 +6,4 @@ scipy
 Pillow
 requests
 datasets  # eval/coralscapes_eval.py only
+pydantic>=2  # cloud/debrief.py schema validation

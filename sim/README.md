@@ -1,16 +1,24 @@
-# Reef Rescue AUV — offline simulation on DGX Spark
+# Simulation entry points
 
-The simulator in [`pelagic/`](pelagic/README.md) now runs the team's actual
-`mission.runner.run_mission` / `MissionFSM` through `ReefRobotAdapter`.
-This demo collects a persistent natural branch cutting from **living reef**,
-checks recipient and donor with UV before harvest, detects an injected grip
-slip, recovers the **same fragment**, places its tissue against a natural
-recipient branch and verifies the securing joint with a measured push.
-Dead colonies are excluded; successful placement means `TREATED`, not recovered.
+The current browser mission is under [`pelagic/`](pelagic/README.md). Start
+with the [project README](../README.md) and
+[system architecture](../docs/ARCHITECTURE.md) for its Gemma E4B appearance
+inference on Modal, bounded Argon assistance, local policy and native cuOpt
+routing. The Isaac RTX feed is an independent read-only view; it is not the
+browser physics or control process.
 
-The supported recording workflow is entirely offline on the DGX Spark with
-Isaac Sim 6.0.x. The Mac receives the completed MP4, with synchronized director,
-scout and wrist-camera views. No camera server or livestream is started.
+## Separate Python research simulation
+
+The commands below exercise `mission.runner.run_mission` / `MissionFSM`
+through `ReefRobotAdapter`. This older scenario uses living-source cuttings,
+synthetic UV checks, a controlled grip slip, same-fragment recovery and
+mechanical placement checks. It is separate from the current loose-fragment
+rescue mission. Dead colonies are excluded; placement means `TREATED`, not
+biological recovery.
+
+This offline research workflow renders on a DGX Spark with Isaac Sim 6.0.x.
+It does not start the independent live-feed service. Set `ISAAC_INSTALL` to
+your Isaac Sim installation directory before running its Python executable.
 
 ## Run from the repository root
 
@@ -19,10 +27,10 @@ scout and wrist-camera views. No camera server or livestream is started.
 python3 sim/pelagic/scripts/plan_team_demo.py \
   --output sim/pelagic/outputs/team-mission-recovery
 # Review RTX action milestones before the full recording.
-/home/smint/isaacsim/python.sh -u sim/pelagic/scripts/render_team_demo.py \
+"${ISAAC_INSTALL:?Set ISAAC_INSTALL to your Isaac Sim directory}/python.sh" -u sim/pelagic/scripts/render_team_demo.py \
   --trace sim/pelagic/outputs/team-mission-recovery/trace.json.gz \
   --output sim/pelagic/outputs/team-preview --preview-stills --samples 8
-/home/smint/isaacsim/python.sh -u sim/pelagic/scripts/render_team_demo.py \
+"${ISAAC_INSTALL:?Set ISAAC_INSTALL to your Isaac Sim directory}/python.sh" -u sim/pelagic/scripts/render_team_demo.py \
   --trace sim/pelagic/outputs/team-mission-recovery/trace.json.gz \
   --output sim/pelagic/outputs/team-video --fps 24 --samples 4 --quality 17 --max-frames 1440 --current-review
 ```
@@ -33,7 +41,7 @@ trajectory; rendering replays it without changing decisions. Playback is
 accelerated during transit and is labelled accordingly. The injected loss is
 a controlled test, not a claim of an unscripted disturbance.
 
-## What is implemented and assumed
+## Research scenario implementation and assumptions
 
 | Area | This iteration |
 |---|---|
@@ -53,7 +61,7 @@ The scenario includes a defined sandy recovery pocket so a fallen fragment is
 not hidden inside display-only coral. The reef is an artistic environment,
 not a reconstruction of Moore Reef. All provenance/licences remain bundled.
 
-The default recording is labelled **OFFLINE DEMO PERCEPTION / NO MODEL CALL**.
+This research workflow is labelled **OFFLINE DEMO PERCEPTION / NO MODEL CALL**.
 The [optional Gemini adapter](../docs/simulation-gemini.md) uses an explicitly
 selected low-cost model and never silently substitutes mocked inference. Its
 SDK requests are tested with a mock transport; live-service validation needs
@@ -73,5 +81,5 @@ python3 -m pytest agent/tests perception/tests eval/test_fsm_loop.py \
 `report.json`, `mission/decisions.jsonl`, `mission/registry.json` and
 `geometry-validation.json` provide controller, identity, push-test and USD
 geometry evidence. Generated videos, traces and logs are excluded from Git.
-The legacy standalone demo and its earlier recordings remain available through
-`scripts/render_demo.py`; they use the original independent controller.
+The older standalone renderer at `pelagic/scripts/render_demo.py` uses an
+independent controller and is not the current browser mission entry point.

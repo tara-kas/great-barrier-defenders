@@ -318,13 +318,14 @@ def main(argv: Optional[list[str]] = None, client: Any = None) -> int:
     else:
         if client is None:
             from dotenv import load_dotenv
-            from google import genai
 
             load_dotenv(REPO_ROOT / ".env")
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
                 print("GEMINI_API_KEY is not set. Add it to .env.", file=sys.stderr)
                 return 1
+            from google import genai
+
             client = genai.Client(api_key=api_key)
 
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

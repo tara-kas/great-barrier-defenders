@@ -663,31 +663,52 @@ class MissionFSM:
         """P-controller on position. Returns ("arrived" | "timeout" | "dislodged", evidence)."""
         nav = self.config.nav
         vmax = nav.max_speed * (nav.carry_speed_scale if carrying else 1.0)
-        goal = np.asarray(target.position, dtype=float)
-        start = self.robot.get_pose().position
-        max_ticks = int(np.ceil(nav.timeout_s / nav.dt))
-        ticks, status = 0, "arrived"
-        while True:
-            pos = np.asarray(self.robot.get_pose().position, dtype=float)
-            if carrying and self.fragment_held is not None and not self.fragment_held():
-                status = "dislodged"
-                break
-            err = goal - pos
-            if np.linalg.norm(err) <= nav.position_tolerance:
-                break
-            if ticks >= max_ticks:
-                status = "timeout"
-                break
-            v = nav.gain * err
-            speed = np.linalg.norm(v)
-            if speed > vmax:
-                v *= vmax / speed
-            self.robot.set_cmd_vel(tuple(float(c) for c in v), (0.0, 0.0, 0.0))
-            self.wait(nav.dt)
-            self.sim_time += nav.dt
-            ticks += 1
-        self.robot.set_cmd_vel((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
-        final = self.robot.get_pose().position
+
+        def position(pose: Pose) -> np.ndarray:
+            point = np.asarray(pose.position, dtype=float)
+            orientation = np.asarray(pose.orientation_quat, dtype=float)
+            if (point.shape != (3,) or orientation.shape != (4,)
+                    or not np.isfinite(point).all() or not np.isfinite(orientation).all()):
+                raise ValueError("Navigation requires finite position and orientation values")
+            return point
+
+        try:
+            goal = position(target)
+            start = tuple(position(self.robot.get_pose()))
+            max_ticks = int(np.ceil(nav.timeout_s / nav.dt))
+            ticks, status = 0, "arrived"
+            if not np.isfinite(vmax):
+                raise ValueError("Navigation speed limit must be finite")
+            while True:
+                pos = position(self.robot.get_pose())
+                if carrying and self.fragment_held is not None and not self.fragment_held():
+                    status = "dislodged"
+                    break
+                with np.errstate(over="ignore", invalid="ignore"):
+                    err = goal - pos
+                    residual = np.linalg.norm(err)
+                if not np.isfinite(residual):
+                    raise ValueError("Navigation position error must be finite")
+                if residual <= nav.position_tolerance:
+                    break
+                if ticks >= max_ticks:
+                    status = "timeout"
+                    break
+                with np.errstate(over="ignore", invalid="ignore"):
+                    v = nav.gain * err
+                    speed = np.linalg.norm(v)
+                if not np.isfinite(v).all() or not np.isfinite(speed):
+                    raise ValueError("Navigation velocity must be finite")
+                if speed > vmax:
+                    v *= vmax / speed
+                self.robot.set_cmd_vel(tuple(float(c) for c in v), (0.0, 0.0, 0.0))
+                self.wait(nav.dt)
+                self.sim_time += nav.dt
+                ticks += 1
+        finally:
+            # Sensor, monitor, adapter and wait failures must also stop motion.
+            self.robot.set_cmd_vel((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+        final = tuple(position(self.robot.get_pose()))
         return status, {
             "start": start,
             "target": target.position,

@@ -1,6 +1,9 @@
 # Hackathon work split
 
-> **Historical.** These describe the original branches, now merged. The mission premise has since changed; see `CLAUDE.md` section 1 and section 15.
+> **Historical task plan — not current instructions.** Original branch scopes,
+> model choices and mission premises below are archival and do not constrain
+> current work. See the [project README](../../README.md) and
+> [system architecture](../ARCHITECTURE.md) for the implemented pipeline.
 
 4 independent branches, each scoped to its own directory so merges don't
 conflict. All 4 branch off `main` at the same commit, which already has the

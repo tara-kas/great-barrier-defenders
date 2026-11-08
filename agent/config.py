@@ -9,8 +9,33 @@ and the regression suite (eval/test_fsm_loop.py) can run it directly.
 from __future__ import annotations
 
 import dataclasses
+import math
 from dataclasses import dataclass, field
+from numbers import Real
 from typing import Any, Optional
+
+
+def _finite_fields(config: Any) -> None:
+    """Reject invalid numeric values before they reach control calculations."""
+    for item in dataclasses.fields(config):
+        value = getattr(config, item.name)
+        if dataclasses.is_dataclass(value):
+            continue
+        values = value if isinstance(value, (tuple, list)) else (value,)
+        for number in values:
+            try:
+                valid = isinstance(number, Real) and not isinstance(number, bool) and math.isfinite(number)
+            except OverflowError:
+                valid = False
+            if not valid:
+                raise ValueError(f"{item.name} must contain finite numeric values")
+
+
+def _positive_counts(config: Any, *names: str) -> None:
+    for name in names:
+        value = getattr(config, name)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            raise ValueError(f"{name} must be a positive integer")
 
 
 @dataclass(frozen=True)
@@ -20,6 +45,9 @@ class PairingWeights:
     w1: float = 1.0  # ROV -> donor travel
     w2: float = 1.5  # donor -> recipient transfer (carry leg)
     w3: float = 2.0  # donor health reward
+
+    def __post_init__(self) -> None:
+        _finite_fields(self)
 
 
 @dataclass(frozen=True)
@@ -38,6 +66,10 @@ class GraftConfig:
     max_candidates: int = 3
     tool_axis: tuple[float, float, float] = (0.0, 0.0, 1.0)  # end-effector approach axis
 
+    def __post_init__(self) -> None:
+        _finite_fields(self)
+        _positive_counts(self, "k_neighbors", "min_patch_points", "max_candidates")
+
 
 @dataclass(frozen=True)
 class NavConfig:
@@ -47,6 +79,12 @@ class NavConfig:
     max_speed: float = 0.5  # m/s
     carry_speed_scale: float = 0.5  # slower while holding a fragment
     timeout_s: float = 120.0
+
+    def __post_init__(self) -> None:
+        _finite_fields(self)
+        for item in dataclasses.fields(self):
+            if getattr(self, item.name) <= 0:
+                raise ValueError(f"{item.name} must be positive")
 
 
 @dataclass(frozen=True)
@@ -75,6 +113,17 @@ class FSMConfig:
     # Return visits. Full recovery needed about a week of contact (Collins et al. 2026).
     revisit_days: tuple[int, ...] = (7, 56)
     recovered_density_pct: float = 80.0  # symbiont density vs healthy tissue at the last visit
+
+    def __post_init__(self) -> None:
+        for name, cls in (("weights", PairingWeights), ("graft", GraftConfig), ("nav", NavConfig)):
+            if not isinstance(getattr(self, name), cls):
+                raise ValueError(f"{name} must be a {cls.__name__}")
+        _finite_fields(self)
+        _positive_counts(self, "max_attempts_per_recipient", "max_perception_failures", "harvest_ik_attempts")
+        if not isinstance(self.reobserve_attempts, int) or self.reobserve_attempts < 0:
+            raise ValueError("reobserve_attempts must be a nonnegative integer")
+        if self.survey_swath <= 0:
+            raise ValueError("survey_swath must be positive")
 
     def to_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)

@@ -1,10 +1,16 @@
 # cloud
 
-Between-dives loop (Argon, via the Interactions API): debrief (review run logs/video, label failures), coder (propose patches to planner weights / behaviour tree / controller), verifier (run patches against the `/eval` regression suite, promote only if nothing regresses **and a human approves**), scene generation/critique for Isaac Sim assets.
+This folder implements a standalone Argon debrief of the Python research
+stack's decision logs. It does not implement an automatic coder, patch verifier
+or patch promotion service.
 
-Owner: TBD (see CLAUDE.md section 10).
-
-Never called from the dive loop (`/control`, `/perception`, `/agent` must stay network-free during a run). Human approval gate required before any promoted patch.
+The current browser demo also uses `gemini-4-argon` for bounded assistance on a
+held issue (`rescan`, `hold`, `abort`) and optional terminal episode review.
+That integration lives in `sim/pelagic/reefsim/lab_server.py`, not this folder.
+Argon does not authorize handling or replace the local safety policy. See the
+[project README](../README.md) and [system architecture](../docs/ARCHITECTURE.md).
+The Python `agent/` package itself makes no network calls; its perception
+integration can call a configured Gemma endpoint.
 
 ## Debrief
 
@@ -25,7 +31,7 @@ python cloud/debrief.py --log <decision-log.jsonl> --html report.html
 
 **Verification.** Argon must cite log values for every flag. `check_citations` looks each one up in the log, and the report marks any that are not there. This shows the quoted evidence exists, not that Argon's reasoning from it is right.
 
-**Failures.** A failed call, an incomplete interaction or invalid output exits non-zero and writes no debrief, with no fallback output. This code does not retry. The SDK's own default retries 408, 409, 429 and 5xx responses up to 4 times, so one run can mean more than one HTTP request after a transient error. Invalid output is kept as `<out>.raw.txt`.
+**Failures.** A failed call, an incomplete interaction or invalid output exits non-zero and writes no debrief, with no fallback output. This code does not retry. Transport retries depend on the installed SDK configuration, so one run can mean more than one HTTP request after a transient error. Invalid output is kept as `<out>.raw.txt`.
 
 **Sample logs.** `sample_logs/fabricated_*.jsonl` are hand-written, not real missions, and the report says so.
 

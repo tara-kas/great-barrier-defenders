@@ -1,68 +1,67 @@
-# Setup
+# Setup and verification
 
-You are developing on macOS and are **not** the one running Isaac Sim — it needs an NVIDIA RTX-class GPU on Linux or Windows and does not run on Mac. A teammate runs it headless on that box; you connect as a viewer, or work entirely off recordings/logs for the modules that don't need a live sim.
+## Local browser mission
 
-## 1. Clone and configure secrets
+Python 3.10+ runs the lab server; a current Node.js with the built-in test runner runs the JavaScript regressions. Isaac Sim, npm and a local GPU are not needed to view the browser mission.
 
+```bash
+git clone https://github.com/tara-kas/great-barrier-defenders.git
+cd great-barrier-defenders
+python3 sim/pelagic/scripts/run_lab.py
 ```
-git clone <repo-url>
-cd da-best-ever
+
+Open `http://127.0.0.1:8090`. For actual model use, configure the gateway before starting it, then select **Robot + base**. Unconfigured endpoints must report unavailable; a running viewer is not proof of inference.
+
+## Real model services
+
+Copy `.env.example` to `.env` and fill in server-side endpoints and credentials. The browser gateway reads process environment, so explicitly export the file before launching (only source a local file you control):
+
+```bash
 cp .env.example .env
+# Edit .env, then:
+set -a
+. ./.env
+set +a
+python3 sim/pelagic/scripts/run_lab.py
 ```
 
-Fill in `.env`:
-- `GEMINI_API_KEY` — your own key or the team's shared key (ask the team lead; never commit it)
-- `ISAAC_SIM_HOST` and ports — ask whoever is running the sim (see step 3)
+- `GEMMA_BASE_URL`: a separately exposed OpenAI-compatible vLLM endpoint including `/v1`. The integrated Modal gateway is not such an endpoint: it calls its private Gemma worker internally. For that deployment, use the hosted gateway/worker configuration below.
+- `GEMMA_MODEL=gemma-4-E4B-it`: must match the server's served model name.
+- `GEMMA_API_KEY`: model service credential if required.
+- `GEMMA_DEPLOYMENT`: accurate hosting metadata (`modal`, `robot`, `base_station`, or `unverified`). This label does not verify hardware residency.
+- `GEMINI_API_KEY` and `ARGON_MODEL=gemini-4-argon`: bounded assistance and optional review.
+- `CUOPT_ADAPTER_URL`, `CUOPT_API_KEY`, `CUOPT_DEPLOYMENT`: actual native route service and its hosting location.
 
-`.env` is git-ignored. Never paste the key into a prompt or a committed file (CLAUDE.md section 8).
+The integrated [Modal backend](sim/pelagic/scripts/modal_lab_backend.py) wires Gemma/cuOpt directly and protects its gateway using `LAB_GATEWAY_TOKEN`. Its dependencies, GPU choices and secrets are declared in that deployment file. The [worker](sim/pelagic/sites/reef-lab/worker.mjs) proxies authenticated requests without exposing service credentials to the browser. Follow the [integrated Modal deployment guide](sim/pelagic/docs/ARCHITECTURE.md#integrated-authenticated-modal-deployment) for the hosted path; deployment provisions paid GPU resources.
 
-## 2. Python environment
+Check readiness, obtain an actual valid Gemma response, then run a complete mission and export the episode. These are separate checks. Use [SCENARIOS](docs/SCENARIOS.md) for acceptance cases and preserve all failure outcomes.
 
+## Regression checks
+
+From the repository root:
+
+```bash
+python3 tools/verify_submission.py
+cd sim/pelagic
+node --test tests/lab-*.test.mjs
+python3 -m unittest tests.test_lab_server tests.test_live_feed tests.test_live_stream_capture
 ```
+
+The tests use provider doubles and local HTTP servers. They do not provision services or establish live model availability. HTTP tests need permission to bind a local ephemeral port.
+
+## Separate Python research stack
+
+```bash
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest -q agent/tests perception/tests eval cloud dashboard
 ```
 
-## 3. Connecting to Isaac Sim as a viewer (not running it)
+Dependencies declare supported minimum versions, not a fully locked reproducible environment. [Agent](agent/README.md), [perception](perception/README.md) and [mission](mission/README.md) document this separate path. The Python Gemma client loads `.env` when python-dotenv is installed; its default model is `gemma-4-31b-it`, unless explicitly overridden. Do not infer that this default ran in the browser demonstration.
 
-The sim owner runs it headless with livestream enabled:
-```
-./runheadless.sh -v          # container, or
-LIVESTREAM=1 ...             # standalone/Isaac Lab, public network
-LIVESTREAM=2 ...             # standalone/Isaac Lab, private/local network
-```
-Their container needs `--network=host` and these ports open on their host firewall:
-- TCP 49100 — signalling
-- UDP 47998 — media
-- TCP 8210 — web viewer (only if they're using the Docker Compose option)
+## Isaac camera/state feed
 
-To watch the stream yourself:
-1. Install the NVIDIA Omniverse **WebRTC Streaming Client** (macOS build — Intel or Apple Silicon).
-2. Get the sim owner's host/IP and put it in `ISAAC_SIM_HOST` in your `.env`.
-3. **Only one streaming client can connect per Isaac Sim instance.** Coordinate in team chat before connecting — if someone else is already watching, use the web viewer (port 8210) or a recording instead.
+Isaac runs on a supported NVIDIA machine, while this checkout can receive its read-only camera/state feed. Use [simulator setup](sim/README.md) and [Pelagic setup](sim/pelagic/README.md) for the configured version and launch commands. Set the host/install paths for your machine; do not rely on a developer's home directory. The stream and browser controller are separate integration paths.
 
-## 4. Working without a live sim connection
-
-Most of this repo doesn't need a live Isaac Sim session day-to-day:
-- `/agent`, `/perception`, `/control` can be developed and unit-tested against logged sensor packets / recorded clips.
-- `/eval` holds the scenario fixtures and regression harness — run those locally.
-- `/dashboard` can run against a recorded or synthetic event log.
-- `/cloud` (Argon debrief/coder/verifier) consumes run logs and video after the fact, not a live stream.
-
-## 5. GPU compute (Modal)
-
-The team has access to Modal for GPU workloads (e.g. Gemma eval off the edge device). A teammate owns that account — ask them for `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` if your work needs it; don't provision anything on Modal yourself without checking in first.
-
-## 6. Run tests
-
-```
-pytest
-```
-
-## 7. Before pushing: secrets audit
-
-```
-git log -p | grep -iE "AIza|api[_-]?key|sk-"
-```
-No API keys in the repo or commit history, ever (CLAUDE.md section 8).
+Keep `.env` and all credentials out of Git and evidence exports. Do not print secrets during readiness checks.

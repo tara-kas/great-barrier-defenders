@@ -1,5 +1,10 @@
 # Task: Perception
 
+> **Historical task plan — not current instructions.** Original branch scopes,
+> model choices and mission premises below are archival and do not constrain
+> current work. See the [project README](../../README.md) and
+> [system architecture](../ARCHITECTURE.md) for the implemented pipeline.
+
 Branch: `perception`. Touches only `perception/`, `eval/coralscapes_eval.py`,
 `eval/generate_synthetic_frames.py`. Don't edit files outside these.
 

@@ -1,6 +1,10 @@
 # Mission Control dashboard
 
-An operator view for Reef Rescue AUV. It reads the shared `SemanticSeabedRegistry.dump()` JSON shape and `DecisionLog.save()` JSONL shape. It does not call a model or the vehicle. The browser polls the source files every two seconds, so an agent writing a new registry dump or decision log updates the view without rebuilding it.
+A standalone file-based diagnostic view for the Python research stack. The
+current browser mission interface is under `sim/pelagic/web/lab`; see the
+[project README](../README.md) and [system architecture](../docs/ARCHITECTURE.md).
+
+This view reads the shared `SemanticSeabedRegistry.dump()` JSON shape and `DecisionLog.save()` JSONL shape. It does not call a model or the vehicle. The browser polls the source files every two seconds, so an agent writing a new registry dump or decision log updates the view without rebuilding it.
 
 ## Run the synthetic demo
 

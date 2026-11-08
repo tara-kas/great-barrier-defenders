@@ -1,7 +1,12 @@
 # Optional Gemini image review
 
-The recorded demo runs offline. Its labelled fixture perception is **not a
-Gemini response**. `perception/gemini_client.py` is a separate, opt-in cloud
+> **Separate research adapter; not the current browser model pipeline.** This
+> document describes the optional Python image-review CLI. The current browser
+> uses Gemma E4B on Modal and bounded Argon assistance; see the
+> [project README](../README.md) and [architecture](ARCHITECTURE.md).
+> Historical validation notes below apply only to this adapter.
+
+The Python research simulation runs offline with labelled fixture perception. `perception/gemini_client.py` is a separate, opt-in cloud
 adapter implementing the team's `VisionLLM.ask(prompt, image_png, json_schema)`
 contract and returning `GemmaReply`. It is not imported by the offline runner.
 

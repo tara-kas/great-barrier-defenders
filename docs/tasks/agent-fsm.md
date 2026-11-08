@@ -1,5 +1,10 @@
 # Task: Agent / Planning / FSM
 
+> **Historical task plan — not current instructions.** Original branch scopes,
+> model choices and mission premises below are archival and do not constrain
+> current work. See the [project README](../../README.md) and
+> [system architecture](../ARCHITECTURE.md) for the implemented pipeline.
+
 Branch: `agent-fsm`. Touches only `agent/`, `eval/synthetic_scene.py`,
 `eval/mock_robot.py`, `eval/test_fsm_loop.py`. Don't edit files outside these.
 

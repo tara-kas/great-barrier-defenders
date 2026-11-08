@@ -1,6 +1,9 @@
 # Build the non-sim half of the ROV stack, against the new spec PDF
 
-> **Historical.** The mission premise has since changed; see `CLAUDE.md` section 1 and section 15.
+> **Historical build plan — not the current specification or instructions.**
+> This predates the current loose-fragment rescue mission and browser pipeline.
+> Model choices, biological premises and implementation claims below are archival.
+> Start with the [project README](../README.md) and [architecture](ARCHITECTURE.md).
 
 ## Context
 

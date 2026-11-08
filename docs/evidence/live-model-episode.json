@@ -1,0 +1,4995 @@
+{
+  "version": 1,
+  "scene": {
+    "version": 1,
+    "seed": 42,
+    "missionGoal": 1,
+    "routeMode": "direct",
+    "restorationMode": "loose_fragment",
+    "water": {
+      "current": 0.08,
+      "visibility": 8
+    },
+    "colonies": [
+      {
+        "id": "donor-1",
+        "position": [
+          -4,
+          -3.2,
+          0.6608154366587579
+        ],
+        "health": "healthy",
+        "genet": "G1",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43,
+        "height": 0.68,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-1",
+        "position": [
+          -2.6,
+          -3.2,
+          0.8892341533050644
+        ],
+        "health": "bleached_alive",
+        "genet": "G1",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43,
+        "height": 0.68,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-2",
+        "position": [
+          4.311059158653901,
+          -3.8401289408690986,
+          2.366010557111489
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.45499237342271953,
+        "height": 0.812308825023938,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-2",
+        "position": [
+          3.875752845753387,
+          3.258410858855509,
+          1.9644736379721366
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4497253837948665,
+        "height": 0.7251094231614843,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-3",
+        "position": [
+          -3.572811569118264,
+          2.993550438559673,
+          1.2726686035663612
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.5137337425909936,
+        "height": 0.6876813899446279,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-3",
+        "position": [
+          -4.412712937571637,
+          -4.001399710522623,
+          0.7123390159257661
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4619461745675653,
+        "height": 0.7174843592918478,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-4",
+        "position": [
+          2.856024637434536,
+          -3.5378252908446974,
+          2.139675522758777
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.45451746736187487,
+        "height": 0.7768541606911459,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-4",
+        "position": [
+          4.837952684132036,
+          4.457410830582932,
+          1.9772224188902778
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.49807689322158694,
+        "height": 0.75396321748849,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-1",
+        "position": [
+          2.2834329571395524,
+          1.7778925042243763,
+          1.7858502139776797
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.46557363770669324,
+        "height": 0.39551412425236776,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-2",
+        "position": [
+          -6.872471529392543,
+          3.2596894045729985,
+          0.8072423420095861
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24939560141181574,
+        "height": 0.7157789082895034,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-3",
+        "position": [
+          -0.3683483976179082,
+          2.6408221467428117,
+          1.4183571380194377
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.36007908849976955,
+        "height": 0.7720404669689015,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-4",
+        "position": [
+          -2.001048193252013,
+          2.9081579885526705,
+          1.2673455677043934
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3384975924459286,
+        "height": 0.6381491632829421,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-5",
+        "position": [
+          0.8791128285062335,
+          -2.2690637657706687,
+          1.5993982334070502
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47850287195295094,
+        "height": 0.8096089717163705,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-6",
+        "position": [
+          2.082771187332066,
+          3.4501088717081583,
+          1.8029299443841025
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4041803780896589,
+        "height": 0.4923180819652043,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-7",
+        "position": [
+          -6.10187545452583,
+          -3.658243721436771,
+          0.5125961440908677
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47318660411518065,
+        "height": 0.41811716512776914,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-8",
+        "position": [
+          -3.840790880934369,
+          -5.43536045571804,
+          0.8640080349920606
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2708593664760701,
+        "height": 0.6800665141362697,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-9",
+        "position": [
+          4.445441002434917,
+          -0.693718269328035,
+          2.2032066797147176
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.31159449097001923,
+        "height": 0.7558350193593651,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-10",
+        "position": [
+          5.820872327832996,
+          -0.9606569594121388,
+          2.3745294646445547
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2323815967142582,
+        "height": 0.7255823296890594,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-11",
+        "position": [
+          -1.351255059847849,
+          -6.102326352015895,
+          1.136222743701095
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.38098313731141387,
+        "height": 0.5890833448665217,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-12",
+        "position": [
+          -1.8320963116425508,
+          3.76123583825444,
+          1.3443735938501356
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.30287302904296665,
+        "height": 0.4715165762859397,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-13",
+        "position": [
+          6.234066836405228,
+          -3.3074612591795605,
+          2.4507753863461272
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.27096654057502745,
+        "height": 0.413958735850174,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-14",
+        "position": [
+          3.3197014459577523,
+          6.082236409600844,
+          1.8940709649563194
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33458888782886786,
+        "height": 0.6973752346751281,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-15",
+        "position": [
+          2.14614446001453,
+          -0.5392792113922211,
+          1.745522872000819
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3538156370818615,
+        "height": 0.6559784074011259,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-16",
+        "position": [
+          2.677033123110408,
+          6.544006317584367,
+          1.8397760971964043
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2723261484247632,
+        "height": 0.7022424079291523,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-17",
+        "position": [
+          5.0518264193196725,
+          -1.904659796106256,
+          2.412481512769
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.374383960228879,
+        "height": 0.43422825494082645,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-18",
+        "position": [
+          1.7611137487534911,
+          5.984937893139801,
+          1.7212907610291859
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4329248844482936,
+        "height": 0.5616492788819596,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-19",
+        "position": [
+          -2.835342654710276,
+          1.264264294318959,
+          1.069396055845601
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4536265037790872,
+        "height": 0.5675565372034908,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-20",
+        "position": [
+          -6.4986750836574965,
+          1.027779645084599,
+          0.7568009424956977
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3274109027883969,
+        "height": 0.6201141699613073,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-21",
+        "position": [
+          -2.4824061105937205,
+          0.5177603616096246,
+          0.9687886238871205
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.41590516480617223,
+        "height": 0.3494495455105789,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-22",
+        "position": [
+          -3.2908614139322223,
+          4.958555112628354,
+          1.2961262333711965
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.42019983755424617,
+        "height": 0.8653011367353611,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-23",
+        "position": [
+          -1.6491671295144041,
+          -1.4394736363831921,
+          0.8888137812573363
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3798473029350862,
+        "height": 0.5130952553055249,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-24",
+        "position": [
+          5.962749961413194,
+          1.9975883297065822,
+          2.018377410270695
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4643829373712651,
+        "height": 0.6642675146274268,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-25",
+        "position": [
+          6.021979489316085,
+          -1.852179755796461,
+          2.4370485837958533
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4689854720677249,
+        "height": 0.8037055930052884,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-26",
+        "position": [
+          1.4555809691270651,
+          4.9277122503990824,
+          1.688984424392462
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.42839286152273415,
+        "height": 0.751635048694443,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-27",
+        "position": [
+          -5.545062199496832,
+          0.9879322043381242,
+          0.8924598525869902
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3472569784102961,
+        "height": 0.5724830526439473,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-28",
+        "position": [
+          2.947477069299316,
+          5.654670403430946,
+          1.859784762768946
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35614930659765376,
+        "height": 0.46706994289299475,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-29",
+        "position": [
+          1.2284795703590032,
+          3.150520337443842,
+          1.6556291544231607
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2637063384358771,
+        "height": 0.32207051541656256,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-30",
+        "position": [
+          -5.444332563149511,
+          4.084277671901644,
+          1.0607199992796112
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.37101256092544643,
+        "height": 0.37203949731076136,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-31",
+        "position": [
+          0.03675731314081591,
+          -1.8199293203516527,
+          1.2974503180503771
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3672020607232116,
+        "height": 0.7626647352287546,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-32",
+        "position": [
+          3.6669201660313218,
+          6.815408257229539,
+          1.9087630475045558
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3702503457502462,
+        "height": 0.8571554236044177,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-33",
+        "position": [
+          -5.013061918011937,
+          5.8188231329340425,
+          1.0622364040365713
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.28124150752089916,
+        "height": 0.8393635892472231,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-34",
+        "position": [
+          1.7117076429470361,
+          -1.634990848090135,
+          1.7614557624036133
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.37213402639143167,
+        "height": 0.765454617321957,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-35",
+        "position": [
+          0.9030920716987745,
+          -3.099400603128841,
+          1.6733180771878982
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40181926214834673,
+        "height": 0.6248577312147245,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-36",
+        "position": [
+          7.2644184167273425,
+          3.2698276049182073,
+          2.0458280506132933
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3071796844783239,
+        "height": 0.6673546739201993,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-37",
+        "position": [
+          -2.15843084108361,
+          -5.490746177278005,
+          1.0271445220408013
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3092396430042572,
+        "height": 0.803930203318596,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-38",
+        "position": [
+          5.309585676938768,
+          1.6466370837449391,
+          2.005501516609899
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40287982505513353,
+        "height": 0.4029730349243619,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-39",
+        "position": [
+          3.343135326261468,
+          -0.6267859150805077,
+          2.0114990580229906
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4145748974010348,
+        "height": 0.7131563406717032,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-40",
+        "position": [
+          -6.497594298526469,
+          2.3662306614729043,
+          0.8290709173014712
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3549766688561067,
+        "height": 0.8112685101735406,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-41",
+        "position": [
+          -5.306173768896153,
+          -5.781034452324787,
+          0.7329213086976533
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24082949404371903,
+        "height": 0.4121756608178839,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-42",
+        "position": [
+          -2.9783609321789104,
+          4.3219473176354155,
+          1.3339945666942643
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43946392061887307,
+        "height": 0.6958424440748059,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-43",
+        "position": [
+          -1.8657018222433632,
+          1.3460355798561945,
+          1.0589206350110159
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.25494593360461293,
+        "height": 0.6649701783363708,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-44",
+        "position": [
+          4.292844812156175,
+          -5.880651896836396,
+          2.217468303143328
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2591476147249341,
+        "height": 0.3523362151510082,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-45",
+        "position": [
+          -3.9940848571848844,
+          6.123297476074272,
+          1.1735286753254186
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44000117377843706,
+        "height": 0.507888781458605,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-46",
+        "position": [
+          -0.8620407171667943,
+          -3.561661016410397,
+          1.2250405450852808
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.323969929323066,
+        "height": 0.43244041081517937,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-47",
+        "position": [
+          -1.0923639897012722,
+          -2.7651435971720373,
+          1.1060161492812772
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4475926459021866,
+        "height": 0.7556665626168251,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-48",
+        "position": [
+          5.469233181782101,
+          6.02184058208422,
+          2.04837758715809
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.28164037138456477,
+        "height": 0.7435905881971121,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-49",
+        "position": [
+          1.792058100022106,
+          -4.680950034381646,
+          1.8565905388661592
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4605084171821363,
+        "height": 0.6069676279486158,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-50",
+        "position": [
+          -4.021061167067014,
+          -6.638533450203802,
+          0.8249086091962082
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44569399401778353,
+        "height": 0.5706962012150325,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-51",
+        "position": [
+          -3.2813091896872484,
+          5.701219759882225,
+          1.2583796589730376
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2640868940693326,
+        "height": 0.8672436577896587,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-52",
+        "position": [
+          1.4411747986754633,
+          -2.7898064162777954,
+          1.7962938230225824
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35113369110738857,
+        "height": 0.6908465471747331,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-53",
+        "position": [
+          -1.5135296210753788,
+          2.5922718474642985,
+          1.2664541836102714
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2812188418069854,
+        "height": 0.6049585093907082,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-54",
+        "position": [
+          -3.4267168625334676,
+          -1.9465924357353628,
+          0.6838071264205051
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44542345418129115,
+        "height": 0.5199806814128534,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-55",
+        "position": [
+          6.6336645965588925,
+          4.700447087874712,
+          2.065839605973733
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4552863573376089,
+        "height": 0.7397533448459581,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-56",
+        "position": [
+          -5.310650442695377,
+          -5.23856599118422,
+          0.7016924370483756
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35811187951592727,
+        "height": 0.5814624115405604,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-57",
+        "position": [
+          1.4647519134350109,
+          1.7509313678171474,
+          1.6698223656146702
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24139960094587878,
+        "height": 0.6320913624763489,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-58",
+        "position": [
+          3.30856531479027,
+          1.3670744310402592,
+          1.8942010845546091
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4382805732497945,
+        "height": 0.5836088965577073,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-59",
+        "position": [
+          -6.016592244896315,
+          0.2568050336455392,
+          0.7744114076250523
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47178089678753166,
+        "height": 0.7664097942924127,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-60",
+        "position": [
+          0.4427341730770491,
+          -0.6148094756643394,
+          1.301375949200609
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4782383273891173,
+        "height": 0.33912799020064993,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-61",
+        "position": [
+          6.38368884290391,
+          2.673575386825535,
+          2.0103180885407337
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2690355138806626,
+        "height": 0.5259539118083194,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-62",
+        "position": [
+          -5.09135385969673,
+          -2.370305156662921,
+          0.5570764784292764
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33238684696378185,
+        "height": 0.7559037793590688,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-63",
+        "position": [
+          -2.0874654422046044,
+          -6.088972438256176,
+          1.0438200173206684
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.34615260544931514,
+        "height": 0.6111419908283279,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-64",
+        "position": [
+          1.0142244533776672,
+          2.245129392965853,
+          1.612637380410748
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3910249861842021,
+        "height": 0.757504595296923,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-65",
+        "position": [
+          5.565705058012444,
+          6.97442821380857,
+          2.0838060501254683
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3998532069567591,
+        "height": 0.7095328394486569,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-66",
+        "position": [
+          6.626043559903415,
+          5.849432076962098,
+          2.1103235486618344
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.23866664131172002,
+        "height": 0.6081683358806186,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-67",
+        "position": [
+          -4.4715821527173265,
+          0.4347423508379582,
+          0.9222702531366436
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33142840951448305,
+        "height": 0.7742981897247956,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-68",
+        "position": [
+          5.233668957951814,
+          -5.222405626467822,
+          2.365523258966777
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3770394664793275,
+        "height": 0.5461696654604749,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-69",
+        "position": [
+          3.2303615326152886,
+          7.247153611370057,
+          1.8797353032409962
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33775593161815776,
+        "height": 0.6479848064761609,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-70",
+        "position": [
+          2.113842002626257,
+          -6.0182205135352795,
+          1.8213169034990262
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40329344595782457,
+        "height": 0.5088451638282276,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-71",
+        "position": [
+          0.14582539138445416,
+          1.441024960664071,
+          1.4171295520446712
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4756654608249664,
+        "height": 0.5981707439222373,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-72",
+        "position": [
+          2.2109498283673825,
+          0.683306770551452,
+          1.6948260646950362
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47718123185448347,
+        "height": 0.4578332473454066,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-73",
+        "position": [
+          0.46723760084994875,
+          2.9998537687245133,
+          1.532832157975831
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35811774265719576,
+        "height": 0.5344110337249004,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-74",
+        "position": [
+          2.9980750250492774,
+          -0.10084730740896886,
+          1.8764231677001881
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.30897288375534115,
+        "height": 0.6008012076537126,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-75",
+        "position": [
+          0.9296022117697889,
+          -4.539730823748414,
+          1.6326652399807775
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3651332427584566,
+        "height": 0.808701585691888,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-76",
+        "position": [
+          1.4957673445944626,
+          2.49720073894939,
+          1.7018454375771932
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33218936624005435,
+        "height": 0.4151897178310901,
+        "morphology": "boulder"
+      }
+    ],
+    "obstacles": [
+      {
+        "id": "rock-1",
+        "position": [
+          -1,
+          0.3,
+          1.0407644299900454
+        ],
+        "radius": 0.45
+      },
+      {
+        "id": "rock-2",
+        "position": [
+          2.1,
+          0.7,
+          1.678301578033379
+        ],
+        "radius": 0.55
+      }
+    ]
+  },
+  "episode": {
+    "time": 80.54999999999671,
+    "running": false,
+    "seed": 42,
+    "restorationMode": "loose_fragment",
+    "phase": "complete",
+    "phaseProgress": 0,
+    "controller": "base_station",
+    "status": "Mission complete · all placements verified",
+    "water": {
+      "current": 0.08,
+      "visibility": 8,
+      "currentVector": [
+        0.08211520083330365,
+        0.00943531023670453,
+        -0.0026830804009627053
+      ],
+      "currentSpeed": 0.08269903389758967,
+      "currentSamples": [
+        {
+          "position": [
+            -8,
+            -8,
+            1.7894648144177212
+          ],
+          "vector": [
+            0.06621043045640031,
+            0.008238693046248096,
+            0.00236337531143569
+          ]
+        },
+        {
+          "position": [
+            -8,
+            -4,
+            1.6052239216796105
+          ],
+          "vector": [
+            0.07103170015070431,
+            0.008760307048753515,
+            0.002255830056747739
+          ]
+        },
+        {
+          "position": [
+            -8,
+            0,
+            1.8038262702038033
+          ],
+          "vector": [
+            0.07720794406366774,
+            0.0029445572942489026,
+            -0.0007285402837474914
+          ]
+        },
+        {
+          "position": [
+            -8,
+            4,
+            1.8508359940570158
+          ],
+          "vector": [
+            0.0826537960662954,
+            -0.0018268361459916696,
+            -0.0027838144992768194
+          ]
+        },
+        {
+          "position": [
+            -8,
+            8,
+            1.819852696782267
+          ],
+          "vector": [
+            0.08508426504458029,
+            0.0016040821520387615,
+            -0.0012889332579276152
+          ]
+        },
+        {
+          "position": [
+            -4,
+            -8,
+            2.0419688262896565
+          ],
+          "vector": [
+            0.07478328735302635,
+            0.009305430356575998,
+            0.001431835318639319
+          ]
+        },
+        {
+          "position": [
+            -4,
+            -4,
+            1.9613387673764646
+          ],
+          "vector": [
+            0.08090453711734924,
+            0.009977919510324819,
+            -0.0017238453427602237
+          ]
+        },
+        {
+          "position": [
+            -4,
+            0,
+            2.0986352379575286
+          ],
+          "vector": [
+            0.08404298504869566,
+            0.0032052321513899966,
+            -0.0026811327735746493
+          ]
+        },
+        {
+          "position": [
+            -4,
+            4,
+            2.465638814368045
+          ],
+          "vector": [
+            0.08176641571764423,
+            -0.0018072230299182297,
+            -0.00021921315981243139
+          ]
+        },
+        {
+          "position": [
+            -4,
+            8,
+            2.221435559845375
+          ],
+          "vector": [
+            0.07762109705093895,
+            0.0014633800543007783,
+            0.0025222655968919114
+          ]
+        },
+        {
+          "position": [
+            0,
+            -8,
+            2.482312473692771
+          ],
+          "vector": [
+            0.08206094746975938,
+            0.010211003804496235,
+            -0.002446993126072452
+          ]
+        },
+        {
+          "position": [
+            0,
+            -4,
+            2.63811709454019
+          ],
+          "vector": [
+            0.08120917151687708,
+            0.010015489931303263,
+            -0.0021551591356879377
+          ]
+        },
+        {
+          "position": [
+            0,
+            0,
+            2.4358429770179093
+          ],
+          "vector": [
+            0.07798011051378752,
+            0.002974006185559874,
+            0.0008851158761769125
+          ]
+        },
+        {
+          "position": [
+            0,
+            4,
+            2.691467370936344
+          ],
+          "vector": [
+            0.07097246904629492,
+            -0.0015686523546970792,
+            0.0027966163383741777
+          ]
+        },
+        {
+          "position": [
+            0,
+            8,
+            2.6996622241272386
+          ],
+          "vector": [
+            0.06545632831395684,
+            0.0012340393130432963,
+            0.0011416353568351751
+          ]
+        },
+        {
+          "position": [
+            4,
+            -8,
+            3.1684634423651596
+          ],
+          "vector": [
+            0.07667837866136391,
+            0.009541240265624801,
+            -0.0012889332579276106
+          ]
+        },
+        {
+          "position": [
+            4,
+            -4,
+            3.5189825872489395
+          ],
+          "vector": [
+            0.07009145044529806,
+            0.008644346483197812,
+            0.0018497045772509141
+          ]
+        },
+        {
+          "position": [
+            4,
+            0,
+            3.2350730362222224
+          ],
+          "vector": [
+            0.06507584839103034,
+            0.002481863315790788,
+            0.0026294428520433452
+          ]
+        },
+        {
+          "position": [
+            4,
+            4,
+            3.172458154051198
+          ],
+          "vector": [
+            0.062291458516638615,
+            -0.0013767823550833852,
+            0.000055893437531422925
+          ]
+        },
+        {
+          "position": [
+            4,
+            8,
+            3.1545008948850963
+          ],
+          "vector": [
+            0.06363964783263733,
+            0.0011997896814044148,
+            -0.002588936011015608
+          ]
+        },
+        {
+          "position": [
+            8,
+            -8,
+            3.461729282950344
+          ],
+          "vector": [
+            0.06520478569009507,
+            0.00811355870584216,
+            0.0025222655968919136
+          ]
+        },
+        {
+          "position": [
+            8,
+            -4,
+            3.5918544234600143
+          ],
+          "vector": [
+            0.06154511433793403,
+            0.007590330765095711,
+            0.002047138155579471
+          ]
+        },
+        {
+          "position": [
+            8,
+            0,
+            3.4905741188843615
+          ],
+          "vector": [
+            0.0626057811316577,
+            0.002387659867504775,
+            -0.001038672826573323
+          ]
+        },
+        {
+          "position": [
+            8,
+            4,
+            3.3429430980192594
+          ],
+          "vector": [
+            0.06724680487045553,
+            -0.0014863067358849619,
+            -0.0027998804617255665
+          ]
+        },
+        {
+          "position": [
+            8,
+            8,
+            3.4074281274738043
+          ],
+          "vector": [
+            0.07352290640994377,
+            0.0013861174199061783,
+            -0.0009904439672546572
+          ]
+        }
+      ],
+      "fieldSource": "Exact samples of the reduced flow field used by vehicle and loose-fragment drag"
+    },
+    "regions": [
+      {
+        "id": "healthy-west",
+        "name": "Living western thicket",
+        "kind": "healthy",
+        "center": [
+          -4.393400445519591,
+          2.9737326649386207
+        ],
+        "radius": 2.6584582081511616,
+        "healthMix": {
+          "healthy": 0.91,
+          "bleached_alive": 0.07,
+          "dead": 0.02
+        }
+      },
+      {
+        "id": "healthy-east",
+        "name": "Living eastern crest",
+        "kind": "healthy",
+        "center": [
+          3.748826508234194,
+          -3.2062222935395925
+        ],
+        "radius": 2.7397801361745224,
+        "healthMix": {
+          "healthy": 0.91,
+          "bleached_alive": 0.07,
+          "dead": 0.02
+        }
+      },
+      {
+        "id": "bleached-east",
+        "name": "Pale eastern patch",
+        "kind": "bleached_alive",
+        "center": [
+          3.895063036270274,
+          3.979261133305287
+        ],
+        "radius": 2.8921316975704396,
+        "healthMix": {
+          "healthy": 0.1,
+          "bleached_alive": 0.86,
+          "dead": 0.04
+        }
+      },
+      {
+        "id": "bleached-west",
+        "name": "Pale western pocket",
+        "kind": "bleached_alive",
+        "center": [
+          -3.3974218120267556,
+          -4.0797650609686915
+        ],
+        "radius": 2.5158658005446197,
+        "healthMix": {
+          "healthy": 0.1,
+          "bleached_alive": 0.86,
+          "dead": 0.04
+        }
+      },
+      {
+        "id": "transition",
+        "name": "Mixed central saddle",
+        "kind": "mixed",
+        "center": [
+          0.035247392434862204,
+          0.39109227728800605
+        ],
+        "radius": 2.2659235052075237,
+        "healthMix": {
+          "healthy": 0.46,
+          "bleached_alive": 0.36,
+          "dead": 0.18
+        }
+      }
+    ],
+    "colonies": [
+      {
+        "id": "donor-1",
+        "position": [
+          -4,
+          -3.2,
+          0.6608154366587579
+        ],
+        "health": "healthy",
+        "genet": "G1",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43,
+        "height": 0.68,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-1",
+        "position": [
+          -2.6,
+          -3.2,
+          0.8892341533050644
+        ],
+        "health": "bleached_alive",
+        "genet": "G1",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43,
+        "height": 0.68,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-2",
+        "position": [
+          4.311059158653901,
+          -3.8401289408690986,
+          2.366010557111489
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.45499237342271953,
+        "height": 0.812308825023938,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-2",
+        "position": [
+          3.875752845753387,
+          3.258410858855509,
+          1.9644736379721366
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4497253837948665,
+        "height": 0.7251094231614843,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-3",
+        "position": [
+          -3.572811569118264,
+          2.993550438559673,
+          1.2726686035663612
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.5137337425909936,
+        "height": 0.6876813899446279,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-3",
+        "position": [
+          -4.412712937571637,
+          -4.001399710522623,
+          0.7123390159257661
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4619461745675653,
+        "height": 0.7174843592918478,
+        "morphology": "branching"
+      },
+      {
+        "id": "donor-4",
+        "position": [
+          2.856024637434536,
+          -3.5378252908446974,
+          2.139675522758777
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.45451746736187487,
+        "height": 0.7768541606911459,
+        "morphology": "branching"
+      },
+      {
+        "id": "recipient-4",
+        "position": [
+          4.837952684132036,
+          4.457410830582932,
+          1.9772224188902778
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.49807689322158694,
+        "height": 0.75396321748849,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-1",
+        "position": [
+          2.2834329571395524,
+          1.7778925042243763,
+          1.7858502139776797
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.46557363770669324,
+        "height": 0.39551412425236776,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-2",
+        "position": [
+          -6.872471529392543,
+          3.2596894045729985,
+          0.8072423420095861
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24939560141181574,
+        "height": 0.7157789082895034,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-3",
+        "position": [
+          -0.3683483976179082,
+          2.6408221467428117,
+          1.4183571380194377
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.36007908849976955,
+        "height": 0.7720404669689015,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-4",
+        "position": [
+          -2.001048193252013,
+          2.9081579885526705,
+          1.2673455677043934
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3384975924459286,
+        "height": 0.6381491632829421,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-5",
+        "position": [
+          0.8791128285062335,
+          -2.2690637657706687,
+          1.5993982334070502
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47850287195295094,
+        "height": 0.8096089717163705,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-6",
+        "position": [
+          2.082771187332066,
+          3.4501088717081583,
+          1.8029299443841025
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4041803780896589,
+        "height": 0.4923180819652043,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-7",
+        "position": [
+          -6.10187545452583,
+          -3.658243721436771,
+          0.5125961440908677
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47318660411518065,
+        "height": 0.41811716512776914,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-8",
+        "position": [
+          -3.840790880934369,
+          -5.43536045571804,
+          0.8640080349920606
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2708593664760701,
+        "height": 0.6800665141362697,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-9",
+        "position": [
+          4.445441002434917,
+          -0.693718269328035,
+          2.2032066797147176
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.31159449097001923,
+        "height": 0.7558350193593651,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-10",
+        "position": [
+          5.820872327832996,
+          -0.9606569594121388,
+          2.3745294646445547
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2323815967142582,
+        "height": 0.7255823296890594,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-11",
+        "position": [
+          -1.351255059847849,
+          -6.102326352015895,
+          1.136222743701095
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.38098313731141387,
+        "height": 0.5890833448665217,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-12",
+        "position": [
+          -1.8320963116425508,
+          3.76123583825444,
+          1.3443735938501356
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.30287302904296665,
+        "height": 0.4715165762859397,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-13",
+        "position": [
+          6.234066836405228,
+          -3.3074612591795605,
+          2.4507753863461272
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.27096654057502745,
+        "height": 0.413958735850174,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-14",
+        "position": [
+          3.3197014459577523,
+          6.082236409600844,
+          1.8940709649563194
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33458888782886786,
+        "height": 0.6973752346751281,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-15",
+        "position": [
+          2.14614446001453,
+          -0.5392792113922211,
+          1.745522872000819
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3538156370818615,
+        "height": 0.6559784074011259,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-16",
+        "position": [
+          2.677033123110408,
+          6.544006317584367,
+          1.8397760971964043
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2723261484247632,
+        "height": 0.7022424079291523,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-17",
+        "position": [
+          5.0518264193196725,
+          -1.904659796106256,
+          2.412481512769
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.374383960228879,
+        "height": 0.43422825494082645,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-18",
+        "position": [
+          1.7611137487534911,
+          5.984937893139801,
+          1.7212907610291859
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4329248844482936,
+        "height": 0.5616492788819596,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-19",
+        "position": [
+          -2.835342654710276,
+          1.264264294318959,
+          1.069396055845601
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4536265037790872,
+        "height": 0.5675565372034908,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-20",
+        "position": [
+          -6.4986750836574965,
+          1.027779645084599,
+          0.7568009424956977
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3274109027883969,
+        "height": 0.6201141699613073,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-21",
+        "position": [
+          -2.4824061105937205,
+          0.5177603616096246,
+          0.9687886238871205
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.41590516480617223,
+        "height": 0.3494495455105789,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-22",
+        "position": [
+          -3.2908614139322223,
+          4.958555112628354,
+          1.2961262333711965
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.42019983755424617,
+        "height": 0.8653011367353611,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-23",
+        "position": [
+          -1.6491671295144041,
+          -1.4394736363831921,
+          0.8888137812573363
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3798473029350862,
+        "height": 0.5130952553055249,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-24",
+        "position": [
+          5.962749961413194,
+          1.9975883297065822,
+          2.018377410270695
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4643829373712651,
+        "height": 0.6642675146274268,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-25",
+        "position": [
+          6.021979489316085,
+          -1.852179755796461,
+          2.4370485837958533
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4689854720677249,
+        "height": 0.8037055930052884,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-26",
+        "position": [
+          1.4555809691270651,
+          4.9277122503990824,
+          1.688984424392462
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.42839286152273415,
+        "height": 0.751635048694443,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-27",
+        "position": [
+          -5.545062199496832,
+          0.9879322043381242,
+          0.8924598525869902
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3472569784102961,
+        "height": 0.5724830526439473,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-28",
+        "position": [
+          2.947477069299316,
+          5.654670403430946,
+          1.859784762768946
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35614930659765376,
+        "height": 0.46706994289299475,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-29",
+        "position": [
+          1.2284795703590032,
+          3.150520337443842,
+          1.6556291544231607
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2637063384358771,
+        "height": 0.32207051541656256,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-30",
+        "position": [
+          -5.444332563149511,
+          4.084277671901644,
+          1.0607199992796112
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.37101256092544643,
+        "height": 0.37203949731076136,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-31",
+        "position": [
+          0.03675731314081591,
+          -1.8199293203516527,
+          1.2974503180503771
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3672020607232116,
+        "height": 0.7626647352287546,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-32",
+        "position": [
+          3.6669201660313218,
+          6.815408257229539,
+          1.9087630475045558
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3702503457502462,
+        "height": 0.8571554236044177,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-33",
+        "position": [
+          -5.013061918011937,
+          5.8188231329340425,
+          1.0622364040365713
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.28124150752089916,
+        "height": 0.8393635892472231,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-34",
+        "position": [
+          1.7117076429470361,
+          -1.634990848090135,
+          1.7614557624036133
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.37213402639143167,
+        "height": 0.765454617321957,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-35",
+        "position": [
+          0.9030920716987745,
+          -3.099400603128841,
+          1.6733180771878982
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40181926214834673,
+        "height": 0.6248577312147245,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-36",
+        "position": [
+          7.2644184167273425,
+          3.2698276049182073,
+          2.0458280506132933
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3071796844783239,
+        "height": 0.6673546739201993,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-37",
+        "position": [
+          -2.15843084108361,
+          -5.490746177278005,
+          1.0271445220408013
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3092396430042572,
+        "height": 0.803930203318596,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-38",
+        "position": [
+          5.309585676938768,
+          1.6466370837449391,
+          2.005501516609899
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40287982505513353,
+        "height": 0.4029730349243619,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-39",
+        "position": [
+          3.343135326261468,
+          -0.6267859150805077,
+          2.0114990580229906
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4145748974010348,
+        "height": 0.7131563406717032,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-40",
+        "position": [
+          -6.497594298526469,
+          2.3662306614729043,
+          0.8290709173014712
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3549766688561067,
+        "height": 0.8112685101735406,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-41",
+        "position": [
+          -5.306173768896153,
+          -5.781034452324787,
+          0.7329213086976533
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24082949404371903,
+        "height": 0.4121756608178839,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-42",
+        "position": [
+          -2.9783609321789104,
+          4.3219473176354155,
+          1.3339945666942643
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.43946392061887307,
+        "height": 0.6958424440748059,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-43",
+        "position": [
+          -1.8657018222433632,
+          1.3460355798561945,
+          1.0589206350110159
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.25494593360461293,
+        "height": 0.6649701783363708,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-44",
+        "position": [
+          4.292844812156175,
+          -5.880651896836396,
+          2.217468303143328
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2591476147249341,
+        "height": 0.3523362151510082,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-45",
+        "position": [
+          -3.9940848571848844,
+          6.123297476074272,
+          1.1735286753254186
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44000117377843706,
+        "height": 0.507888781458605,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-46",
+        "position": [
+          -0.8620407171667943,
+          -3.561661016410397,
+          1.2250405450852808
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.323969929323066,
+        "height": 0.43244041081517937,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-47",
+        "position": [
+          -1.0923639897012722,
+          -2.7651435971720373,
+          1.1060161492812772
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4475926459021866,
+        "height": 0.7556665626168251,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-48",
+        "position": [
+          5.469233181782101,
+          6.02184058208422,
+          2.04837758715809
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.28164037138456477,
+        "height": 0.7435905881971121,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-49",
+        "position": [
+          1.792058100022106,
+          -4.680950034381646,
+          1.8565905388661592
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4605084171821363,
+        "height": 0.6069676279486158,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-50",
+        "position": [
+          -4.021061167067014,
+          -6.638533450203802,
+          0.8249086091962082
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44569399401778353,
+        "height": 0.5706962012150325,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-51",
+        "position": [
+          -3.2813091896872484,
+          5.701219759882225,
+          1.2583796589730376
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2640868940693326,
+        "height": 0.8672436577896587,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-52",
+        "position": [
+          1.4411747986754633,
+          -2.7898064162777954,
+          1.7962938230225824
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35113369110738857,
+        "height": 0.6908465471747331,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-53",
+        "position": [
+          -1.5135296210753788,
+          2.5922718474642985,
+          1.2664541836102714
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2812188418069854,
+        "height": 0.6049585093907082,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-54",
+        "position": [
+          -3.4267168625334676,
+          -1.9465924357353628,
+          0.6838071264205051
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.44542345418129115,
+        "height": 0.5199806814128534,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-55",
+        "position": [
+          6.6336645965588925,
+          4.700447087874712,
+          2.065839605973733
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4552863573376089,
+        "height": 0.7397533448459581,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-56",
+        "position": [
+          -5.310650442695377,
+          -5.23856599118422,
+          0.7016924370483756
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35811187951592727,
+        "height": 0.5814624115405604,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-57",
+        "position": [
+          1.4647519134350109,
+          1.7509313678171474,
+          1.6698223656146702
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.24139960094587878,
+        "height": 0.6320913624763489,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-58",
+        "position": [
+          3.30856531479027,
+          1.3670744310402592,
+          1.8942010845546091
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4382805732497945,
+        "height": 0.5836088965577073,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-59",
+        "position": [
+          -6.016592244896315,
+          0.2568050336455392,
+          0.7744114076250523
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47178089678753166,
+        "height": 0.7664097942924127,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-60",
+        "position": [
+          0.4427341730770491,
+          -0.6148094756643394,
+          1.301375949200609
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4782383273891173,
+        "height": 0.33912799020064993,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-61",
+        "position": [
+          6.38368884290391,
+          2.673575386825535,
+          2.0103180885407337
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.2690355138806626,
+        "height": 0.5259539118083194,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-62",
+        "position": [
+          -5.09135385969673,
+          -2.370305156662921,
+          0.5570764784292764
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33238684696378185,
+        "height": 0.7559037793590688,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-63",
+        "position": [
+          -2.0874654422046044,
+          -6.088972438256176,
+          1.0438200173206684
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.34615260544931514,
+        "height": 0.6111419908283279,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-64",
+        "position": [
+          1.0142244533776672,
+          2.245129392965853,
+          1.612637380410748
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3910249861842021,
+        "height": 0.757504595296923,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-65",
+        "position": [
+          5.565705058012444,
+          6.97442821380857,
+          2.0838060501254683
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3998532069567591,
+        "height": 0.7095328394486569,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-66",
+        "position": [
+          6.626043559903415,
+          5.849432076962098,
+          2.1103235486618344
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.23866664131172002,
+        "height": 0.6081683358806186,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-67",
+        "position": [
+          -4.4715821527173265,
+          0.4347423508379582,
+          0.9222702531366436
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33142840951448305,
+        "height": 0.7742981897247956,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-68",
+        "position": [
+          5.233668957951814,
+          -5.222405626467822,
+          2.365523258966777
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3770394664793275,
+        "height": 0.5461696654604749,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-69",
+        "position": [
+          3.2303615326152886,
+          7.247153611370057,
+          1.8797353032409962
+        ],
+        "health": "dead",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33775593161815776,
+        "height": 0.6479848064761609,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-70",
+        "position": [
+          2.113842002626257,
+          -6.0182205135352795,
+          1.8213169034990262
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.40329344595782457,
+        "height": 0.5088451638282276,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-71",
+        "position": [
+          0.14582539138445416,
+          1.441024960664071,
+          1.4171295520446712
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.4756654608249664,
+        "height": 0.5981707439222373,
+        "morphology": "boulder"
+      },
+      {
+        "id": "reef-72",
+        "position": [
+          2.2109498283673825,
+          0.683306770551452,
+          1.6948260646950362
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.47718123185448347,
+        "height": 0.4578332473454066,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-73",
+        "position": [
+          0.46723760084994875,
+          2.9998537687245133,
+          1.532832157975831
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.35811774265719576,
+        "height": 0.5344110337249004,
+        "morphology": "plate"
+      },
+      {
+        "id": "reef-74",
+        "position": [
+          2.9980750250492774,
+          -0.10084730740896886,
+          1.8764231677001881
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.30897288375534115,
+        "height": 0.6008012076537126,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-75",
+        "position": [
+          0.9296022117697889,
+          -4.539730823748414,
+          1.6326652399807775
+        ],
+        "health": "healthy",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.3651332427584566,
+        "height": 0.808701585691888,
+        "morphology": "branching"
+      },
+      {
+        "id": "reef-76",
+        "position": [
+          1.4957673445944626,
+          2.49720073894939,
+          1.7018454375771932
+        ],
+        "health": "bleached_alive",
+        "genet": "",
+        "species": "Pocillopora damicornis",
+        "radius": 0.33218936624005435,
+        "height": 0.4151897178310901,
+        "morphology": "boulder"
+      }
+    ],
+    "obstacles": [
+      {
+        "id": "rock-1",
+        "position": [
+          -1,
+          0.3,
+          1.0407644299900454
+        ],
+        "radius": 0.45
+      },
+      {
+        "id": "rock-2",
+        "position": [
+          2.1,
+          0.7,
+          1.678301578033379
+        ],
+        "radius": 0.55
+      }
+    ],
+    "terrain": {
+      "model": "Shared sloping limestone relief",
+      "units": "metres"
+    },
+    "habitatCount": 812,
+    "wildlife": [
+      {
+        "id": "fish-1",
+        "type": "fish",
+        "schoolId": "school-1",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          -2.8932972897827938,
+          1.881963675395667,
+          2.38470862521156
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.13321604651269858,
+          -0.07745720405469392,
+          0.017124180564955793
+        ]
+      },
+      {
+        "id": "fish-2",
+        "type": "fish",
+        "schoolId": "school-1",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          -2.6732972897827936,
+          2.080992333999139,
+          2.4397856370157482
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.13321604651269858,
+          -0.09896742844820672,
+          0.007120138126426312
+        ]
+      },
+      {
+        "id": "fish-3",
+        "type": "fish",
+        "schoolId": "school-1",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          -2.453297289782794,
+          2.1297072301801627,
+          2.4656373609001663
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.13321604651269858,
+          -0.16255414763356235,
+          -0.008952943545619263
+        ]
+      },
+      {
+        "id": "fish-4",
+        "type": "fish",
+        "schoolId": "school-2",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          2.602587628321084,
+          -1.3994365810375045,
+          3.050925335416167
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.20241646056687657,
+          -0.2516704574715867,
+          0.050233690028163025
+        ]
+      },
+      {
+        "id": "fish-5",
+        "type": "fish",
+        "schoolId": "school-2",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          2.822587628321084,
+          -1.606338071087989,
+          3.089384612333501
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.20241646056687657,
+          -0.23909030490702587,
+          0.04859874028531941
+        ]
+      },
+      {
+        "id": "fish-6",
+        "type": "fish",
+        "schoolId": "school-2",
+        "behavior": "coherent seeded school trajectory",
+        "position": [
+          3.0425876283210838,
+          -1.683529658281647,
+          3.1185237866367634
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.20241646056687657,
+          -0.1782942564260459,
+          0.04710780475404519
+        ]
+      },
+      {
+        "id": "fish-7",
+        "type": "fish",
+        "schoolId": null,
+        "behavior": "individual seeded wander",
+        "position": [
+          1.8547714421993486,
+          1.056930017318124,
+          2.891622071582149
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.2753585442707829,
+          0.30594497883043914,
+          0.09084882633642266
+        ]
+      },
+      {
+        "id": "fish-8",
+        "type": "fish",
+        "schoolId": null,
+        "behavior": "individual seeded wander",
+        "position": [
+          1.8547714421993486,
+          1.2675632040855151,
+          2.9477271079071308
+        ],
+        "radius": 0.1,
+        "velocity": [
+          0.2753585442707829,
+          0.30254668993396905,
+          0.08554166007905373
+        ]
+      },
+      {
+        "id": "crab-1",
+        "type": "crab",
+        "behavior": "seeded seabed wander",
+        "position": [
+          -2.657449831542748,
+          0.18783749326035373,
+          1.0019700264169393
+        ],
+        "radius": 0.16,
+        "velocity": [
+          0.054535465301412955,
+          0.021127030287711457,
+          0.0016451303478293156
+        ]
+      },
+      {
+        "id": "crab-2",
+        "type": "crab",
+        "behavior": "seeded seabed wander",
+        "position": [
+          0.26381694274365236,
+          0.7718299601310409,
+          1.4464100614747357
+        ],
+        "radius": 0.16,
+        "velocity": [
+          -0.006654008411176582,
+          0.009443198086009907,
+          -0.0004643000166870692
+        ]
+      },
+      {
+        "id": "crab-3",
+        "type": "crab",
+        "behavior": "seeded seabed wander",
+        "position": [
+          1.3103682128358933,
+          -0.0476794227604275,
+          1.5836531427836746
+        ],
+        "radius": 0.16,
+        "velocity": [
+          -0.05151185600313024,
+          -0.02541805905918293,
+          -0.012020587432157726
+        ]
+      },
+      {
+        "id": "turtle-1",
+        "type": "turtle",
+        "behavior": "seeded broad transit",
+        "position": [
+          -3.662299808952508,
+          0.5886088830307316,
+          2.626340427915798
+        ],
+        "radius": 0.42,
+        "velocity": [
+          0.08838008844241685,
+          0.01960316763043979,
+          0.00540790571982086
+        ]
+      }
+    ],
+    "intelligence": {
+      "architecture": "Gemma perception → inspectable local policy / cuOpt route proposal → local safety controller; Argon review is between missions",
+      "hardwareValidated": false,
+      "requireFullStack": true,
+      "perceptionMaxAgeSeconds": 120,
+      "planMaxAgeSeconds": 45,
+      "onboard": {
+        "status": "received",
+        "reason": "External model estimates stored separately from scenario registry ground truth.",
+        "observations": [
+          {
+            "visualContract": "appearance/v1",
+            "targetVisible": true,
+            "objectKind": "coral_colony",
+            "appearance": "pale_or_bleached",
+            "viabilityKnown": false,
+            "id": "recipient-1",
+            "health": "unknown",
+            "confidence": 0.9,
+            "frameTime": 36.099999999999234,
+            "receivedTime": 39.333333333332384,
+            "requestId": "capture-3-3-36100",
+            "source": "gemma",
+            "model": "gemma-4-E4B-it",
+            "provider": "vllm_openai_compatible",
+            "genotypeInferred": false,
+            "confidenceCalibration": "Uncalibrated provider score; 0.70 is an engineering demo gate"
+          },
+          {
+            "visualContract": "appearance/v1",
+            "targetVisible": true,
+            "objectKind": "coral_colony",
+            "appearance": "pigmented",
+            "viabilityKnown": false,
+            "id": "donor-1",
+            "health": "unknown",
+            "confidence": 0.9,
+            "frameTime": 48.76666666666518,
+            "receivedTime": 51.61666666666502,
+            "requestId": "capture-4-3-48767",
+            "source": "gemma",
+            "model": "gemma-4-E4B-it",
+            "provider": "vllm_openai_compatible",
+            "genotypeInferred": false,
+            "confidenceCalibration": "Uncalibrated provider score; 0.70 is an engineering demo gate"
+          }
+        ],
+        "lastPacket": {
+          "visualContract": "appearance/v1",
+          "targetVisible": true,
+          "objectKind": "coral_fragment",
+          "appearance": "pigmented",
+          "confidence": 0.9,
+          "viabilityKnown": false,
+          "uncertainty": "The object is clearly visible and distinct from the surrounding substrate.",
+          "requestId": "capture-5-3-57550",
+          "captureRequestId": "capture-5",
+          "targetId": "donor-1-fragment-1",
+          "targetKind": "fragment",
+          "fragmentVisible": true,
+          "gripperState": "empty",
+          "frameTime": 57.549999999998015,
+          "receivedTime": 60.316666666664524,
+          "source": "gemma",
+          "provider": "vllm_openai_compatible",
+          "model": "gemma-4-E4B-it",
+          "deployment": "modal",
+          "summary": "A small, reddish-pink coral fragment is visible on the ground.",
+          "inputImageFocus": {
+            "source": "tracked_camera_projection",
+            "target": [
+              0.4959132139691699,
+              0.6989950292655353
+            ],
+            "gripper": [
+              0.5047871881967066,
+              0.3604018122444682
+            ]
+          },
+          "inputImageSha256": "7a934244453223289771f72b963cb74380e58fd37564ba6f03fbcf59890abc94",
+          "latencyMs": 2320
+        }
+      },
+      "baseStation": {
+        "status": "applied",
+        "reason": "External plan passed local bounds; registry and perception gates still apply.",
+        "localValidation": {
+          "safe": true,
+          "needsLocalReplan": false,
+          "minBedClearance": 1.0761817298082201,
+          "reason": "Bounded route accepted; local terrain, habitat and wildlife reflexes remain authoritative.",
+          "guard": "Local closed-loop thrust and nonpenetration controller; external coordinates are never executed"
+        },
+        "plan": {
+          "requestId": "decision-1",
+          "frameTime": 61.31666666666447,
+          "receivedTime": 62.14999999999775,
+          "source": "local_planner",
+          "provider": "inspectable_policy",
+          "model": "reef-local-policy-v1",
+          "decision": "proceed",
+          "reason": "Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative.",
+          "routeMode": "direct",
+          "optimizer": {
+            "source": "cuopt",
+            "configured": true,
+            "status": "solved",
+            "solverStatus": "SUCCESS",
+            "requestId": "decision-1",
+            "routeMode": "direct",
+            "objectiveCost": 2.1318345069885254,
+            "costs": {
+              "direct": 2.1318345069885254,
+              "clearance": 2.1318345069885254
+            },
+            "model": "nvidia-cuopt",
+            "solverVersion": "26.10.0",
+            "solveTimeMs": 198
+          }
+        }
+      }
+    },
+    "perceptionRequest": null,
+    "rescan": null,
+    "registryGroundTruth": {
+      "source": "scenario_registry_ground_truth",
+      "notModelOutput": true,
+      "genotypeSource": "Explicit scenario registry; never inferred from fluorescence or image colour",
+      "pair": [
+        {
+          "id": "donor-1",
+          "health": "healthy",
+          "species": "Pocillopora damicornis",
+          "genet": "G1"
+        },
+        {
+          "id": "recipient-1",
+          "health": "bleached_alive",
+          "species": "Pocillopora damicornis",
+          "genet": "G1"
+        }
+      ]
+    },
+    "perception": {
+      "source": "synthetic_camera_uv",
+      "stage": "complete",
+      "targetId": null,
+      "targetKind": null,
+      "targetPosition": null,
+      "exposure": 0,
+      "requiredExposureSeconds": 1.2,
+      "observations": [
+        {
+          "id": "recipient-1",
+          "health": "bleached_alive",
+          "species": "Pocillopora damicornis",
+          "registryGenet": "G1",
+          "uvMarker": "scenario-marker-G1",
+          "score": 0.9069374847284547,
+          "exposureSeconds": 1.2,
+          "source": "synthetic_camera_uv",
+          "rangeM": 0.36263170754985424,
+          "exposure": 1
+        },
+        {
+          "id": "donor-1",
+          "health": "healthy",
+          "species": "Pocillopora damicornis",
+          "registryGenet": "G1",
+          "uvMarker": "scenario-marker-G1",
+          "score": 0.9080976169173626,
+          "exposureSeconds": 1.2,
+          "source": "synthetic_camera_uv",
+          "rangeM": 0.3528621733274727,
+          "exposure": 1
+        }
+      ],
+      "candidateComparison": [
+        {
+          "donorId": "donor-1",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "No eligible source stock"
+        },
+        {
+          "donorId": "donor-2",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "donor-3",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "donor-4",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-3",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-6",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-7",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-10",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-11",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-12",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-15",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        },
+        {
+          "donorId": "reef-16",
+          "targetId": "recipient-1",
+          "eligible": false,
+          "reason": "Unknown registered lineage"
+        }
+      ],
+      "reason": "Recovery camera acquisition; fragment identity comes from tracked scene association."
+    },
+    "grip": {
+      "source": "Reduced hydrodynamic load proxy",
+      "loadN": 0,
+      "dragN": 0,
+      "inertialN": 0,
+      "thresholdN": 5,
+      "areaM2": 0.002,
+      "fragmentMassKg": 0.018,
+      "lastLoss": null
+    },
+    "pilot": {
+      "mode": "autonomous",
+      "command": {
+        "forward": 0,
+        "right": 0,
+        "vertical": 0,
+        "yaw": 0
+      },
+      "lastInputTime": null,
+      "watchdogSeconds": 2,
+      "expired": false
+    },
+    "sensors": {
+      "fusion": {
+        "source": "Synthetic geometric sensor fusion; no learned perception or acoustic calibration",
+        "time": 80.46666666666339,
+        "opticalAvailable": true,
+        "confidence": 0.7354282749305435,
+        "contacts": [
+          {
+            "id": "recipient-1",
+            "type": "coral",
+            "position": [
+              -2.6,
+              -3.2,
+              1.1209210558050644
+            ],
+            "distance": 1.3046596345135626,
+            "confidence": 0.924121860050877,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": "G1"
+            }
+          },
+          {
+            "id": "habitat-coral-87",
+            "type": "habitat",
+            "position": [
+              -2.7674352575688004,
+              -4.737391624056683,
+              1.1167971595116062
+            ],
+            "distance": 1.7954297650688582,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "donor-1",
+            "type": "coral",
+            "position": [
+              -4,
+              -3.2,
+              0.8925023391587579
+            ],
+            "distance": 1.8842563875129044,
+            "confidence": 0.908182949343395,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "healthy",
+              "species": "Pocillopora damicornis",
+              "knownGenet": "G1"
+            }
+          },
+          {
+            "id": "habitat-coral-392",
+            "type": "habitat",
+            "position": [
+              -1.5321444203145802,
+              -4.44733172794804,
+              1.3018652342077142
+            ],
+            "distance": 1.9738843228655525,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-180",
+            "type": "habitat",
+            "position": [
+              -1.228016803972423,
+              -3.9774866895750165,
+              1.3113220424132235
+            ],
+            "distance": 2.0171152462668953,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-203",
+            "type": "habitat",
+            "position": [
+              -3.5485749733634293,
+              -4.861673862673342,
+              1.052150516541829
+            ],
+            "distance": 2.0457038166060384,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-rock-57",
+            "type": "habitat",
+            "position": [
+              -1.3159988892730325,
+              -2.664843758335337,
+              1.1735671291627257
+            ],
+            "distance": 2.1115831423426203,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-324",
+            "type": "habitat",
+            "position": [
+              -1.1645777537117854,
+              -2.8525730304327714,
+              1.228047250519087
+            ],
+            "distance": 2.135414260832914,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "reef-47",
+            "type": "coral",
+            "position": [
+              -1.0923639897012722,
+              -2.7651435971720373,
+              1.3471820881437353
+            ],
+            "distance": 2.1599584768199085,
+            "confidence": 0.9006011418874524,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "recipient-3",
+            "type": "coral",
+            "position": [
+              -4.412712937571637,
+              -4.001399710522623,
+              0.9612387329194486
+            ],
+            "distance": 2.165604234922529,
+            "confidence": 0.9004458835396304,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "reef-54",
+            "type": "coral",
+            "position": [
+              -3.4267168625334676,
+              -1.9465924357353628,
+              0.9238042901417005
+            ],
+            "distance": 2.1680933037461663,
+            "confidence": 0.9003774341469803,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "healthy",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "habitat-coral-154",
+            "type": "habitat",
+            "position": [
+              -1.5588944419287145,
+              -4.894080365542322,
+              1.4006048714235202
+            ],
+            "distance": 2.1697519542649633,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-115",
+            "type": "habitat",
+            "position": [
+              -1.057579101071806,
+              -4.272432440125987,
+              1.4063248726972761
+            ],
+            "distance": 2.203633986345369,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "reef-46",
+            "type": "coral",
+            "position": [
+              -0.8620407171667943,
+              -3.561661016410397,
+              1.3995977298015716
+            ],
+            "distance": 2.2271811086790696,
+            "confidence": 0.8987525195113255,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "habitat-coral-425",
+            "type": "habitat",
+            "position": [
+              -4.157270382612217,
+              -4.706911607270919,
+              0.951349966428232
+            ],
+            "distance": 2.2926180310817363,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-rock-142",
+            "type": "habitat",
+            "position": [
+              -1.6322804666124284,
+              -5.159505723975599,
+              1.3860232493253288
+            ],
+            "distance": 2.320199396046816,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-56",
+            "type": "habitat",
+            "position": [
+              -3.000772743485868,
+              -1.627296573948115,
+              0.9065937907468345
+            ],
+            "distance": 2.3492014585463714,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-41",
+            "type": "habitat",
+            "position": [
+              -3.2099298305248047,
+              -5.478317438982441,
+              1.192676791106245
+            ],
+            "distance": 2.365461066572487,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-193",
+            "type": "habitat",
+            "position": [
+              -2.6746487202229603,
+              -5.5314255002636905,
+              1.2347319692490657
+            ],
+            "distance": 2.3728076998048575,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-167",
+            "type": "habitat",
+            "position": [
+              -2.063196417397462,
+              -1.6661881337866955,
+              0.9762393116081443
+            ],
+            "distance": 2.4080627337333547,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-548",
+            "type": "habitat",
+            "position": [
+              -1.0418086051940918,
+              -4.730406520888209,
+              1.4425717313837483
+            ],
+            "distance": 2.408401980938197,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-122",
+            "type": "habitat",
+            "position": [
+              -3.574472373389192,
+              -5.495376122019793,
+              1.2164492566905212
+            ],
+            "distance": 2.4484925154732218,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "reef-37",
+            "type": "coral",
+            "position": [
+              -2.15843084108361,
+              -5.490746177278005,
+              1.1937649290590855
+            ],
+            "distance": 2.4533139651895883,
+            "confidence": 0.8925338659572863,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "habitat-coral-5",
+            "type": "habitat",
+            "position": [
+              -2.6935542222388125,
+              -1.3729715253400525,
+              1.0418326521031196
+            ],
+            "distance": 2.479079967617576,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-561",
+            "type": "habitat",
+            "position": [
+              -3.766788677778095,
+              -1.6028676494024694,
+              0.9115406844729788
+            ],
+            "distance": 2.528346090189743,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-59",
+            "type": "habitat",
+            "position": [
+              -1.555002340039131,
+              -5.372546847326136,
+              1.2552928948149598
+            ],
+            "distance": 2.5739046663549443,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "reef-8",
+            "type": "coral",
+            "position": [
+              -3.840790880934369,
+              -5.43536045571804,
+              1.0099488899500908
+            ],
+            "distance": 2.5931220603472167,
+            "confidence": 0.8886891433404515,
+            "sources": [
+              "synthetic_geometric_sonar",
+              "synthetic_optical_registry"
+            ],
+            "classification": {
+              "health": "bleached_alive",
+              "species": "Pocillopora damicornis",
+              "knownGenet": null
+            }
+          },
+          {
+            "id": "habitat-coral-410",
+            "type": "habitat",
+            "position": [
+              -0.3937351748926936,
+              -3.732299906649693,
+              1.5314371039928893
+            ],
+            "distance": 2.6227726357765433,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-rock-79",
+            "type": "habitat",
+            "position": [
+              -1.1375403215643018,
+              -1.7752999039366841,
+              1.2962339453762373
+            ],
+            "distance": 2.639227283715985,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-222",
+            "type": "habitat",
+            "position": [
+              -4.049068789513672,
+              -5.510662521655826,
+              1.1610839682479286
+            ],
+            "distance": 2.662618014248868,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-rock-37",
+            "type": "habitat",
+            "position": [
+              -0.7763030892238021,
+              -4.771984362741932,
+              1.3665496634071352
+            ],
+            "distance": 2.663188386779082,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          },
+          {
+            "id": "habitat-coral-442",
+            "type": "habitat",
+            "position": [
+              -3.095665249069103,
+              -1.251342177210534,
+              0.8805105925293091
+            ],
+            "distance": 2.6737201832727187,
+            "confidence": 0.68,
+            "sources": [
+              "synthetic_geometric_sonar"
+            ],
+            "classification": null
+          }
+        ],
+        "controllerSource": "base_station",
+        "controllerDecisionId": "decision-1"
+      }
+    },
+    "navigation": {
+      "velocity": [
+        -0.00010511865596068062,
+        -0.00005393229887164259,
+        0.009946667459788873
+      ],
+      "speed": 0.009947369108478652,
+      "bedClearance": 1.5071376010852235,
+      "waypointIndex": 0
+    },
+    "sonar": {
+      "time": 80.46666666666339,
+      "sampleRateHz": 5,
+      "range": 6,
+      "contacts": [
+        {
+          "id": "recipient-1",
+          "type": "coral",
+          "distance": 1.3046596345135626,
+          "bearing": -0.4543173520479999,
+          "position": [
+            -2.6,
+            -3.2,
+            1.1209210558050644
+          ]
+        },
+        {
+          "id": "habitat-coral-87",
+          "type": "habitat",
+          "distance": 1.7954297650688582,
+          "bearing": -2.7265634999409296,
+          "position": [
+            -2.7674352575688004,
+            -4.737391624056683,
+            1.1167971595116062
+          ]
+        },
+        {
+          "id": "donor-1",
+          "type": "coral",
+          "distance": 1.8842563875129044,
+          "bearing": 1.688599093680555,
+          "position": [
+            -4,
+            -3.2,
+            0.8925023391587579
+          ]
+        },
+        {
+          "id": "habitat-coral-392",
+          "type": "habitat",
+          "distance": 1.9738843228655525,
+          "bearing": -1.869576204280573,
+          "position": [
+            -1.5321444203145802,
+            -4.44733172794804,
+            1.3018652342077142
+          ]
+        },
+        {
+          "id": "habitat-coral-180",
+          "type": "habitat",
+          "distance": 2.0171152462668953,
+          "bearing": -1.5379413942004587,
+          "position": [
+            -1.228016803972423,
+            -3.9774866895750165,
+            1.3113220424132235
+          ]
+        },
+        {
+          "id": "habitat-coral-203",
+          "type": "habitat",
+          "distance": 2.0457038166060384,
+          "bearing": 3.0278632747817444,
+          "position": [
+            -3.5485749733634293,
+            -4.861673862673342,
+            1.052150516541829
+          ]
+        },
+        {
+          "id": "habitat-rock-57",
+          "type": "habitat",
+          "distance": 2.1115831423426203,
+          "bearing": -0.7564155316316092,
+          "position": [
+            -1.3159988892730325,
+            -2.664843758335337,
+            1.1735671291627257
+          ]
+        },
+        {
+          "id": "habitat-coral-324",
+          "type": "habitat",
+          "distance": 2.135414260832914,
+          "bearing": -0.8877756433090969,
+          "position": [
+            -1.1645777537117854,
+            -2.8525730304327714,
+            1.228047250519087
+          ]
+        },
+        {
+          "id": "reef-47",
+          "type": "coral",
+          "distance": 2.1599584768199085,
+          "bearing": -0.8572010693694379,
+          "position": [
+            -1.0923639897012722,
+            -2.7651435971720373,
+            1.3471820881437353
+          ]
+        },
+        {
+          "id": "recipient-3",
+          "type": "coral",
+          "distance": 2.165604234922529,
+          "bearing": 2.248819914378228,
+          "position": [
+            -4.412712937571637,
+            -4.001399710522623,
+            0.9612387329194486
+          ]
+        },
+        {
+          "id": "reef-54",
+          "type": "coral",
+          "distance": 2.1680933037461663,
+          "bearing": 0.6978753542149987,
+          "position": [
+            -3.4267168625334676,
+            -1.9465924357353628,
+            0.9238042901417005
+          ]
+        },
+        {
+          "id": "habitat-coral-154",
+          "type": "habitat",
+          "distance": 2.1697519542649633,
+          "bearing": -2.063820257497378,
+          "position": [
+            -1.5588944419287145,
+            -4.894080365542322,
+            1.4006048714235202
+          ]
+        },
+        {
+          "id": "habitat-coral-115",
+          "type": "habitat",
+          "distance": 2.203633986345369,
+          "bearing": -1.6540526957832966,
+          "position": [
+            -1.057579101071806,
+            -4.272432440125987,
+            1.4063248726972761
+          ]
+        },
+        {
+          "id": "reef-46",
+          "type": "coral",
+          "distance": 2.2271811086790696,
+          "bearing": -1.282004367606049,
+          "position": [
+            -0.8620407171667943,
+            -3.561661016410397,
+            1.3995977298015716
+          ]
+        },
+        {
+          "id": "habitat-coral-425",
+          "type": "habitat",
+          "distance": 2.2926180310817363,
+          "bearing": 2.6790451499534886,
+          "position": [
+            -4.157270382612217,
+            -4.706911607270919,
+            0.951349966428232
+          ]
+        },
+        {
+          "id": "habitat-rock-142",
+          "type": "habitat",
+          "distance": 2.320199396046816,
+          "bearing": -2.1748762946292515,
+          "position": [
+            -1.6322804666124284,
+            -5.159505723975599,
+            1.3860232493253288
+          ]
+        },
+        {
+          "id": "habitat-coral-56",
+          "type": "habitat",
+          "distance": 2.3492014585463714,
+          "bearing": 0.4159434150437342,
+          "position": [
+            -3.000772743485868,
+            -1.627296573948115,
+            0.9065937907468345
+          ]
+        },
+        {
+          "id": "habitat-coral-41",
+          "type": "habitat",
+          "distance": 2.365461066572487,
+          "bearing": -2.9710729392026063,
+          "position": [
+            -3.2099298305248047,
+            -5.478317438982441,
+            1.192676791106245
+          ]
+        },
+        {
+          "id": "habitat-coral-193",
+          "type": "habitat",
+          "distance": 2.3728076998048575,
+          "bearing": -2.7104498442084455,
+          "position": [
+            -2.6746487202229603,
+            -5.5314255002636905,
+            1.2347319692490657
+          ]
+        },
+        {
+          "id": "habitat-coral-167",
+          "type": "habitat",
+          "distance": 2.4080627337333547,
+          "bearing": -0.07908067839422527,
+          "position": [
+            -2.063196417397462,
+            -1.6661881337866955,
+            0.9762393116081443
+          ]
+        },
+        {
+          "id": "habitat-coral-548",
+          "type": "habitat",
+          "distance": 2.408401980938197,
+          "bearing": -1.8401018897030619,
+          "position": [
+            -1.0418086051940918,
+            -4.730406520888209,
+            1.4425717313837483
+          ]
+        },
+        {
+          "id": "habitat-coral-122",
+          "type": "habitat",
+          "distance": 2.4484925154732218,
+          "bearing": -3.1369537785438903,
+          "position": [
+            -3.574472373389192,
+            -5.495376122019793,
+            1.2164492566905212
+          ]
+        },
+        {
+          "id": "reef-37",
+          "type": "coral",
+          "distance": 2.4533139651895883,
+          "bearing": -2.467407882201543,
+          "position": [
+            -2.15843084108361,
+            -5.490746177278005,
+            1.1937649290590855
+          ]
+        },
+        {
+          "id": "habitat-coral-5",
+          "type": "habitat",
+          "distance": 2.479079967617576,
+          "bearing": 0.2597021054396367,
+          "position": [
+            -2.6935542222388125,
+            -1.3729715253400525,
+            1.0418326521031196
+          ]
+        },
+        {
+          "id": "habitat-coral-561",
+          "type": "habitat",
+          "distance": 2.528346090189743,
+          "bearing": 0.7941852845013779,
+          "position": [
+            -3.766788677778095,
+            -1.6028676494024694,
+            0.9115406844729788
+          ]
+        },
+        {
+          "id": "habitat-coral-59",
+          "type": "habitat",
+          "distance": 2.5739046663549443,
+          "bearing": -2.201706612150506,
+          "position": [
+            -1.555002340039131,
+            -5.372546847326136,
+            1.2552928948149598
+          ]
+        },
+        {
+          "id": "reef-8",
+          "type": "coral",
+          "distance": 2.5931220603472167,
+          "bearing": 3.0229899817152455,
+          "position": [
+            -3.840790880934369,
+            -5.43536045571804,
+            1.0099488899500908
+          ]
+        },
+        {
+          "id": "habitat-coral-410",
+          "type": "habitat",
+          "distance": 2.6227726357765433,
+          "bearing": -1.3408572757941666,
+          "position": [
+            -0.3937351748926936,
+            -3.732299906649693,
+            1.5314371039928893
+          ]
+        },
+        {
+          "id": "habitat-rock-79",
+          "type": "habitat",
+          "distance": 2.639227283715985,
+          "bearing": -0.4572631086557617,
+          "position": [
+            -1.1375403215643018,
+            -1.7752999039366841,
+            1.2962339453762373
+          ]
+        },
+        {
+          "id": "habitat-coral-222",
+          "type": "habitat",
+          "distance": 2.662618014248868,
+          "bearing": 2.9582843604930287,
+          "position": [
+            -4.049068789513672,
+            -5.510662521655826,
+            1.1610839682479286
+          ]
+        },
+        {
+          "id": "habitat-rock-37",
+          "type": "habitat",
+          "distance": 2.663188386779082,
+          "bearing": -1.7922231296986941,
+          "position": [
+            -0.7763030892238021,
+            -4.771984362741932,
+            1.3665496634071352
+          ]
+        },
+        {
+          "id": "habitat-coral-442",
+          "type": "habitat",
+          "distance": 2.6737201832727187,
+          "bearing": 0.44585572626675446,
+          "position": [
+            -3.095665249069103,
+            -1.251342177210534,
+            0.8805105925293091
+          ]
+        },
+        {
+          "id": "reef-23",
+          "type": "coral",
+          "distance": 2.67998918395753,
+          "bearing": -0.20068995274426424,
+          "position": [
+            -1.6491671295144041,
+            -1.4394736363831921,
+            1.0934780720480557
+          ]
+        },
+        {
+          "id": "habitat-coral-92",
+          "type": "habitat",
+          "distance": 2.7157717531547387,
+          "bearing": -0.48648562174388643,
+          "position": [
+            -1.077484440524131,
+            -1.815725427120924,
+            1.151112038942292
+          ]
+        },
+        {
+          "id": "habitat-rock-31",
+          "type": "habitat",
+          "distance": 2.731247879049848,
+          "bearing": 0.20668210672894485,
+          "position": [
+            -2.538196943467483,
+            -1.0502289256546646,
+            1.124300228447094
+          ]
+        },
+        {
+          "id": "habitat-rock-84",
+          "type": "habitat",
+          "distance": 2.7559895505686316,
+          "bearing": -1.5064520700907307,
+          "position": [
+            -0.3036372431088239,
+            -4.183497870806605,
+            1.651670772341613
+          ]
+        },
+        {
+          "id": "habitat-coral-212",
+          "type": "habitat",
+          "distance": 2.771065843576192,
+          "bearing": -2.671429103235022,
+          "position": [
+            -2.534021195024252,
+            -5.982341579161584,
+            1.2784243014049732
+          ]
+        },
+        {
+          "id": "habitat-coral-306",
+          "type": "habitat",
+          "distance": 2.836007014981843,
+          "bearing": -2.8616952256506063,
+          "position": [
+            -3.0207571605940884,
+            -6.054040886943522,
+            1.2424304735214555
+          ]
+        },
+        {
+          "id": "habitat-rock-163",
+          "type": "habitat",
+          "distance": 2.921348288221777,
+          "bearing": 0.41595054649654295,
+          "position": [
+            -3.0632422210182995,
+            -0.7990870680660009,
+            1.1786082106779663
+          ]
+        },
+        {
+          "id": "habitat-coral-281",
+          "type": "habitat",
+          "distance": 2.9287049180422655,
+          "bearing": -0.7285356232004545,
+          "position": [
+            -0.401301315312946,
+            -2.108005640321018,
+            1.537855352646324
+          ]
+        },
+        {
+          "id": "habitat-coral-82",
+          "type": "habitat",
+          "distance": 2.936197963746036,
+          "bearing": 1.2251650551636202,
+          "position": [
+            -4.806736107976311,
+            -1.8653219926292737,
+            0.8539214534284822
+          ]
+        },
+        {
+          "id": "reef-62",
+          "type": "coral",
+          "distance": 2.9710401223818272,
+          "bearing": 1.4575173582177074,
+          "position": [
+            -5.09135385969673,
+            -2.370305156662921,
+            0.7361687551845791
+          ]
+        },
+        {
+          "id": "reef-63",
+          "type": "coral",
+          "distance": 2.9713864329783366,
+          "bearing": -2.5143716229027,
+          "position": [
+            -2.0874654422046044,
+            -6.088972438256176,
+            1.2303293776668462
+          ]
+        },
+        {
+          "id": "habitat-coral-518",
+          "type": "habitat",
+          "distance": 2.976828967392716,
+          "bearing": -0.9682622934113697,
+          "position": [
+            -0.10798133490607142,
+            -2.719457456842065,
+            1.5195390460652363
+          ]
+        },
+        {
+          "id": "habitat-coral-4",
+          "type": "habitat",
+          "distance": 3.0011320193220845,
+          "bearing": 0.7807474578614848,
+          "position": [
+            -3.971841595135629,
+            -1.10229397052899,
+            0.8797604382257748
+          ]
+        },
+        {
+          "id": "habitat-coral-321",
+          "type": "habitat",
+          "distance": 3.0148321700209113,
+          "bearing": 2.3717837070470122,
+          "position": [
+            -5.224060932162584,
+            -4.628559678526372,
+            0.9088141510346026
+          ]
+        },
+        {
+          "id": "habitat-rock-62",
+          "type": "habitat",
+          "distance": 3.01602736197319,
+          "bearing": -0.7514743011135854,
+          "position": [
+            -0.27360673644579947,
+            -2.1142874255310744,
+            1.6058598588073616
+          ]
+        },
+        {
+          "id": "habitat-coral-482",
+          "type": "habitat",
+          "distance": 3.0266820642140164,
+          "bearing": -1.1167331276856858,
+          "position": [
+            0.05933409713151239,
+            -3.125014334870805,
+            1.657378381194416
+          ]
+        },
+        {
+          "id": "habitat-rock-15",
+          "type": "habitat",
+          "distance": 3.0376291719599466,
+          "bearing": -0.15144112982584954,
+          "position": [
+            -1.5664961903821677,
+            -1.0399020505137742,
+            1.0683907314964043
+          ]
+        },
+        {
+          "id": "habitat-coral-140",
+          "type": "habitat",
+          "distance": 3.0482432325024598,
+          "bearing": -0.37219030981114254,
+          "position": [
+            -1.0362448055050264,
+            -1.345050047691228,
+            1.151044582821769
+          ]
+        },
+        {
+          "id": "habitat-coral-603",
+          "type": "habitat",
+          "distance": 3.0987026004220963,
+          "bearing": -2.1057741649446,
+          "position": [
+            -0.9795486791990697,
+            -5.715761533472687,
+            1.3943701701109816
+          ]
+        },
+        {
+          "id": "habitat-coral-101",
+          "type": "habitat",
+          "distance": 3.1052386461229124,
+          "bearing": 2.6475447528742824,
+          "position": [
+            -4.912870171166949,
+            -5.314961865265409,
+            0.9618129108485538
+          ]
+        },
+        {
+          "id": "habitat-coral-283",
+          "type": "habitat",
+          "distance": 3.1196559893755116,
+          "bearing": -2.2878302487452213,
+          "position": [
+            -1.4051682124845684,
+            -6.044819406699389,
+            1.4161381830762945
+          ]
+        },
+        {
+          "id": "habitat-coral-1",
+          "type": "habitat",
+          "distance": 3.139135138350733,
+          "bearing": -1.9667346487524513,
+          "position": [
+            -0.609024787787348,
+            -5.501677847001702,
+            1.5997582470431557
+          ]
+        },
+        {
+          "id": "habitat-coral-43",
+          "type": "habitat",
+          "distance": 3.1573980775998636,
+          "bearing": 3.135814424967157,
+          "position": [
+            -3.821733588713939,
+            -6.114057559665414,
+            0.9606545977891273
+          ]
+        },
+        {
+          "id": "habitat-coral-464",
+          "type": "habitat",
+          "distance": 3.1614831024304895,
+          "bearing": -1.6127026565389435,
+          "position": [
+            -0.009107852928569304,
+            -4.606104442810206,
+            1.642521404334646
+          ]
+        },
+        {
+          "id": "habitat-coral-264",
+          "type": "habitat",
+          "distance": 3.167653546937469,
+          "bearing": 1.3741226235167157,
+          "position": [
+            -5.18981500249356,
+            -2.071191269904375,
+            0.7305614249139133
+          ]
+        },
+        {
+          "id": "habitat-coral-592",
+          "type": "habitat",
+          "distance": 3.168066578906359,
+          "bearing": 1.0969706289069683,
+          "position": [
+            -4.8097767833627385,
+            -1.393938003469458,
+            0.9631876997666271
+          ]
+        },
+        {
+          "id": "habitat-coral-496",
+          "type": "habitat",
+          "distance": 3.203602255349465,
+          "bearing": 2.078675788108115,
+          "position": [
+            -5.668869091619596,
+            -3.9313498391506223,
+            0.9013746426285353
+          ]
+        },
+        {
+          "id": "reef-11",
+          "type": "coral",
+          "distance": 3.2158248244094905,
+          "bearing": -2.281676972224591,
+          "position": [
+            -1.351255059847849,
+            -6.102326352015895,
+            1.3414990297206617
+          ]
+        },
+        {
+          "id": "habitat-rock-82",
+          "type": "habitat",
+          "distance": 3.285369057584843,
+          "bearing": -2.069758964776046,
+          "position": [
+            -0.7280727555043995,
+            -5.837561822030693,
+            1.6154129647838587
+          ]
+        },
+        {
+          "id": "habitat-coral-14",
+          "type": "habitat",
+          "distance": 3.3248431871186845,
+          "bearing": -3.0457168082672044,
+          "position": [
+            -3.6095145870931447,
+            -6.447009294293821,
+            1.1230812683033837
+          ]
+        },
+        {
+          "id": "habitat-coral-335",
+          "type": "habitat",
+          "distance": 3.3455223015492117,
+          "bearing": 3.0124837448238915,
+          "position": [
+            -4.234037480619252,
+            -6.158720052696836,
+            0.9524250364371137
+          ]
+        },
+        {
+          "id": "habitat-coral-524",
+          "type": "habitat",
+          "distance": 3.3559850084123886,
+          "bearing": 1.7271628173712783,
+          "position": [
+            -5.712523955378966,
+            -2.9264645496702437,
+            0.6816828937746927
+          ]
+        }
+      ],
+      "totalContacts": 262,
+      "omittedContacts": 198,
+      "closestRange": 1.3046596345135626,
+      "model": "Synthetic analytic line-of-sight ranges; rock occlusion only, not acoustic propagation",
+      "visibilityLimited": false,
+      "maxContacts": 64
+    },
+    "route": {
+      "mode": "direct",
+      "goal": [
+        -2.8727389304647484,
+        -3.458743809644694,
+        2.341406619821559
+      ],
+      "waypoints": [
+        [
+          -2.8727389304647484,
+          -3.458743809644694,
+          2.341406619821559
+        ]
+      ],
+      "index": 0,
+      "alternatives": [
+        {
+          "id": "direct",
+          "label": "Direct over-reef transit",
+          "points": [
+            [
+              -2.864163396178922,
+              -3.459396012552639,
+              1.7938914757661206
+            ],
+            [
+              -2.8727389304647484,
+              -3.458743809644694,
+              2.341406619821559
+            ]
+          ]
+        },
+        {
+          "id": "clearance",
+          "label": "Wide corridor · elevated clearance",
+          "points": [
+            [
+              -2.864163396178922,
+              -3.459396012552639,
+              1.7938914757661206
+            ],
+            [
+              -2.8727389304647484,
+              -3.458743809644694,
+              2.341406619821559
+            ]
+          ]
+        }
+      ]
+    },
+    "robot": {
+      "position": [
+        -2.8627574416438444,
+        -3.4577558891892544,
+        2.3735444098654557
+      ],
+      "velocity": [
+        -0.00010511865596068062,
+        -0.00005393229887164259,
+        0.009946667459788873
+      ],
+      "target": [
+        -2.8727389304647484,
+        -3.458743809644694,
+        2.341406619821559
+      ],
+      "gripper": [
+        -2.8627574416438444,
+        -3.4577558891892544,
+        1.7235444098654558
+      ],
+      "yaw": 7.513299914783945,
+      "holding": null,
+      "gripperOpen": 1
+    },
+    "fragments": [
+      {
+        "id": "donor-1-fragment-1",
+        "donorId": "donor-1",
+        "position": [
+          -2.8727389304647484,
+          -3.458743809644694,
+          1.141406619821559
+        ],
+        "velocity": [
+          0.0008588567640325954,
+          0.0006496915770218554,
+          0.014356175662446572
+        ],
+        "state": "placed",
+        "quality": 1,
+        "targetId": "recipient-1",
+        "source": "scenario_permitted_loose_stock",
+        "sourcePosition": [
+          -3.2833143994047136,
+          -4.272595799870284,
+          0.9422990008749188
+        ],
+        "detachedAtStart": true,
+        "unstable": false
+      }
+    ],
+    "targetId": "recipient-1",
+    "donorId": "donor-1",
+    "metrics": {
+      "placed": 1,
+      "attempts": 1,
+      "drops": 0,
+      "recoveries": 0,
+      "rejectedCuts": 0,
+      "placementRetries": 0,
+      "distance": 9.782571739334793,
+      "energy": 41.71855311876355,
+      "damage": 0,
+      "collisions": 0,
+      "decisionCount": 1,
+      "wildlifeAvoidances": 0,
+      "habitatAvoidances": 0
+    },
+    "events": [
+      {
+        "time": 0,
+        "type": "warning",
+        "message": "No collision-clear loose-fragment pickup for donor-1; inaccessible stock excluded."
+      },
+      {
+        "time": 0,
+        "type": "info",
+        "message": "Scene ready. Known lineage gates donor–recipient compatibility."
+      },
+      {
+        "time": 3.016666666666661,
+        "type": "plan",
+        "message": "Pair donor-1 → recipient-1; same registered genet G1."
+      },
+      {
+        "time": 7.09999999999998,
+        "type": "perception",
+        "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+      },
+      {
+        "time": 12.750000000000213,
+        "type": "perception",
+        "message": "Received external Gemma health estimates for donor-1; no registry fields changed."
+      },
+      {
+        "time": 12.750000000000213,
+        "type": "hold",
+        "message": "Fresh Gemma colony observation is uncertain or incompatible: The exact texture and composition are difficult to determine with certainty from this distance."
+      },
+      {
+        "time": 35.09999999999929,
+        "type": "perception",
+        "message": "Argon assistance requested fresh evidence: During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fr"
+      },
+      {
+        "time": 36.38333333333255,
+        "type": "fault",
+        "message": "Camera dropout: perception unavailable for 8 seconds."
+      },
+      {
+        "time": 36.39999999999922,
+        "type": "hold",
+        "message": "Safe hold: current, visibility or camera quality exceeds operating limits."
+      },
+      {
+        "time": 39.333333333332384,
+        "type": "perception",
+        "message": "Received external Gemma health estimates for recipient-1; no registry fields changed."
+      },
+      {
+        "time": 44.39999999999876,
+        "type": "recovery",
+        "message": "Conditions recovered; resuming from the same mission state."
+      },
+      {
+        "time": 51.61666666666502,
+        "type": "perception",
+        "message": "Received external Gemma health estimates for donor-1; no registry fields changed."
+      },
+      {
+        "time": 60.316666666664524,
+        "type": "perception",
+        "message": "Received external Gemma fragment/gripper view of donor-1-fragment-1; no registry fields changed."
+      },
+      {
+        "time": 61.31666666666447,
+        "type": "decision",
+        "message": "Argon assistance requested fresh evidence: During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fr Awaiting live base-station plan."
+      },
+      {
+        "time": 62.14999999999775,
+        "type": "plan",
+        "message": "Planner proposal received; the planner cannot bypass local eligibility or reflexes."
+      },
+      {
+        "time": 62.14999999999775,
+        "type": "decision",
+        "message": "base_station: proceed — Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative."
+      },
+      {
+        "time": 65.08333333333093,
+        "type": "collection",
+        "message": "donor-1-fragment-1 collected from registered loose stock; healthy colonies unchanged."
+      },
+      {
+        "time": 80.54999999999671,
+        "type": "success",
+        "message": "donor-1-fragment-1 mechanically verified on recipient-1. Biological recovery is not simulated."
+      }
+    ],
+    "decision": {
+      "id": "decision-1",
+      "action": "proceed",
+      "reason": "Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative.",
+      "source": "base_station",
+      "routeMode": "direct",
+      "time": 62.14999999999775,
+      "perception": {
+        "visualContract": "appearance/v1",
+        "targetVisible": true,
+        "objectKind": "coral_fragment",
+        "appearance": "pigmented",
+        "confidence": 0.9,
+        "viabilityKnown": false,
+        "uncertainty": "The object is clearly visible and distinct from the surrounding substrate.",
+        "requestId": "capture-5-3-57550",
+        "captureRequestId": "capture-5",
+        "targetId": "donor-1-fragment-1",
+        "targetKind": "fragment",
+        "fragmentVisible": true,
+        "gripperState": "empty",
+        "frameTime": 57.549999999998015,
+        "receivedTime": 60.316666666664524,
+        "source": "gemma",
+        "provider": "vllm_openai_compatible",
+        "model": "gemma-4-E4B-it",
+        "deployment": "modal",
+        "summary": "A small, reddish-pink coral fragment is visible on the ground.",
+        "inputImageFocus": {
+          "source": "tracked_camera_projection",
+          "target": [
+            0.4959132139691699,
+            0.6989950292655353
+          ],
+          "gripper": [
+            0.5047871881967066,
+            0.3604018122444682
+          ]
+        },
+        "inputImageSha256": "7a934244453223289771f72b963cb74380e58fd37564ba6f03fbcf59890abc94",
+        "latencyMs": 2320
+      },
+      "planning": {
+        "requestId": "decision-1",
+        "frameTime": 61.31666666666447,
+        "receivedTime": 62.14999999999775,
+        "source": "local_planner",
+        "provider": "inspectable_policy",
+        "model": "reef-local-policy-v1",
+        "decision": "proceed",
+        "reason": "Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative.",
+        "routeMode": "direct",
+        "optimizer": {
+          "source": "cuopt",
+          "configured": true,
+          "status": "solved",
+          "solverStatus": "SUCCESS",
+          "requestId": "decision-1",
+          "routeMode": "direct",
+          "objectiveCost": 2.1318345069885254,
+          "costs": {
+            "direct": 2.1318345069885254,
+            "clearance": 2.1318345069885254
+          },
+          "model": "nvidia-cuopt",
+          "solverVersion": "26.10.0",
+          "solveTimeMs": 198
+        }
+      }
+    },
+    "pendingDecision": null,
+    "completed": true,
+    "missionGoal": 1,
+    "queuedFaults": [],
+    "environmentHold": 0,
+    "assistanceHold": null,
+    "physics": {
+      "parameterProvenance": "Engineering demonstration constants; not calibrated to a vehicle or validated onboard hardware",
+      "uvProxy": {
+        "minimumExposureSeconds": 1.2,
+        "rangeM": 1.6,
+        "genotypeInference": false
+      },
+      "gripProxy": {
+        "capacityN": 5,
+        "areaM2": 0.002,
+        "fragmentMassKg": 0.018,
+        "waterDensityKgM3": 1025,
+        "dragCoefficient": 1.15
+      },
+      "waveProxy": {
+        "localizedPeakMS": 3.2,
+        "envelopeSeconds": 4
+      },
+      "model": "Reduced buoyancy, thrust and quadratic drag; bounded kinematic grip/contact",
+      "massKg": 18,
+      "maxThrustN": 42,
+      "stepSeconds": 0.016666666666666666,
+      "forces": {
+        "thrust": [
+          -0.21314600118890342,
+          -0.020074491352114927,
+          -0.9476645727843028
+        ],
+        "drag": [
+          0.21175785539605257,
+          0.019607883654617134,
+          -0.02804443611840512
+        ],
+        "buoyancy": [
+          0,
+          0,
+          0.15
+        ],
+        "net": [
+          -0.0013881457928508478,
+          -0.000466607697497793,
+          -0.8257090089027079
+        ]
+      },
+      "currentModel": "Seeded continuous spatial, depth and temporal current field",
+      "assetResponses": {
+        "stonyCoral": "Rigid terrain-anchored skeleton collision proxies; not swaying plants",
+        "rocks": "Rigid terrain-anchored collision proxies",
+        "flexibleTissue": "Bounded visual bending driven by local flow; not a structural mechanics simulation",
+        "looseFragments": "Submerged weight and local-flow drag",
+        "vehicles": "Thrust, buoyancy residual and relative-current drag"
+      }
+    },
+    "limits": {
+      "biology": "Mechanical verification only; no tissue fusion or biological recovery",
+      "perception": "Synthetic known scene labels; no image-based genotype inference",
+      "contacts": "Approximate obstacle collision and fragment contact; no fracture or glue chemistry"
+    }
+  },
+  "transportActivity": [
+    {
+      "time": 2.1833333333333305,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T13:39:28.045Z"
+    },
+    {
+      "time": 4.049999999999991,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:04 (768×576; White RGB inspection) to Gemma · target recipient-1 · capture capture-1. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:39:30.025Z"
+    },
+    {
+      "time": 7.09999999999998,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 3075ms: The object at the target point is a large, pale, irregularly shaped coral colony. Uncertainty: The texture is rough and porous, consistent with bleached coral. recipient-1: pale or bleached (90% provider score; viability from registry only) Frame T+ 00:04.",
+      "receivedAt": "2026-11-08T13:39:33.101Z"
+    },
+    {
+      "time": 9.800000000000066,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:09 (768×576; White RGB inspection) to Gemma · target donor-1 · capture capture-2. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:39:35.954Z"
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2877ms: The object at the target point is a distinct, pinkish, irregularly shaped piece of coral. Uncertainty: The exact texture and composition are difficult to determine with certainty from this distance. donor-1: pigmented (90% provider score; viability from registry only) Frame T+ 00:09.",
+      "receivedAt": "2026-11-08T13:39:38.832Z"
+    },
+    {
+      "time": 12.750000000000213,
+      "type": "request",
+      "message": "Sending perception_uncertainty at T+ 00:12 to Argon assistance (1/3). Robot held; permitted suggestions: rescan / hold / abort. Awaiting actual response.",
+      "receivedAt": "2026-11-08T13:39:38.833Z"
+    },
+    {
+      "time": 35.09999999999929,
+      "type": "response",
+      "message": "Argon assistance gemini-4-argon (22700ms): RESCAN — During inspect_donor, Gemma observation capture-2-2-9800 for targetId donor-1 (targetKind colony) returned objectKind coral_fragment with distance uncertainty, and gripperState holding conflicts with robot.holding null; 2 assistance attempts remain for a fresh matched view.. Advisory only; fresh Gemma gates remain authoritative.",
+      "receivedAt": "2026-11-08T13:40:01.533Z"
+    },
+    {
+      "time": 36.099999999999234,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:36 (768×576; White RGB inspection) to Gemma · target recipient-1 · capture capture-3. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:02.794Z"
+    },
+    {
+      "time": 39.333333333332384,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 3201ms: The object at the target point is a large, pale, irregularly shaped coral colony. Uncertainty: The exact structure is complex, but it appears to be a colony. recipient-1: pale or bleached (90% provider score; viability from registry only) Frame T+ 00:36.",
+      "receivedAt": "2026-11-08T13:40:05.996Z"
+    },
+    {
+      "time": 48.76666666666518,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:48 (768×576; White RGB inspection) to Gemma · target donor-1 · capture capture-4. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:15.756Z"
+    },
+    {
+      "time": 51.61666666666502,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2824ms: The object at the target point is a section of a pinkish, textured coral colony. Uncertainty: The texture is complex, but the overall form is clearly visible. donor-1: pigmented (90% provider score; viability from registry only) Frame T+ 00:48.",
+      "receivedAt": "2026-11-08T13:40:18.580Z"
+    },
+    {
+      "time": 57.549999999998015,
+      "type": "request",
+      "message": "Sending tool frame T+ 00:57 (768×576; White RGB inspection) to Gemma · target donor-1-fragment-1 · capture capture-5. Awaiting visual observations.",
+      "receivedAt": "2026-11-08T13:40:24.762Z"
+    },
+    {
+      "time": 60.316666666664524,
+      "type": "response",
+      "message": "Gemma gemma-4-E4B-it responded in 2687ms: A small, reddish-pink coral fragment is visible on the ground. Uncertainty: The object is clearly visible and distinct from the surrounding substrate. Fragment visible: true; gripper: empty. Frame T+ 00:57.",
+      "receivedAt": "2026-11-08T13:40:27.449Z"
+    },
+    {
+      "time": 60.74999999999783,
+      "type": "transport",
+      "message": "Telemetry gateway rate limited one batch; retrying up to 5 retained sensor frames. Acknowledged count is unchanged.",
+      "receivedAt": "2026-11-08T13:40:27.863Z"
+    },
+    {
+      "time": 61.41666666666446,
+      "type": "request",
+      "message": "Sending observations to inspectable policy · actions proceed/abort · routes direct/clearance · cuOpt solve required. Awaiting action and route.",
+      "receivedAt": "2026-11-08T13:40:28.686Z"
+    },
+    {
+      "time": 62.14999999999775,
+      "type": "response",
+      "message": "Local planner reef-local-policy-v1 responded in 689ms: PROCEED — Fresh Gemma appearance evidence passed the 0.70 engineering threshold; the fragment is already loose and independent registered species, lineage and eligibility agree. Local contact and clearance guards remain authoritative. cuOpt selected direct; objective 2.1318345069885254.",
+      "receivedAt": "2026-11-08T13:40:29.380Z"
+    }
+  ],
+  "exportedAt": "2026-11-08T13:41:14.099Z"
+}

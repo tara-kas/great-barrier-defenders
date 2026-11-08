@@ -1,58 +1,95 @@
-# Reef Rescue AUV
+# Reef Rescue — Great Barrier Defenders
 
-AgentVerse 2026, Robotics Track.
+Reef Rescue is a robotics simulation prototype for moving **registered, already-detached coral fragments** onto eligible bleached recipients. It combines robot-camera perception with Gemma, bounded Gemini Argon assistance, NVIDIA cuOpt route selection and local motion/safety controls.
 
-An autonomous underwater vehicle that treats bleached coral. Healthy coral can restore a bleached fragment of the same genet through direct contact, by transferring symbionts ([Collins et al. 2026](https://doi.org/10.1126/sciadv.aeh1580)). This vehicle makes that contact at reef scale, for restoration teams limited by diver depth, time and weather. It is simulated in NVIDIA Isaac Sim, in a Moore Reef scenario on the Great Barrier Reef.
+The **pipeline video** presents this workflow. For reproducible implementation and measured results, start with the [evidence index](docs/EVIDENCE.md), [scenario and failure cases](docs/SCENARIOS.md), [judging guide](docs/JUDGING_GUIDE.md) and [setup](SETUP.md).
 
-Project notes and setup instructions are in the repository root.
+## The scenario
 
-## Models
+A restoration team supplies the source/recipient registry: species, lineage and biological eligibility. The robot inspects the recipient and loose stock, collects a compatible fragment, transports it, places it and verifies mechanical attachment. It holds, rescans or aborts if evidence or conditions are unsafe. It never needs to cut a healthy colony in this workflow.
 
-| Role | Model | Status |
-|---|---|---|
-| Between-dives debrief | `gemini-4-argon` | In use, `cloud/debrief.py` |
-| Coral detection and classification | `gemma-4-31b-it`, self-hosted | Built, `perception/` |
-| Synthetic test images | `gemini-nano-banana-2.1` | In use, `eval/generate_synthetic_frames.py` |
+The compact demonstration uses a configured reef scene with one placement goal. Gemma examines rendered robot-camera pixels; it reports appearance, target visibility and fragment/gripper state. **RGB appearance does not establish viability or genotype.** Registry data and simulated UV exposure checks remain separate inputs. The simulation demonstrates mechanical handling, not biological recovery. The [scientific motivation and intended impact](docs/JUDGING_GUIDE.md#relevance-scientific-motivation-and-intended-impact) link to primary research and current reef monitoring.
 
-## How it works
+## Models and their jobs
 
-During a dive, the mission loop surveys the seabed and classifies each colony with Gemma. For bleached colonies it reads UV fluorescence to identify the genet, then collects a healthy fragment of that genet from a base station and places it touching the colony. Dead colonies are skipped, and so is any colony without a confident in-stock genet match, because contact with the wrong genet harms the coral. The loop makes no cloud calls, and Gemma runs on the same machine as the vehicle's stack. If perception fails repeatedly the mission aborts rather than finishing with an empty map.
+| Component | Exact identifier | Where it runs | Responsibility |
+| --- | --- | --- | --- |
+| Google Gemma | `gemma-4-E4B-it`, weights `google/gemma-4-E4B-it` | vLLM on Modal | Read robot-camera images and return structured visual evidence. |
+| Google Gemini Argon | `gemini-4-argon` | Google Interactions API | Advise on held issues: `rescan`, `hold` or `abort`; optional post-mission review. |
+| NVIDIA cuOpt | `nvidia-cuopt`; recorded solver `26.10.0` | Modal | Solve costs for proposed route alternatives. |
+| Local mission policy | `reef-local-policy-v1` | Python gateway | Check fresh perception and registry eligibility, propose an action and route. |
+| Local controller | Mission state machine and reduced physics | Browser | Enforce motion, clearance, current, grip, identity and placement checks. |
 
-The fragment stays in contact. The vehicle returns at day 7 to confirm contact and at day 56 to judge recovery.
+**Gemma is currently served through Modal.** On-robot Gemma is a deployment target; an onboard model, power budget or disconnected successful mission has not been measured. Configured GPU choices are not resource measurements. The current Modal deployment offers L4/A10 for Gemma and T4 for cuOpt.
 
-Every decision is logged with the evidence behind it. `mission/` connects these parts and writes live files for the dashboard.
+The separate Python research stack defaults to `gemma-4-31b-it`. Its optional cloud perception client uses `gemini-3.5-flash-lite`; synthetic fixture generation uses `gemini-nano-banana-2.1`. These are not additional models in the recorded browser mission. See the [model-to-source map](docs/ARCHITECTURE.md).
 
-## Verification loop
+## How a decision becomes action
 
-Two checks are built today:
-
-1. **In the dive:** the mission will not start without a post-placement push test, which must confirm the fragment held and stayed in contact. If not, the colony stays open and the vehicle retries, then gives up on it after three attempts. The test itself comes from the simulator, which is still to be connected.
-2. **After the dive:** `gemini-4-argon` reviews the decision log and flags suspect transitions. Every flag must cite log values, and code checks each citation against the log. Argon proposes one patch, which a person reviews.
-
-Not built yet: applying proposed patches automatically, or running them against the regression suite before a person approves them.
-
-## Repository layout
-
-```
-sim/         Isaac Sim world, vehicle, sensors, hydrodynamics
-control/     Thrusters, station keeping, carry-aware control, safety limits
-perception/  Classification and semantic mapping
-agent/       On-device mission FSM, pairing and graft-point selection
-mission/     Entry point connecting perception, the FSM and the dashboard
-cloud/       Between-dives Argon debrief
-dashboard/   Live telemetry: camera, detections, map, decision log
-eval/        Scenario suite and regression harness
-docs/        Technical summary and supporting assets
+```mermaid
+flowchart TD
+  Camera[Rendered robot camera] --> Gemma[Gemma on Modal]
+  Gemma --> Evidence[Fresh target-bound visual evidence]
+  Registry[Registered eligibility and lineage] --> Policy[Local mission policy]
+  Evidence --> Policy
+  Policy --> Routes[Native cuOpt route solve]
+  Routes --> Guards[Local safety and identity checks]
+  Guards --> Action[Collect, transport, place, verify]
+  Action --> Camera
+  Evidence --> Hold[Uncertainty: hold]
+  Hold --> Argon[Argon assistance]
+  Argon --> Advice[Rescan, hold or abort]
+  Advice --> Camera
 ```
 
-## Setup
+Gemma packets carry target/capture IDs, timestamps and image hashes. Replayed, stale or mismatched evidence must not authorize handling. The controller continues safety/physics checks during remote waits. Argon receives structured observations and telemetry in the assistance operation; it cannot authorize handling, issue arbitrary actuator commands or automatically modify the code. A rescan still has to pass the original gates.
 
-See `SETUP.md` for environment setup and connecting to a remote Isaac Sim instance.
+The independently displayed Isaac RTX camera/state feed is read-only. Browser mission execution uses its own controller and reduced physics; [architecture](docs/ARCHITECTURE.md) explains both integration paths.
 
-## Interactive browser lab
+## Recorded result and validation
 
-The [Reef Rescue AUV live demo](LIVE_DEMO.md) adds an editable Three.js reef, fault recovery, wildlife avoidance, two navigation routes, simulated sonar, and optional Gemini camera review. It preserves the existing design system. Run `python3 sim/pelagic/scripts/run_lab.py` or open the private hosted demo linked in the guide. Browser physics and sensor models are explicitly separate from Isaac validation.
+The [complete saved live-model episode](docs/evidence/live-model-episode.json), exported **8 November 2026 at 13:41:14 UTC**, records:
 
-## Isaac Sim checkpoint
+- One mechanically verified placement; zero collisions, drops or recoveries, in 80.55 simulated seconds.
+- Five Gemma responses; an uncertain observation triggered actual Argon assistance and a fresh rescan.
+- A camera-dropout hold followed by recovery; one native cuOpt route solve.
 
-The `simulation` branch includes the offline DGX Spark simulator, bundled assets, configurations and tests under [`sim/pelagic/`](sim/pelagic/README.md). Start with [`sim/README.md`](sim/README.md) for the connected team mission, natural live-reef harvesting, same-fragment recovery, push testing and offline recording commands. The default recording uses an explicitly labelled pre-mapped perception demo; optional Gemini inference requires separate cloud opt-in.
+| Measurement in that episode | Samples | Recorded value |
+| --- | ---: | --- |
+| Gemma browser request/response latency | 5 | 2.687–3.201 seconds |
+| Argon assistance latency | 1 | 22.700 seconds |
+| cuOpt solve time | 1 | 0.198 seconds |
+
+These are observations from one run, not performance guarantees. Deterministic regression tests cover additional failures, including same-fragment drop recovery, stale perception, provider outages and unsafe routes. [SCENARIOS](docs/SCENARIOS.md) maps each case to its test; [EVIDENCE](docs/EVIDENCE.md) preserves provenance and distinguishes measurements from test coverage.
+
+## Run and inspect
+
+```bash
+git clone https://github.com/tara-kas/great-barrier-defenders.git
+cd great-barrier-defenders
+python3 sim/pelagic/scripts/run_lab.py
+```
+
+Open `http://127.0.0.1:8090`. For real inference, configure the server-side model endpoints and credentials in [SETUP](SETUP.md), then use **Robot + base**. Starting the viewer alone does not provision inference services.
+
+```bash
+python3 tools/verify_submission.py
+cd sim/pelagic
+node --test tests/lab-*.test.mjs
+python3 -m unittest tests.test_lab_server tests.test_live_feed tests.test_live_stream_capture
+```
+
+The tests use explicit fixtures/provider doubles and local HTTP servers. They require no paid inference. The separate Python stack has its own regression command in [SETUP](SETUP.md).
+
+## Repository map
+
+| Path | Contents |
+| --- | --- |
+| [sim/pelagic](sim/pelagic/README.md) | Current browser mission, camera, gateway, Modal serving, worker, simulation and tests. |
+| [agent](agent/README.md), [mission](mission/README.md), [perception](perception/README.md) | Separate Python mission/perception research stack and adapters. |
+| [cloud](cloud/README.md) | Standalone Argon log debrief and proposal validation. |
+| [eval](eval/README.md), [dashboard](dashboard/README.md) | Research evaluation fixtures and log viewer. |
+| [docs](docs/README.md) | Architecture, scenarios, judging answers, evidence and remaining acceptance work. |
+| [AGENTS.md](AGENTS.md) | Starting instructions for repository reviewers and coding agents. |
+
+[Implementation status](docs/IMPLEMENTATION_STATUS.md) lists the remaining concrete acceptance work: repeated live-model fault trials, calibrated perception, measured on-robot operation and physical/ecological validation. Passing software tests establishes the tested behavior, not a failure-free field robot.

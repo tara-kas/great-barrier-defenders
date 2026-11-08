@@ -1,5 +1,10 @@
 # Task: Dashboard
 
+> **Historical task plan — not current instructions.** Original branch scopes,
+> model choices and mission premises below are archival and do not constrain
+> current work. See the [project README](../../README.md) and
+> [system architecture](../ARCHITECTURE.md) for the implemented pipeline.
+
 Branch: `dashboard`. Touches only `dashboard/`. Don't edit files outside it.
 
 ## What exists already (on `main`, don't recreate)
