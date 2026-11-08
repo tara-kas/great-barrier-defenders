@@ -41,6 +41,12 @@ FONTS = {"brand": _font(32, True), "title": _font(26, True),
          "number": _font(28, True)}
 
 
+def draw_brand(draw):
+    """Use the current team name without covering the mission header."""
+    draw.text((24, 19), "REEF RESCUE", font=FONTS["body"], fill=INK)
+    draw.text((24, 43), "AUV", font=FONTS["title"], fill=TEAL)
+
+
 def phase_name(state):
     worker = next((robot for robot in state.get("robots", [])
                    if robot.get("role") == "restoration"), {})
@@ -159,7 +165,7 @@ def compose_frame(main, scout, worker, state, playback_speed=1.0, *, keyframe=Fa
     # Deliberately restrained: recorded views remain the main evidence.
     draw.line((24, 88, 1576, 88), fill=(36, 66, 68), width=1)
     draw.line((24, 790, 1576, 790), fill=(36, 66, 68), width=1)
-    draw.text((24, 23), "PELAGIC", font=FONTS["brand"], fill=INK)
+    draw_brand(draw)
     contact = any(c.get("contact_fixture") for c in state.get("corals", []))
     draw.text((218, 30), "SAME-GENET CONTACT  /  P. DAMICORNIS PROXY" if contact else "HEALTHY → BLEACHED / ALIVE  /  OFFLINE REPLAY", font=FONTS["small"], fill=MUTED)
     for x, label, color in ((218, "COLOURED / DONOR", "#d79c75"),
@@ -194,6 +200,13 @@ def compose_frame(main, scout, worker, state, playback_speed=1.0, *, keyframe=Fa
     water = state.get("water", {})
     current = water.get("current", [0, 0, 0])
     flow = math.sqrt(sum(float(value) ** 2 for value in current))
+    motion = state.get("motion", {})
+    instant = motion.get("flow_velocity", current)
+    flow = math.sqrt(sum(float(value) ** 2 for value in instant))
+    transfer = next((r for r in robots if r.get("role") == "restoration"), {})
+    hold = transfer.get("hydrodynamics", {})
+    drift = float(hold.get("station_error_m") or 0.) * 100.
+    draw.text((540, 96), f"CURRENT {flow:.2f} m/s  |  STATION OFFSET {drift:.1f} cm  |  REDUCED DYNAMICS", font=FONTS["tiny"], fill=TEAL)
     inspection = state.get("inspection", {})
     if inspection:
         label, explanation = inspection_caption(inspection, worker_state)

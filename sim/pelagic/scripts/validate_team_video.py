@@ -5,7 +5,8 @@ import argparse, hashlib, json, math, shutil, subprocess
 
 
 def validate(output):
-    movie=output/'pelagic-team-pip.mp4'
+    movie=output/'reef-rescue-mission.mp4'
+    if not movie.exists(): movie=output/'pelagic-team-pip.mp4'
     state=json.loads((output/'state.json').read_text())
     schedule=json.loads((output/'schedule.json').read_text())
     geometry=json.loads((output/'geometry-validation.json').read_text())

@@ -1,7 +1,7 @@
 """Offline detail reel layouts using supplied Isaac camera images only."""
 from PIL import Image, ImageDraw
 
-from .compositor import FONTS, _place_image, _text_fit
+from .compositor import draw_brand, FONTS, _place_image, _text_fit
 
 WIDTH, HEIGHT = 1600, 900
 BG, INK, MUTED = (5,22,27), (225,238,229), (136,171,170)
@@ -17,7 +17,7 @@ POLYP = (24,608,488,869)
 def _base(title, elapsed, duration):
     frame=Image.new("RGB",(WIDTH,HEIGHT),BG)
     draw=ImageDraw.Draw(frame)
-    draw.text((24,23),"PELAGIC",font=FONTS["brand"],fill=INK)
+    draw_brand(draw)
     draw.text((218,27),title,font=FONTS["body"],fill=TEAL)
     draw.text((218,55),"ACTUAL ISAAC CAMERA VIEWS  ·  OFFLINE DETAIL RECORDING",font=FONTS["tiny"],fill=MUTED)
     draw.text((1348,27),f"{elapsed:05.1f} / {duration:04.1f}s",font=FONTS["body"],fill=INK)

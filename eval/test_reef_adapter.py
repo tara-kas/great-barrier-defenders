@@ -186,3 +186,50 @@ def test_push_approach_meets_push_motion_without_tool_snap(completed_reef_missio
             boundaries.append(math.dist(first['gripper_world'], second['gripper_world']))
     assert len(boundaries) == 1
     assert boundaries[0] < .002, 'Push test jumped from its approach endpoint'
+
+
+def test_central_contact_and_gentle_seating_are_measured(completed_reef_mission):
+    robot, _ = completed_reef_mission
+    fixture = robot.recipient['contact_fixture']
+    assert fixture['radial_fraction'] <= .40
+    assert fixture['contact_area_proxy_m2'] > 0
+    assert fixture['contact_vertices'] >= 3
+    assert fixture['minimum_surface_separation_m'] >= -1e-7
+    rows = list(fragment_frames(robot))
+    for before, after in zip(rows, rows[1:]):
+        _, old_fragment, old_worker = before
+        _, fragment, worker = after
+        if old_worker['state'] == 'SECURE_FRAGMENT' and worker['state'] in ('SECURE_FRAGMENT', 'OPEN_GRIPPER'):
+            assert math.dist(old_fragment['position'],fragment['position']) < .001
+        if old_worker['state'] != worker['state'] and old_worker['state'] in ('SECURE_FRAGMENT','OPEN_GRIPPER','RETRACT_GRIPPER','PUSH_APPROACH'):
+            assert math.dist(old_worker['gripper_world'],worker['gripper_world']) < .002
+    forces = [s['robots'][1]['hydrodynamics'] for s in robot.frames if 'hydrodynamics' in s['robots'][1]]
+    assert any(math.dist(row['drag_force_n'],[0.,0.,0.])>.01 for row in forces)
+    assert any((row['station_error_m'] or 0.)>.001 for row in forces)
+
+
+def test_both_robot_arms_remain_inside_physical_link_reach(completed_reef_mission):
+    from reefsim.gripper_linkage import WRIST_CENTER
+    robot, _ = completed_reef_mission
+    for snapshot in robot.frames:
+        for body in snapshot['robots']:
+            delta=[body['gripper_world'][k]-body['position'][k] for k in range(3)]
+            jaw=rotated(delta,-body['yaw'])
+            wrist=rotated(WRIST_CENTER,body.get('wrist_yaw',0.))
+            endpoint=[jaw[k]+wrist[k] for k in range(3)]
+            reach=math.dist(endpoint,[.17,0.,-.12])
+            assert .021 <= reach <= .779, (body['id'],snapshot['time'],body['state'],reach)
+
+
+def test_stow_handoff_has_no_jump_from_accumulated_station_drift(completed_reef_mission):
+    robot, _ = completed_reef_mission
+    seen=set()
+    for first,second in zip(robot.frames,robot.frames[1:]):
+        a,b=first['robots'][1],second['robots'][1]
+        if a['state'] in ('RETRACT_FRAGMENT','RECOVERY_LIFT') and b['state']=='NAVIGATE_TO_SITE':
+            relative=[a['gripper_world'][k]-a['position'][k] for k in range(3)]
+            turned=rotated(relative,b['yaw']-a['yaw'])
+            expected=[b['position'][k]+turned[k] for k in range(3)]
+            assert math.dist(expected,b['gripper_world'])<.001, 'Stow handoff jumped beyond rigid body motion'
+            seen.add(a['state'])
+    assert seen=={'RETRACT_FRAGMENT','RECOVERY_LIFT'}

@@ -234,6 +234,56 @@ def flow_velocity(current, time, *, surge_ratio=.8, surge_period=6.5,
             current[1] * along + current[0] * cross, current[2]]
 
 
+def flow_displacement(current, time, *, surge_ratio=.8, surge_period=6.5,
+                      cross_flow_ratio=.25, phase_offset=0.):
+    """Analytic integral of ``flow_velocity`` from zero to ``time``.
+
+    Passive suspended tracers use the same surge as flexible coral drag.
+    Evaluation is independent of frame rate, frame skipping and rewind.
+    """
+    # Share validation with the driving velocity field.
+    flow_velocity(current,time,surge_ratio=surge_ratio,surge_period=surge_period,
+                  cross_flow_ratio=cross_flow_ratio,phase_offset=phase_offset)
+    frequency=math.tau/surge_period
+    angle=frequency*time+phase_offset
+    along=time+surge_ratio*(math.cos(phase_offset)-math.cos(angle))/frequency
+    cross=cross_flow_ratio*(math.sin(angle)-math.sin(phase_offset))/frequency
+    return [current[0]*along-current[1]*cross,
+            current[1]*along+current[0]*cross,current[2]*time]
+
+
+def tracer_pose(origin, time, current, *, settling_speed=0., width=18.,
+                length=18., height=6.3, bottom=.1, fade_margin=.20):
+    """Current-driven suspended particle with faded, seamless volume wrapping.
+
+    Opacity reaches zero at each volume edge, hiding its wrap into the opposite
+    edge. ``settling_speed`` models slow downward sediment settling in m/s;
+    use zero for neutrally buoyant tracers and the still-water control.
+    """
+    if not isinstance(origin,(list,tuple)) or len(origin)!=3:
+        raise ValueError('Origin must contain three components')
+    origin=tuple(_number(v,'origin') for v in origin)
+    width=_number(width,'width',positive=True)
+    length=_number(length,'length',positive=True)
+    height=_number(height,'height',positive=True)
+    bottom=_number(bottom,'bottom')
+    fade_margin=_number(fade_margin,'fade_margin',positive=True)
+    settling_speed=_number(settling_speed,'settling_speed')
+    if settling_speed<0:
+        raise ValueError('Settling speed cannot be negative')
+    shift=flow_displacement(current,time)
+    shift[2]-=settling_speed*time
+    limits=((-width*.5,width),(-length*.5,length),(bottom,height))
+    result=[];opacity=1.
+    for value,delta,(low,span) in zip(origin,shift,limits):
+        wrapped=(value+delta-low)%span
+        result.append(low+wrapped)
+        edge=min(wrapped,span-wrapped)
+        u=max(0.,min(1.,edge/min(fade_margin,span*.5)))
+        opacity*=u*u*(3.-2.*u)
+    return {'position':result,'opacity':opacity}
+
+
 @lru_cache(maxsize=64)
 def _drag_harmonics(surge_ratio, cross_flow_ratio):
     """Six-harmonic representation of v*|v| for the configured wave cycle."""

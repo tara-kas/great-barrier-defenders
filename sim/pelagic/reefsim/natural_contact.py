@@ -217,3 +217,113 @@ def natural_contact_candidates(coral,colony_seed,detail="standard"):
         item["patch_triangles"]=list(candidate["patch_triangles"])
         result.append(item)
     return result
+
+
+def central_scanned_contact(coral, part, colony_seed, detail="hero"):
+    """Seat an unchanged cutting among upper central branches.
+
+    Broad contact is ranked by donor surface area within 1.5 mm of the actual
+    recipient triangles. This is a geometric contact proxy, not tissue fusion.
+    Every accepted cutting vertex is checked against the recipient surface;
+    no outer-edge preference or fabricated support branch is used.
+    """
+    import numpy as np
+    mesh = generate_pocillopora_scan("bleached_alive", coral["radius"], coral["height"], colony_seed, detail=detail)
+    points = np.asarray(mesh["points"], dtype=float)
+    indices = np.asarray(mesh["indices"], dtype=int).reshape(-1, 3)
+    triangles = points[indices]
+    centers = triangles.mean(axis=1)
+    normals = np.cross(triangles[:,1]-triangles[:,0], triangles[:,2]-triangles[:,0])
+    normals /= np.maximum(np.linalg.norm(normals, axis=1)[:,None], 1e-12)
+    vertex_normals = np.asarray(mesh["normals"])
+    try:
+        from scipy.spatial import cKDTree
+        tree = cKDTree(points)
+        def closest_vertices(values):
+            return tree.query(values)
+    except ImportError:
+        # Slower planning-only fallback; Isaac rendering has no SciPy dependency.
+        def closest_vertices(values):
+            nearest=[]; distances=[]
+            for chunk in np.array_split(values, max(1, len(values)//16)):
+                squared=np.sum((chunk[:,None,:]-points[None,:,:])**2, axis=2)
+                ids=np.argmin(squared, axis=1)
+                nearest.extend(ids); distances.extend(np.sqrt(squared[np.arange(len(ids)),ids]))
+            return np.asarray(distances),np.asarray(nearest)
+    cutting=np.asarray(part["mesh"]["points"])
+    original_count=len(part["mesh"]["source_vertex_indices"])
+    low,high=part["contact_band_local_z"]
+    mask=((np.linalg.norm(centers[:,:2],axis=1) < coral["radius"]*.40)
+          & (centers[:,2] > points[:,2].max()*.70) & (np.abs(normals[:,2]) < .30))
+    ids=sorted(np.flatnonzero(mask),key=lambda i:-centers[i,2])
+    selected=[]; cells=set()
+    for index in ids:
+        key=tuple(np.floor(centers[index]/.005).astype(int))
+        if key not in cells:
+            cells.add(key); selected.append(index)
+    candidates=[]
+    rotations=[]
+    for degrees in range(0,360,10):
+        yaw=math.radians(degrees); co,si=math.cos(yaw),math.sin(yaw)
+        rotations.append((yaw,cutting@np.array([[co,si,0.],[-si,co,0.],[0.,0.,1.]])))
+    stride=max(1,len(cutting)//200)
+    for triangle_index in selected:
+        normal=normals[triangle_index].copy(); normal[2]=0.; normal/=np.linalg.norm(normal)
+        for yaw,rotated in rotations:
+            contact_index=int(np.argmin(rotated@normal))
+            if contact_index>=original_count or not low<=cutting[contact_index,2]<=high:
+                continue
+            base=centers[triangle_index]-rotated[contact_index]
+            radial=float(np.linalg.norm(base[:2])/coral["radius"])
+            if radial>.40:
+                continue
+            samples=(rotated+base)[::stride]
+            distance,near=closest_vertices(samples)
+            signed=np.sum((samples-points[near])*vertex_normals[near],axis=1)
+            if signed.min()<-.001:
+                continue
+            close=int(((distance<.002)&(signed>=-.0003)).sum())
+            candidates.append((close,-radial,triangle_index,yaw,contact_index,base,normal))
+    surface=SurfaceQuery(mesh["points"],mesh["indices"],cell_size=.0125)
+    accepted=[]
+    donor_faces=np.asarray(part["mesh"]["indices"],dtype=int).reshape(-1,3)[:part["source_triangle_count"]]
+    donor_triangles=cutting[donor_faces]
+    donor_area=np.linalg.norm(np.cross(donor_triangles[:,1]-donor_triangles[:,0],donor_triangles[:,2]-donor_triangles[:,0]),axis=1)*.5
+    for _,negative_radial,triangle_index,yaw,contact_index,base,normal in sorted(candidates,key=lambda row:row[:2],reverse=True)[:48]:
+        co,si=math.cos(yaw),math.sin(yaw)
+        rotated=cutting@np.array([[co,si,0.],[-si,co,0.],[0.,0.,1.]])
+        world=rotated+base
+        gaps=np.asarray([query["signed_distance"] if query is not None else 1.
+                         for query in (surface.nearest(point,radius=.006) for point in world)])
+        if float(gaps.min()) < -1e-7:
+            continue
+        # Verify the final gentle diagonal seating corridor, not only its end.
+        clear=True
+        for distance in (.004,.012,.025):
+            offset=normal*(distance*.16)+np.array([0.,0.,distance])
+            for point in world[::stride]+offset:
+                query=surface.nearest(point,radius=.004)
+                if query and query["signed_distance"] < -.0003:
+                    clear=False;break
+            if not clear:break
+        if not clear:
+            continue
+        close=gaps<=.0015
+        # Triangle area weighted by the fraction of vertices within tolerance.
+        area=float(np.sum(donor_area*close[donor_faces].mean(axis=1)))
+        accepted.append((area,negative_radial,triangle_index,yaw,contact_index,base,normal,gaps))
+    if not accepted:
+        raise ValueError("No collision-free central recipient contact for this native cutting")
+    area,negative_radial,index,yaw,contact_index,base,normal,gaps=max(accepted,key=lambda row:row[:2])
+    origin=np.asarray(coral["position"])
+    point=centers[index]
+    support=surface.nearest(base,radius=.04)
+    return {"base":(base+origin).tolist(),"point":(point+origin).tolist(),
+            "normal":normal.tolist(),"yaw":float(yaw),"fragment_vertex":int(contact_index),
+            "triangle_index":int(index),"triangle":(triangles[index]+origin).tolist(),
+            "patch_triangles":surface.nearby_triangles(point,.025),
+            "support_point":(np.asarray(support["point"])+origin).tolist() if support else (point+origin).tolist(),
+            "contact_area_proxy_m2":area,"contact_vertices":int(np.count_nonzero(gaps[:original_count]<=.0015)),
+            "minimum_surface_separation_m":float(gaps.min()),
+            "radial_fraction":float(-negative_radial),"source_vertex_count":len(points),
+            "source_triangle_count":len(indices),"method":"central upper natural branches; measured tissue contact area; collision-checked gentle seating"}

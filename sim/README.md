@@ -1,4 +1,4 @@
-# Offline reef mission on DGX Spark
+# Reef Rescue AUV — offline simulation on DGX Spark
 
 The simulator in [`pelagic/`](pelagic/README.md) now runs the team's actual
 `mission.runner.run_mission` / `MissionFSM` through `ReefRobotAdapter`.
@@ -24,10 +24,10 @@ python3 sim/pelagic/scripts/plan_team_demo.py \
   --output sim/pelagic/outputs/team-preview --preview-stills --samples 8
 /home/smint/isaacsim/python.sh -u sim/pelagic/scripts/render_team_demo.py \
   --trace sim/pelagic/outputs/team-mission-recovery/trace.json.gz \
-  --output sim/pelagic/outputs/team-video --fps 24 --samples 4 --quality 17
+  --output sim/pelagic/outputs/team-video --fps 24 --samples 4 --quality 17 --max-frames 1440 --current-review
 ```
 
-The output is `pelagic-team-pip.mp4`. Validate and extract review frames with
+The output is `reef-rescue-mission.mp4`. Pass `--current-review` to also save an eight-second `reef-rescue-current.mp4` with a fixed-camera zero-current comparison. Validate and extract review frames with
 `python3 sim/pelagic/scripts/validate_team_video.py sim/pelagic/outputs/team-video`. The trace contains the actual controller
 trajectory; rendering replays it without changing decisions. Playback is
 accelerated during transit and is labelled accordingly. The injected loss is

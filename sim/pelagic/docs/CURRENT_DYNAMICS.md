@@ -1,0 +1,13 @@
+# Current and physical response
+
+The demo uses a reduced underwater dynamics model, not a fluid solver or validated vehicle model. The mean current is `[0.10, 0.035, 0.0]` m/s. A 6.5-second surge cycle and transverse component provide a continuously varying velocity field. The same field drives flexible coral drag, suspended-particle advection, and the team adapter's vehicle disturbance when integrated.
+
+`team_physics.vehicle_step` integrates a neutrally buoyant 18 kg vehicle with quadratic drag relative to water, a 4/s velocity controller, and vector-limited 38 N thrust. Station keeping uses position feedback to a saved anchor. It does not zero velocity or teleport the robot to its anchor. Ten-millisecond substeps keep the force response bounded. Added mass, pressure waves, rotational dynamics, propeller wash, and calibrated hydrodynamic coefficients are outside this model.
+
+In a 60-second stationary-control check with the configured current and surge, the model produced 15.19 mm peak position error, a largest 0.489 mm displacement per 50 ms, and 2.37 N peak corrective thrust. This is hull motion; a world-stabilized tool can maintain coral contact while the body corrects its station. A zero-current, zero-command vehicle at rest remains still. Unpowered controls drift with flow.
+
+`reef_motion.flow_displacement` is the exact time integral of the current field. `tracer_pose` uses it for frame-rate-independent particle motion and provides a smooth edge opacity so volume wrapping need not pop. Tracers with zero settling in still water remain still. Settling particles may move downward even when horizontal current is zero. The renderer must apply the returned opacity (or scale point width) to hide wrap boundaries, and update on every recorded frame.
+
+Existing flexible sea fans respond through a bounded damped spring under quadratic drag, with fixed roots and a tested excursion of more than 8 cm over a surge cycle for a 55 cm fan. Living polyp tentacles deform on their unchanged scanned surfaces. The mineral skeletons of stony coral remain rigid; deformation of whole *Pocillopora* colonies would misrepresent their physical structure. Near-worksite fan placement and a sustained camera view make the motion visible.
+
+Tests in `tests/test_current_dynamics.py` cover station-keeping continuity and response, vector thrust saturation, unpowered drift, timestep equivalence, consistent tracer/fan velocities, rewind independence, still-water controls, and faded wrapping. Existing fan and polyp tests cover roots, displacement bounds, stiffness/damping dependence and normal deformation.

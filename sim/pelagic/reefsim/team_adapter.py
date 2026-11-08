@@ -11,7 +11,8 @@ import numpy as np
 from agent.robot_interface import RobotInterface, Pose, RGBDFrame
 from agent.graft_point import GraftCandidate
 from .core import ReefSimulation, distance
-from .team_physics import dropped_step, push_response
+from .team_physics import dropped_step, push_response, vehicle_step
+from .reef_motion import flow_velocity
 
 
 class ReefRobotAdapter(RobotInterface):
@@ -24,7 +25,8 @@ class ReefRobotAdapter(RobotInterface):
         self.worker['gripper_world']=self.sim._stowed_gripper(self.worker)
         self.sim.robots[0]['position']=[-3.8,-1.8,1.8]
         self.sim.robots[0]['state']='SURVEY'
-        self.command=np.zeros(3); self.locked=False
+        self.sim.robots[0]['gripper_world']=self.sim._stowed_gripper(self.sim.robots[0])
+        self.command=np.zeros(3); self.locked=False; self.station_anchor=None
         self.frames=[]; self.capture=capture
         self.inject_drop=inject_drop; self.drop_done=False; self.carry_elapsed=0.
         self.active_fragment=None; self.recipient=None; self.source=None
@@ -77,14 +79,18 @@ class ReefRobotAdapter(RobotInterface):
             self.sim.time+=dt
             w=self.worker
             desired=np.zeros(3) if self.locked else self.command
-            velocity=np.asarray(w['velocity'])
-            # Closed-loop thruster/drag response, bounded acceleration.
-            acceleration=np.clip(4.*(desired-velocity),-.8,.8)
-            velocity+=acceleration*dt
-            if self.locked: velocity[:]=0
-            old=np.asarray(w['position']); new=old+velocity*dt
-            w['position']=new.tolist(); w['velocity']=velocity.tolist()
-            w['distance_travelled']+=float(np.linalg.norm(new-old))
+            if self.locked and self.station_anchor is None:
+                self.station_anchor=w['position'][:]
+            elif not self.locked:
+                self.station_anchor=None
+            old=np.asarray(w['position'])
+            flow=flow_velocity(self.sim.water['current'],self.sim.time)
+            position,velocity,diagnostics=vehicle_step(w['position'],w['velocity'],desired,flow,dt,
+                anchor=self.station_anchor,mass=self.sim.config['robot']['mass'],
+                max_thrust=self.sim.config['robot']['max_thrust'],water_density=self.sim.config['water']['density'])
+            w['position']=position; w['velocity']=velocity; w['hydrodynamics']=diagnostics
+            velocity=np.asarray(velocity)
+            w['distance_travelled']+=float(np.linalg.norm(np.asarray(position)-old))
             if np.linalg.norm(desired[:2])>.04 and not self.manual_jaw:
                 heading=math.atan2(desired[1],desired[0]); error=(heading-w['yaw']+math.pi)%(2*math.pi)-math.pi
                 w['yaw']+=max(-1.5*dt,min(1.5*dt,error))
@@ -105,7 +111,7 @@ class ReefRobotAdapter(RobotInterface):
                 f=self.active_fragment
                 from .reef_landscape import _foundation_height
                 floor=_foundation_height(f['position'][0],f['position'][1],self.sim.config,self.sim.snapshot())+.001
-                f['position'],self.drop_velocity=dropped_step(f['position'],self.drop_velocity,self.sim.water['current'],dt,floor=floor)
+                f['position'],self.drop_velocity=dropped_step(f['position'],self.drop_velocity,flow,dt,floor=floor)
                 f['base_world']=f['position'][:]
             self._record()
     def _move_body(self,point,state,yaw=None):
@@ -125,7 +131,7 @@ class ReefRobotAdapter(RobotInterface):
             error=(yaw-self.worker['yaw']+math.pi)%(2*math.pi)-math.pi
             if abs(error)<.003: break
             self.worker['yaw']+=max(-.06,min(.06,error)); self.wait(.05)
-    def _arm(self,state,end,duration,opening=None):
+    def _arm(self,state,end,duration,opening=None,*,track_stowed=False):
         self.command[:]=0; self.locked=True; self.manual_jaw=True
         start=self.worker['gripper_world'][:]; first=self.worker['gripper_open']
         self.worker['state']=state
@@ -133,7 +139,10 @@ class ReefRobotAdapter(RobotInterface):
         for i in range(steps):
             t=(i+1)/steps; blend=t*t*(3-2*t)
             self.worker['phase_progress']=t
-            self.worker['gripper_world']=[start[k]*(1-blend)+end[k]*blend for k in range(3)]
+            # The hull keeps moving under current during retraction. End at
+            # its present stow location instead of a stale pre-retraction pose.
+            target=self.sim._stowed_gripper(self.worker) if track_stowed else end
+            self.worker['gripper_world']=[start[k]*(1-blend)+target[k]*blend for k in range(3)]
             if opening is not None: self.worker['gripper_open']=first*(1-blend)+opening*blend
             self.wait(.05)
     def _colony(self,entry):
@@ -214,7 +223,7 @@ class ReefRobotAdapter(RobotInterface):
         f['stage']='carried'; self.worker['carrying']=True
         self.source['harvested_fragments']+=1
         self.audit.append({'event':'harvest','time':self.sim.time,'fragment_id':f['id'],'source':'living_reef'})
-        self._arm('RETRACT_FRAGMENT',self.sim._stowed_gripper(self.worker),2.)
+        self._arm('RETRACT_FRAGMENT',self.sim._stowed_gripper(self.worker),2.,track_stowed=True)
         self.manual_jaw=False
     def recover_lost_fragment(self,fragment_id,recipient_id):
         f=self.active_fragment
@@ -226,7 +235,7 @@ class ReefRobotAdapter(RobotInterface):
         self._arm('RECOVERY_APPROACH',grip,2.4,1.)
         self._arm('RECOVERY_GRASP',grip,1.4,0.)
         f['stage']='carried'; self.worker['carrying']=True
-        self._arm('RECOVERY_LIFT',self.sim._stowed_gripper(self.worker),2.)
+        self._arm('RECOVERY_LIFT',self.sim._stowed_gripper(self.worker),2.,track_stowed=True)
         self.manual_jaw=False; self.locked=False
         ev={'recovered':True,'fragment_id':f['id'],'time':self.sim.time,'grip_force_n':.35,'same_fragment':True}
         self.audit.append(dict(ev,event='recovered')); self.sim._event('recovery','Same fragment regrasped — resume transfer')
@@ -236,29 +245,27 @@ class ReefRobotAdapter(RobotInterface):
         from .scanned_fragment import split_scanned_donor
         donor=self.source
         part=split_scanned_donor(donor['radius'],donor['height'],f['source_mesh_seed'],slots=donor.get('scanned_partition_slots',donor['donor_capacity']),detail=f.get('source_mesh_detail','hero'))['fragments'][f['source_slot']]
-        points=np.asarray(part['mesh']['points']); normal=np.asarray(coral['contact_normal'])
-        low,high=part['contact_band_local_z']
-        original_count=len(part['mesh']['source_vertex_indices'])
-        candidates=[]
-        for degrees in range(0,360,5):
-            yaw=math.radians(degrees); co,si=math.cos(yaw),math.sin(yaw)
-            rotated=points@np.array([[co,si,0.],[-si,co,0.],[0.,0.,1.]])
-            index=int(np.argmin(rotated@normal))
-            if index<original_count and low<=points[index,2]<=high:
-                candidates.append((abs(points[index,2]-(low+high)/2),yaw,index,rotated[index]))
-        if not candidates:
-            return None,{'failure':'No exposed natural tissue contact within the live branch band'}
-        _,yaw,index,sample=min(candidates,key=lambda item:item[0])
-        base=np.asarray(coral['contact_point'])-sample
-        coral['planting_point']=base.tolist(); coral['contact_base']=base.tolist()
-        coral['contact_fixture']['natural_fragment_contact_local']=points[index].tolist()
-        coral['contact_fixture']['natural_fragment_contact_index']=index
-        coral['contact_fixture']['natural_fragment_contact_yaw']=yaw
+        from .natural_contact import central_scanned_contact
+        chosen=central_scanned_contact(coral,part,coral['contact_fixture']['source_mesh_seed'],detail=coral['contact_fixture'].get('source_mesh_detail','hero'))
+        points=np.asarray(part['mesh']['points']); normal=np.asarray(chosen['normal'])
+        yaw=chosen['yaw']; index=chosen['fragment_vertex']; base=np.asarray(chosen['base'])
+        coral.update(planting_point=base.tolist(),contact_base=base.tolist(),contact_point=chosen['point'],contact_normal=chosen['normal'])
+        coral['contact_fixture'].update(source_triangle_index=chosen['triangle_index'],
+            contact_triangle_world=chosen['triangle'],contact_patch_triangle_indices=chosen['patch_triangles'],
+            support_point=chosen['support_point'],natural_fragment_contact_local=points[index].tolist(),
+            natural_fragment_contact_index=index,natural_fragment_contact_yaw=yaw,
+            contact_area_proxy_m2=chosen['contact_area_proxy_m2'],contact_vertices=chosen['contact_vertices'],
+            minimum_surface_separation_m=chosen['minimum_surface_separation_m'],
+            radial_fraction=chosen['radial_fraction'],selection_method=chosen['method'])
         self.placement_base=base.tolist(); self.placement_yaw=yaw
         old_yaw=f['yaw']; f['yaw']=yaw
         grip=base+np.asarray(self._grasp_offset(f)); f['yaw']=old_yaw
+        # Reposition the hull around the newly selected central branch before
+        # extending the arm; the old outer-branch staging pose is not reused.
+        heading=math.atan2(-normal[1],-normal[0])
+        self._move_body([base[0]+.38*normal[0],base[1]+.38*normal[1],max(.70,base[2]+.51)],
+                        'NAVIGATE_TO_SITE',heading)
         self.worker['state']='ORIENT_FRAGMENT'; self.manual_jaw=True
-        self._face(math.atan2(-normal[1],-normal[0]))
         candidate=GraftCandidate(tuple(grip),(0.,0.,0.,1.),tuple(normal),len(coral['contact_fixture']['contact_patch_triangle_indices']),float(normal[2]))
         return candidate,{'method':'actual scanned fragment tissue / existing recipient triangle','triangle':coral['contact_fixture']['source_triangle_index'],'fragment_vertex':index}
     def detach_fragment(self,at_pose):
@@ -268,14 +275,20 @@ class ReefRobotAdapter(RobotInterface):
         for i in range(40):
             t=(i+1)/40; f['yaw']=initial_yaw+delta*t*t*(3-2*t); self.wait(.05)
         f['yaw']=self.placement_yaw
-        self._arm('LOWER_FRAGMENT',list(at_pose.position),3.)
-        self._arm('SECURE_FRAGMENT',list(at_pose.position),2.5)
-        f['stage']='placed'; f['position']=self.placement_base[:]; f['base_world']=f['position'][:]
+        final_grip=np.asarray(at_pose.position)
+        preseat=final_grip+np.asarray(self.recipient['contact_normal'])*.004+np.array([0.,0.,.025])
+        self._arm('LOWER_FRAGMENT',preseat.tolist(),3.)
+        self._arm('SECURE_FRAGMENT',final_grip.tolist(),3.)
+        # The carried pose has already reached contact; changing ownership
+        # must not teleport the cutting onto a separately computed anchor.
+        if distance(f['position'],self.placement_base)>1e-7:
+            raise RuntimeError('Seating did not reach the planned contact continuously')
+        f['stage']='placed'; f['base_world']=f['position'][:]
         self.worker['carrying']=False
         c=self.recipient
         c.update(fragment_attached=True,attachment_position=f['position'][:],fragment_id=f['id'],source_donor_id=f['donor_id'])
         self._arm('OPEN_GRIPPER',list(at_pose.position),1.5,1.)
-        self._arm('RETRACT_GRIPPER',self.sim._stowed_gripper(self.worker),2.)
+        self._arm('RETRACT_GRIPPER',self.sim._stowed_gripper(self.worker),2.,track_stowed=True)
         self.manual_jaw=False
         self.audit.append({'event':'placed','time':self.sim.time,'fragment_id':f['id'],'contact':'natural scanned tissue'})
     def placement_verifier(self,pose):
@@ -303,7 +316,7 @@ class ReefRobotAdapter(RobotInterface):
         report={k:v for k,v in response.items() if k!='samples'}
         report.update(contact=max_contact_gap<=fixture['contact_tolerance_m'],max_contact_gap_m=max_contact_gap,fragment_id=f['id'],time=self.sim.time)
         self.push_tests.append(report)
-        self._arm('VERIFY_ATTACHMENT',self.sim._stowed_gripper(self.worker),2.)
+        self._arm('VERIFY_ATTACHMENT',self.sim._stowed_gripper(self.worker),2.,track_stowed=True)
         self.worker['push_force_n']=0.; self.manual_jaw=False
         if report['stable'] and report['contact']:
             self.recipient['task_status']='verified'

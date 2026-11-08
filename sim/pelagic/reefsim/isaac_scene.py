@@ -24,12 +24,13 @@ from .fauna import build_fauna, fauna_pose
 from .scanned_coral import generate_scanned_coral
 from .inspection import MODES, beam_exposure, inspection_response, auto_inspection_mode
 from .uv_detection import mission_profile, scan_light_pose, beam_unoccluded
-from .reef_motion import generate_soft_coral, current_pose
+from .reef_motion import generate_soft_coral, current_pose, tracer_pose
 from .polyp_motion import generate_polyp_patch, polyp_current_pose
 from .reef_tissue import material_files as tissue_maps, tissue_color
 from .reef_substrate import generate_reef_rock
 from .pocillopora import generate_pocillopora, generate_contact_fragment
 from .pocillopora_scan import generate_pocillopora_scan, texture_files as pocillopora_textures
+from .gripper_linkage import WRIST_CENTER, PALM_CENTER, PALM_SIZE, CARRIAGE_SIZE, jaw_linkage
 
 
 def _name(value: Any) -> str:
@@ -568,7 +569,12 @@ class IsaacReefScene:
         fan_radius = float(render.get("soft_coral_radius",.15))
         if render.get("realistic_tissue",False):
             candidates = [c for c in self.scenery if c["health"] == "healthy"] if soft_count else []
-            candidates.sort(key=lambda c: math.hypot(c["position"][0]+4.2,c["position"][1]+3.5))
+            focus_ids = set(render.get("quality_focus_ids", []))
+            focus = [c["position"] for c in snapshot["corals"] if c["id"] in focus_ids]
+            # Put existing flexible fans in the working reef, where their
+            # current response is visible in the actual manipulation cameras.
+            focus = focus or [(-4.2, -3.5, 0.)]
+            candidates.sort(key=lambda c: min(math.hypot(c["position"][0]-p[0],c["position"][1]-p[1]) for p in focus))
             for candidate in candidates:
                 x,y = candidate["position"][:2]
                 if any(math.hypot(x-c["position"][0],y-c["position"][1]) < c["radius"]+fan_radius+.25
@@ -682,7 +688,8 @@ class IsaacReefScene:
             self._particle_speeds.append(self._rng.uniform(0.005, 0.022))
         particles = UsdGeom.Points.Define(self.stage, "/World/Environment/MarineSnow")
         particles.CreatePointsAttr(Vt.Vec3fArray([_color(p) for p in self._particle_origins]))
-        particles.CreateWidthsAttr([self._rng.uniform(0.0015, 0.006) for _ in range(count)])
+        self._particle_widths = [self._rng.uniform(0.0015, 0.006) for _ in range(count)]
+        particles.CreateWidthsAttr(self._particle_widths)
         self._bind(particles, "snow")
         self._particles = particles
 
@@ -1044,8 +1051,10 @@ class IsaacReefScene:
         wrist_yaw_op.Set(0.)
         # Parallel jaws approach the vertical stem sideways. Their palm is
         # behind the cutting, so the crown cannot intersect the wrist.
-        self._cube(path + "/Gripper/Palm", (-.075, 0, 0), (.045, .12, .045), "dark")
+        self._cube(path + "/Gripper/Palm", PALM_CENTER, PALM_SIZE, "dark")
         self._cylinder(path + "/Gripper/Wrist", (-.115, 0, 0), (-.085, 0, 0), .023, "white")
+        # The knuckle encloses the forearm endpoint for every wrist heading.
+        self._sphere(path + "/Gripper/WristKnuckle", WRIST_CENTER, (.031,) * 3, "metal")
         self._sphere(path + "/Gripper/WorkLamp", (-.06, -.055, .035), (.009,) * 3, "lamp")
         self._cylinder(path + "/Gripper/CameraBracket", (-.08, -.055, 0), (.10, -.18, .08), .005, "metal")
         self._sphere(path + "/Gripper/ToolCamera", (.10, -.18, .08), (.018, .018, .015), "glass")
@@ -1055,7 +1064,12 @@ class IsaacReefScene:
         work_light.CreateColorAttr(_color((.92, .96, 1.)))
         work_light.AddTranslateOp().Set(Gf.Vec3d(-.06, -.055, .035))
         fingers = []
+        jaw_slides = []
         for j, side in enumerate((-1, 1)):
+            layout = jaw_linkage()[j]
+            rail = self._cylinder(f"{path}/Gripper/Slide{j}", layout["rail_start"], layout["rail_end"], .009, "metal")
+            carriage = self._cube(f"{path}/Gripper/Carriage{j}", layout["carriage"], CARRIAGE_SIZE, "dark")
+            jaw_slides.append((rail, carriage.GetOrderedXformOps()[0]))
             finger = self._xform(f"{path}/Gripper/Jaw{j}", (0, side * .056, 0))
             body = UsdGeom.Capsule.Define(self.stage, f"{path}/Gripper/Jaw{j}/Finger")
             body.CreateAxisAttr(UsdGeom.Tokens.x)
@@ -1072,7 +1086,7 @@ class IsaacReefScene:
         self.robots[identifier] = {"position": position_op, "yaw": yaw_op, "root": root,
                                   "arm1": arm1, "arm2": arm2, "elbow": elbow_op,
                                   "gripper": gripper_op, "wrist_yaw": wrist_yaw_op,
-                                  "fingers": fingers,
+                                  "fingers": fingers, "jaw_slides": jaw_slides,
                                   "trail": trail, "target": target, "survey": is_survey}
         if self._inspection_enabled and not is_survey:
             # A real wrist-mounted fixture. UV itself is not visible RGB light;
@@ -1207,8 +1221,37 @@ class IsaacReefScene:
             focal = 23.
         elif state in recovery_states and fragment:
             target = _v(fragment["position"]) + Gf.Vec3d(0,0,fragment.get("height",.08)*.5)
-            director_eye = target + Gf.Vec3d(.48,-.62,.38)
-            focal = 29.
+            key = (worker.get("fragment_id"), "recovery")
+            if key != self._director_key:
+                self._director_key = key
+                from .reef_landscape import _foundation_height
+                ground = _foundation_height(target[0], target[1], self.config, snapshot)
+                anchor = Gf.Vec3d(target[0], target[1], ground + .05)
+                blockers = list(self.scenery) + list(snapshot.get("corals", [])) + list(snapshot.get("obstacles", []))
+                # Include the complete swept envelope of flexible fans; their
+                # moving branches used to pass directly in front of this shot.
+                blockers += [{"position": f["position"], "radius": float(self.config.get("render", {}).get("soft_coral_radius", .28)) + .16,
+                              "height": f["data"]["motion"]["height"]} for f in self._soft_corals]
+                body = anchor - forward * .32
+                body[2] = .64
+                def recovery_cost(angle):
+                    eye = anchor + Gf.Vec3d(math.cos(angle)*1.05, math.sin(angle)*1.05, .65)
+                    delta = anchor-eye
+                    score = .1*(1.-math.cos(angle-yaw))
+                    for item in blockers:
+                        center = _v(item["position"])
+                        t = Gf.Dot(center-eye, Gf.Vec3d(delta[0],delta[1],0.)) / max(1e-9,delta[0]**2+delta[1]**2)
+                        if not .02 < t < .98: continue
+                        ray = eye+delta*t
+                        if math.hypot(ray[0]-center[0],ray[1]-center[1]) < item["radius"]+.04 and ray[2] < center[2]+item["height"]+.07:
+                            score += 100.
+                    t = max(0.,min(1.,Gf.Dot(body-eye,delta)/Gf.Dot(delta,delta)))
+                    if (eye+delta*t-body).GetLength() < .34: score += 300.
+                    return score
+                self._recovery_camera_angle = min((i*math.tau/48 for i in range(48)),key=recovery_cost)
+            angle = self._recovery_camera_angle
+            director_eye = target + Gf.Vec3d(math.cos(angle)*1.05,math.sin(angle)*1.05,.65)
+            focal = 32.
             self._look_at("worker",worker_eye,target)
         elif active:
             UsdGeom.Camera.Get(self.stage,self.CAMERA_PATHS["worker"]).GetFocalLengthAttr().Set(11.)
@@ -1388,7 +1431,7 @@ class IsaacReefScene:
             jaw = Gf.Vec3d(.34, 0, -.32)
         # Forearm ends at the wrist behind the contact point; jaw stays exactly
         # at the authoritative world-space grasp point from the mission core.
-        tip = jaw + _wrist_offset(robot, (-.10, 0, 0))
+        tip = jaw + _wrist_offset(robot, WRIST_CENTER)
         l1, l2 = 0.38, 0.40
         delta = tip - shoulder
         distance = delta.GetLength()
@@ -1708,14 +1751,16 @@ class IsaacReefScene:
             data["yaw"].Set(math.degrees(float(robot.get("yaw", 0.0))))
             shoulder, elbow, tip = self._arm_pose(robot, snapshot)
             self._set_cylinder(data["arm1"], shoulder, elbow)
-            self._set_cylinder(data["arm2"], elbow, tip + _wrist_offset(robot, (-.10, 0, 0)))
+            self._set_cylinder(data["arm2"], elbow, tip + _wrist_offset(robot, WRIST_CENTER))
             data["elbow"].Set(_v(elbow))
             data["gripper"].Set(_v(tip))
             data["wrist_yaw"].Set(math.degrees(float(robot.get("wrist_yaw", 0.))))
             opening = max(0., min(1., float(robot.get("gripper_open", 1.))))
-            separation = (float(robot.get("grasp_radius", .012)) + .006) + .038 * opening
-            for index, side in enumerate((-1, 1)):
-                data["fingers"][index].Set(Gf.Vec3d(0, side * separation, 0))
+            for index, layout in enumerate(jaw_linkage(robot.get("grasp_radius", .012), opening)):
+                data["fingers"][index].Set(_v(layout["finger"]))
+                rail, carriage = data["jaw_slides"][index]
+                self._set_cylinder(rail, layout["rail_start"], layout["rail_end"])
+                carriage.Set(_v(layout["carriage"]))
             trail = robot.get("trail", [])[-180:]
             data["trail"].GetVisibilityAttr().Set(UsdGeom.Tokens.inherited if show_telemetry else UsdGeom.Tokens.invisible)
             if len(trail) > 1:
@@ -1778,18 +1823,16 @@ class IsaacReefScene:
                 polyp_maximum = max(polyp_maximum,pose["max_displacement"])
             self._motion_info.update(max_tip_displacement_m=maximum,max_polyp_displacement_m=polyp_maximum)
             self._last_soft_time = time
-        if self._particles and (time - self._last_time > 0.1 or time < self._last_time):
+        if self._particles and time != self._last_time:
             current = water.get("current", [0.03, 0.01, 0])
             if isinstance(current, dict):
                 current = current.get("vector", [0.03, 0.01, 0])
-            vx = float(current[0]) if len(current) else 0.03
-            vy = float(current[1]) if len(current) > 1 else 0.01
-            points = []
-            for i, (x, y, z) in enumerate(self._particle_origins):
-                points.append(_color((((x + vx * time + 9) % 18) - 9,
-                                      ((y + vy * time + 0.015 * math.sin(time + i) + 9) % 18) - 9,
-                                      0.1 + ((z - self._particle_speeds[i] * time) % min(self.depth - 0.2, 6.3)))))
-            self._particles.GetPointsAttr().Set(Vt.Vec3fArray(points))
+            poses = [tracer_pose(origin, time, current, settling_speed=self._particle_speeds[i],
+                                height=min(self.depth - 0.2, 6.3))
+                     for i, origin in enumerate(self._particle_origins)]
+            self._particles.GetPointsAttr().Set(Vt.Vec3fArray([_color(p["position"]) for p in poses]))
+            self._particles.GetWidthsAttr().Set([w * math.sqrt(p["opacity"])
+                                                for w,p in zip(self._particle_widths,poses)])
             self._last_time = time
         self._update_cameras(snapshot)
         self._apply_inspection(snapshot)

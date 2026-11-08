@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
-from .compositor import FONTS, _place_image, _text_fit
+from .compositor import draw_brand, FONTS, _place_image, _text_fit
 
 
 WIDTH, HEIGHT = 1600, 900
@@ -40,7 +40,7 @@ def compose_inspection(white, active, robot, case, metadata, *, case_number=1,
     profile = case["profile"]
     canvas = Image.new("RGB", (WIDTH, HEIGHT), BG)
     draw = ImageDraw.Draw(canvas)
-    draw.text((24, 20), "PELAGIC", font=FONTS["brand"], fill=INK)
+    draw_brand(draw)
     draw.text((218, 25), "ROBOT LIGHTING / CORAL APPEARANCE", font=FONTS["body"], fill=TEAL)
     draw.text((218, 54), "LOW-AMBIENT INSPECTION  ·  RGB RESPONSE PROXY  ·  OFFLINE", font=FONTS["tiny"], fill=MUTED)
     draw.text((1310, 22), f"CASE {case_number:02d} / {case_count:02d}", font=FONTS["body"], fill=INK)

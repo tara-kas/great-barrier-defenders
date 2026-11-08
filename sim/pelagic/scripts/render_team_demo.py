@@ -258,6 +258,8 @@ def main():
     parser.add_argument("--trace",type=Path,required=True)
     parser.add_argument("--output",type=Path,default=ROOT/"outputs/team-mission-video")
     parser.add_argument("--preview-stills",action="store_true")
+    parser.add_argument("--patch-recovery",action="store_true",help="Render only loss/recovery camera replacements as indexed PNGs")
+    parser.add_argument("--current-review",action="store_true",help="Also capture an eight-second fixed-camera flow comparison")
     parser.add_argument("--fps",type=int,default=24)
     parser.add_argument("--max-frames",type=int,default=2400)
     parser.add_argument("--samples",type=int,default=4)
@@ -265,13 +267,23 @@ def main():
     args,kit_args = parser.parse_known_args()
     if args.samples < 1 or not 0 <= args.quality <= 40:
         parser.error("samples must be positive and quality CRF in 0..40")
+    if args.patch_recovery and args.preview_stills:
+        parser.error("patch-recovery requires the full movie schedule, not preview-stills")
     opener = gzip.open if args.trace.suffix == ".gz" else open
     with opener(args.trace,"rt",encoding="utf-8") as handle:
         trace = json.load(handle)
     config,frames = trace["config"],trace["frames"]
     schedule = build_schedule(frames,args.fps,args.max_frames)
+    patch_indices = []
+    if args.patch_recovery:
+        losses = [i for i,tick in enumerate(schedule["ticks"]) if worker_of(frames[tick]).get("state") == "FRAGMENT_LOST"]
+        lifts = [i for i,tick in enumerate(schedule["ticks"]) if worker_of(frames[tick]).get("state") == "RECOVERY_LIFT"]
+        if not losses or not lifts or lifts[-1] < losses[0]:
+            parser.error("patch-recovery requires a complete loss/recovery sequence")
+        patch_indices = list(range(losses[0],min(len(schedule["ticks"]),lifts[-1]+121)))
+    patch_index_set = set(patch_indices)
     ffmpeg = shutil.which("ffmpeg")
-    if not args.preview_stills and not ffmpeg:
+    if not args.preview_stills and not args.patch_recovery and not ffmpeg:
         parser.error("ffmpeg is required for offline MP4 recording")
     args.output.mkdir(parents=True,exist_ok=True)
     (args.output/"schedule.json").write_text(json.dumps(schedule,indent=2))
@@ -291,6 +303,10 @@ def main():
         from reefsim.isaac_scene import IsaacReefScene
         from reefsim.compositor import compose_frame,WIDTH,HEIGHT
         from scripts.render_demo import _capture
+        from scripts.validate_linkage import check_linkage, preflight_linkages
+        early_linkage = preflight_linkages(config,[frames[t] for t in sorted(set(schedule["milestones"].values()))])
+        (args.output/"linkage-preflight.json").write_text(json.dumps(early_linkage,indent=2))
+        print("REEF_RESCUE_LINKAGE_PREFLIGHT_PASSED",flush=True)
         context = omni.usd.get_context()
         context.new_stage()
         stage = context.get_stage()
@@ -300,10 +316,12 @@ def main():
         scene.update(state)
         audit = NativeScanAudit(stage,state)
         audit.check(state,"initial")
+        linkage_checks = [check_linkage(scene,state)]
         for name,tick in sorted(schedule['milestones'].items(),key=lambda item:item[1]):
             preflight=frames[tick]
             scene.update(preflight)
             audit.check(preflight,'preflight_'+name)
+            linkage_checks.append(check_linkage(scene,preflight))
         scene.update(state)
         print('PELAGIC_TEAM_PREFLIGHT_PASSED',flush=True)
         specs = {"director":(1280,720),"scout":(400,240),"worker":(400,240)}
@@ -331,10 +349,11 @@ def main():
             targets = sorted((tick,name) for name,tick in schedule["milestones"].items())
         else:
             targets = [(tick,f"frame-{i:05d}") for i,tick in enumerate(schedule["ticks"])]
-            encoder = subprocess.Popen([ffmpeg,"-nostdin","-hide_banner","-loglevel","error","-y",
-                "-f","rawvideo","-pixel_format","rgb24","-video_size",f"{WIDTH}x{HEIGHT}",
-                "-framerate",str(args.fps),"-i","pipe:0","-an","-c:v","libx264","-preset","veryfast",
-                "-crf",str(args.quality),"-pix_fmt","yuv420p","-movflags","+faststart",str(args.output/"pelagic-team-pip.mp4")],stdin=subprocess.PIPE)
+            if not args.patch_recovery:
+                encoder = subprocess.Popen([ffmpeg,"-nostdin","-hide_banner","-loglevel","error","-y",
+                    "-f","rawvideo","-pixel_format","rgb24","-video_size",f"{WIDTH}x{HEIGHT}",
+                    "-framerate",str(args.fps),"-i","pipe:0","-an","-c:v","libx264","-preset","veryfast",
+                    "-crf",str(args.quality),"-pix_fmt","yuv420p","-movflags","+faststart",str(args.output/"reef-rescue-mission.mp4")],stdin=subprocess.PIPE)
         started = time.monotonic()
         manifest = []
         previous_tick,previous_phase = 0,None
@@ -343,20 +362,35 @@ def main():
             state = copy.deepcopy(frames[tick])
             if not args.preview_stills:
                 state["_presentation_dt"] = 1. / args.fps
+            if args.patch_recovery and index not in patch_index_set:
+                # Preserve the full director filter history at presentation
+                # cadence, including identical/repeated trace timestamps.
+                scene._update_cameras(state)
+                previous_tick,previous_phase = tick,worker_of(state).get("state","UNKNOWN")
+                continue
             scene.update(state)
             if config.get("inspection",{}).get("enabled"):
                 state["inspection"] = scene.inspection_metadata()
+            state["motion"] = scene.motion_metadata()
             worker = worker_of(state)
             phase = worker.get("state","UNKNOWN")
-            check = args.preview_stills or phase != previous_phase or tick in milestone_ticks or index == len(targets)-1
+            check = (args.preview_stills or phase != previous_phase or tick in milestone_ticks or index == len(targets)-1
+                     or (args.patch_recovery and index in (patch_indices[0],patch_indices[-1])))
             if check:
                 audit.check(state,name)
+                linkage_checks.append(check_linkage(scene,state))
             for _ in range(max(12,args.samples) if args.preview_stills else args.samples):
                 app.update()
             images = {key:_capture(*products[key],state,key=="director",seed=tick,scene=scene,camera=key) for key in specs}
             speed = 1. if args.preview_stills else max(.1,(state["time"]-frames[previous_tick]["time"])*args.fps)
             composite = compose_frame(images["director"],images["scout"],images["worker"],state,speed,keyframe=args.preview_stills)
-            if args.preview_stills:
+            if not args.preview_stills and tick in milestone_ticks:
+                review_dir = args.output/"render-review"
+                review_dir.mkdir(exist_ok=True)
+                composite.save(review_dir/f"{index:04d}-{phase}.jpg",quality=92)
+            if args.patch_recovery:
+                composite.save(args.output/f"patch-{index:05d}.png")
+            elif args.preview_stills:
                 composite.save(args.output/f"preview-{index+1:03d}-{name}.png")
                 for key in specs:
                     Image.fromarray(images[key]).save(args.output/f"preview-{index+1:03d}-{name}-{key}.png")
@@ -370,7 +404,8 @@ def main():
                           "fragment_id":worker.get("fragment_id"),"carrying":worker.get("carrying"),
                           "gripper_world":worker.get("gripper_world"),"gripper_open":worker.get("gripper_open"),
                           "team_mission":state.get("team_mission"),"metrics":state.get("metrics"),
-                          "inspection":state.get("inspection"),"elapsed_wall_seconds":time.monotonic()-started}
+                          "inspection":state.get("inspection"),"motion":state.get("motion"),
+                          "hydrodynamics":worker.get("hydrodynamics"),"elapsed_wall_seconds":time.monotonic()-started}
                 manifest.append(record)
                 print("PELAGIC_TEAM_FRAME "+json.dumps(record),flush=True)
             previous_tick,previous_phase = tick,phase
@@ -390,9 +425,54 @@ def main():
                               "synchronized_render_products":True,"server_started":False,
                               "trace_summary":trace.get("summary",trace.get("report",{})),"geometry_validation":audit.report(),
                               "wall_seconds":time.monotonic()-started}
-        for filename,value in (("geometry-validation.json",audit.report()),("state.json",final),("manifest.json",manifest)):
+        for filename,value in (("geometry-validation.json",audit.report()),("linkage-validation.json",{"passed":True,"checks":linkage_checks}),("state.json",final),("manifest.json",manifest)):
             (args.output/filename).write_text(json.dumps(value,indent=2))
+        if args.patch_recovery:
+            patch_manifest = {"mode":"native Isaac recovery camera replacement",
+                              "trace":str(args.trace.resolve()),"trace_sha256":hashlib.sha256(args.trace.read_bytes()).hexdigest(),
+                              "full_schedule_frame_count":schedule["frame_count"],"fps":args.fps,
+                              "patch_indices":patch_indices,"rendered_frame_count":len(patch_indices),
+                              "pattern":"patch-{index:05d}.png","camera_history":"all schedule entries stepped in order",
+                              "geometry_validation":audit.report(),"linkage_validation":{"passed":True,"checks":linkage_checks},
+                              "current_review":False,"mp4_encoder_started":False}
+            (args.output/"patch-manifest.json").write_text(json.dumps(patch_manifest,indent=2))
+        if args.current_review and not args.preview_stills and not args.patch_recovery:
+            from reefsim.reef_detail_compositor import compose_current
+            source = frames[0]
+            zero = scene.aim_current(source, 0., current_override=[0.,0.,0.])
+            assert scene.motion_metadata()["max_tip_displacement_m"] < 1e-9
+            for _ in range(16): app.update()
+            reference = _capture(*products["director"],zero,True,seed=0,scene=scene,camera="director")
+            current_movie = args.output / "reef-rescue-current.mp4"
+            encoder = subprocess.Popen([ffmpeg,"-v","error","-y","-f","rawvideo","-pix_fmt","rgb24",
+                "-s",f"{WIDTH}x{HEIGHT}","-r",str(args.fps),"-i","pipe:0","-an","-c:v","libx264",
+                "-preset","fast","-crf",str(args.quality),"-pix_fmt","yuv420p","-movflags","+faststart",str(current_movie)],stdin=subprocess.PIPE)
+            motion_records = []
+            for index in range(8*args.fps):
+                elapsed = index/args.fps
+                state = scene.aim_current(source, elapsed)
+                for _ in range(args.samples): app.update()
+                active = _capture(*products["director"],state,True,seed=index,scene=scene,camera="director")
+                macro = _capture(*products["worker"],state,False,seed=index,scene=scene,camera="worker")
+                metadata = scene.motion_metadata()
+                motion_records.append(dict(metadata,time=elapsed))
+                encoder.stdin.write(compose_current(reference,active,macro,metadata,elapsed=elapsed,duration=8.).tobytes())
+                if index % 48 == 0: print("REEF_RESCUE_CURRENT_FRAME "+str(index),flush=True)
+            encoder.stdin.close()
+            if encoder.wait(): raise RuntimeError("Current review encoding failed")
+            encoder = None
+            tips = [r["tracked_tip_world"] for r in motion_records]
+            excursion = max(math.dist(a,b) for a in tips for b in tips)
+            assert excursion > .02, "Current review shows insufficient flexible fan movement"
+            (args.output/"current-validation.json").write_text(json.dumps({"zero_current_rest_passed":True,
+                "fan_tip_excursion_m":excursion,"records":motion_records,"seconds":8,"frames":8*args.fps,
+                "scope":"controlled renderer inspection; reduced damped flexible-tissue physics"},indent=2))
         print("PELAGIC_TEAM_OFFLINE_FINISHED "+json.dumps(final.get("metrics",{})),flush=True)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        sys.stderr.flush()
+        raise
     finally:
         if encoder:
             if encoder.stdin and not encoder.stdin.closed:

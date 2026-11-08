@@ -57,7 +57,7 @@ def plan(output,config_path=None,inject_drop=True):
         for colony in frame['corals']:
             final=robot.sim._truth_by_id[colony['id']]
             if final.get('contact_fixture',{}):
-                for key in ('contact_fixture','planting_point','contact_base'):
+                for key in ('contact_fixture','planting_point','contact_base','contact_point','contact_normal'):
                     colony[key]=copy.deepcopy(final[key])
     report={'summary' :dataclasses.asdict(summary),'audit':robot.audit,'push_tests':robot.push_tests,
         'sensor_mode':'explicit offline demo with pre-mapped colonies and analytical UV gate',

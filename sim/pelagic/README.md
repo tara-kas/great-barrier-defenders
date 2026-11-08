@@ -1,4 +1,4 @@
-# PELAGIC
+# Reef Rescue AUV — underwater simulation
 
 This standalone simulation checkpoint lives under `sim/pelagic/` in the team repository. Run the commands below from this directory. Generated videos, preview frames and runtime logs remain local in the ignored `outputs/` directory; the bundled geometry, textures and third-party license/provenance records are committed. See [team integration status](../README.md).
 
@@ -21,6 +21,8 @@ The contact scenario is an enlarged engineering adaptation of same-genet *Pocill
 The habitat includes continuous reef pavement, interlocking colonies, pitted limestone boulders, current-driven flexible fans and three schools of small reef fish. Living and bleached contact colonies use a bundled Smithsonian *Pocillopora damicornis* scan, alongside the earlier *Acropora secale* asset. Close-up mission colonies retain the scan’s full 150,000 triangles and original UV seams. Matte tissue maps preserve calice detail; partly bleached colonies retain irregular pigment islands. Hard coral skeletons remain rigid; larger fans and living polyp tentacles respond to oscillating current with bounded damped motion. Fish use deterministic local motion and avoidance rules. All assets and motion run offline. See [Pocillopora provenance](docs/POCILLOPORA_SCAN.md) and [Acropora provenance](docs/SCANNED_CORALS.md).
 
 ## Render and review offline
+
+The latest team iteration adds connected gripper slides, central natural tissue contact, and current-driven station keeping. See [the changes and measured checks](docs/CONNECTED_CONTACT_CURRENT.md). Record with `scripts/render_team_demo.py --current-review` to include the fixed-camera flow comparison.
 
 The current **UV-first offline demo is 1:55**, at `outputs/uv-detection-pip/pelagic-pip.mp4` (2758 frames, 1600×900, 24 fps). All four transfers require a UV scan of the living bleached recipient and compatible healthy donor before harvesting; pickup, transport, placement and mechanical verification use white light. Both lamps have a 100-degree full cone; the scan footprint is about 2.62 m across at 1.1 m distance. The movie was rendered on Spark, copied locally, visually reviewed and validated, with matching SHA-256 hashes. Detailed evidence is in [validation evidence](docs/VALIDATION.md).
 
